@@ -1,8 +1,10 @@
 
 "use client";
 
-import { useState } from "react";
+import { useEffect, useState } from "react";
 import Link from "next/link";
+import { useRouter } from "next/navigation";
+import { createClient } from "@/lib/supabase";
 
 const modules = [
   {
@@ -49,10 +51,26 @@ const modules = [
   },
 ];
 
+type Company = {
+  id: string;
+  company_name: string;
+};
+
 export default function DashboardPage() {
+  const router = useRouter();
+
   const [profile, setProfile] = useState("Personal");
   const [active, setActive] = useState("Overview");
   const [menuOpen, setMenuOpen] = useState(false);
+
+  const [fullName, setFullName] = useState("");
+  const [companies, setCompanies] = useState<Company[]>([]);
+  const [activeCompanyId, setActiveCompanyId] = useState("");
+  const [userId, setUserId] = useState("");
+
+  const [loading, setLoading] = useState(true);
+  const [switching, setSwitching] = useState(false);
+  const [signingOut, setSigningOut] = useState(false);
 
   const navigation = [
     { name: "Overview", icon: "▦", id: "overview" },
@@ -61,13 +79,209 @@ export default function DashboardPage() {
     { name: "Activity", icon: "◷", id: "activity" },
   ];
 
+  useEffect(() => {
+    let mounted = true;
+
+    async function loadDashboard() {
+      try {
+        const supabase = createClient();
+
+        const {
+          data: { user },
+          error: authError,
+        } = await supabase.auth.getUser();
+
+        if (authError || !user) {
+          router.replace("/login");
+          return;
+        }
+
+        if (!mounted) return;
+
+        setUserId(user.id);
+
+        const [
+          { data: profileData },
+          { data: companyData },
+          { data: settingsData },
+        ] = await Promise.all([
+          supabase
+            .from("profiles")
+            .select("full_name")
+            .eq("id", user.id)
+            .maybeSingle(),
+
+          supabase
+            .from("companies")
+            .select("id, company_name")
+            .eq("owner_id", user.id),
+
+          supabase
+            .from("account_settings")
+            .select("active_profile_type, active_company_id")
+            .eq("user_id", user.id)
+            .maybeSingle(),
+        ]);
+
+        if (!mounted) return;
+
+        const name =
+          profileData?.full_name ||
+          user.user_metadata?.full_name ||
+          user.email?.split("@")[0] ||
+          "VOINNECT User";
+
+        setFullName(name);
+        setCompanies(companyData || []);
+
+        const savedProfile =
+          settingsData?.active_profile_type || "personal";
+
+        const savedCompanyId =
+          settingsData?.active_company_id || "";
+
+        const validCompany = (companyData || []).find(
+          (company) => company.id === savedCompanyId
+        );
+
+        if (
+          savedProfile === "company" &&
+          validCompany
+        ) {
+          setProfile("Company");
+          setActiveCompanyId(validCompany.id);
+        } else {
+          setProfile("Personal");
+          setActiveCompanyId("");
+        }
+      } catch (error) {
+        console.error("Dashboard loading error:", error);
+        router.replace("/login");
+      } finally {
+        if (mounted) {
+          setLoading(false);
+        }
+      }
+    }
+
+    loadDashboard();
+
+    return () => {
+      mounted = false;
+    };
+  }, [router]);
+
   const goToSection = (name: string, id: string) => {
     setActive(name);
     setMenuOpen(false);
+
     document.getElementById(id)?.scrollIntoView({
       behavior: "smooth",
     });
   };
+
+  async function switchProfile(type: "Personal" | "Company") {
+    if (switching || type === profile) return;
+
+    if (type === "Company" && companies.length === 0) {
+      alert(
+        "You don't have a Company Profile yet. Create one first."
+      );
+      return;
+    }
+
+    setSwitching(true);
+
+    try {
+      const supabase = createClient();
+
+      const companyId =
+        type === "Company" ? companies[0].id : null;
+
+      const { error } = await supabase
+        .from("account_settings")
+        .update({
+          active_profile_type:
+            type === "Company" ? "company" : "personal",
+          active_company_id: companyId,
+        })
+        .eq("user_id", userId);
+
+      if (error) {
+        throw error;
+      }
+
+      setProfile(type);
+      setActiveCompanyId(companyId || "");
+    } catch (error) {
+      console.error("Profile switching error:", error);
+      alert("Unable to switch profile. Please try again.");
+    } finally {
+      setSwitching(false);
+    }
+  }
+
+  async function handleSignOut() {
+    if (signingOut) return;
+
+    setSigningOut(true);
+
+    try {
+      const supabase = createClient();
+
+      const { error } = await supabase.auth.signOut();
+
+      if (error) {
+        throw error;
+      }
+
+      router.replace("/login");
+      router.refresh();
+    } catch (error) {
+      console.error("Sign out error:", error);
+      alert("Unable to sign out. Please try again.");
+      setSigningOut(false);
+    }
+  }
+
+  const displayName = fullName || "VOINNECT User";
+  const initials = displayName
+    .trim()
+    .split(/\s+/)
+    .slice(0, 2)
+    .map((part) => part.charAt(0).toUpperCase())
+    .join("");
+
+  if (loading) {
+    return (
+      <main
+        style={{
+          minHeight: "100vh",
+          display: "grid",
+          placeItems: "center",
+          background: "#f4f7fc",
+          color: "#17243c",
+          fontFamily: "Arial, Helvetica, sans-serif",
+        }}
+      >
+        <div style={{ textAlign: "center" }}>
+          <div
+            style={{
+              fontSize: 27,
+              fontWeight: 800,
+              letterSpacing: 2,
+              marginBottom: 15,
+            }}
+          >
+            VOIN<span style={{ color: "#438ce0" }}>NECT</span>
+          </div>
+          <p style={{ color: "#8490a2", fontSize: 13 }}>
+            Loading your workspace...
+          </p>
+        </div>
+      </main>
+    );
+  }
 
   return (
     <main className="vn-dashboard">
@@ -336,6 +550,11 @@ export default function DashboardPage() {
           box-shadow: 0 3px 8px #2469b933;
         }
 
+        .vn-switcher button:disabled {
+          opacity: .6;
+          cursor: not-allowed;
+        }
+
         .vn-section-head {
           display: flex;
           justify-content: space-between;
@@ -460,8 +679,6 @@ export default function DashboardPage() {
             padding: 25px;
           }
         }
-
-        /* MOBILE RESPONSIVE */
 
         @media (max-width: 700px) {
           .vn-layout {
@@ -727,7 +944,9 @@ export default function DashboardPage() {
           {navigation.map((item) => (
             <button
               key={item.name}
-              className={`vn-nav ${active === item.name ? "active" : ""}`}
+              className={`vn-nav ${
+                active === item.name ? "active" : ""
+              }`}
               onClick={() => goToSection(item.name, item.id)}
             >
               <span className="vn-nav-icon">{item.icon}</span>
@@ -741,7 +960,9 @@ export default function DashboardPage() {
             <button
               key={item.name}
               className="vn-nav"
-              onClick={() => goToSection(item.name, "applications")}
+              onClick={() =>
+                goToSection(item.name, "applications")
+              }
             >
               <span className="vn-nav-icon">{item.icon}</span>
               {item.name}
@@ -760,10 +981,14 @@ export default function DashboardPage() {
               Settings
             </button>
 
-            <Link href="/login" className="vn-nav">
+            <button
+              className="vn-nav"
+              onClick={handleSignOut}
+              disabled={signingOut}
+            >
               <span className="vn-nav-icon">↪</span>
-              Sign Out
-            </Link>
+              {signingOut ? "Signing Out..." : "Sign Out"}
+            </button>
           </div>
         </aside>
 
@@ -783,13 +1008,17 @@ export default function DashboardPage() {
             </div>
 
             <div className="vn-top-right">
-              <div className="vn-search">⌕ Search workspace...</div>
+              <div className="vn-search">
+                ⌕ Search workspace...
+              </div>
 
               <div className="vn-user">
-                <div className="vn-avatar">U</div>
+                <div className="vn-avatar">
+                  {initials || "U"}
+                </div>
 
                 <div className="vn-user-name">
-                  Welcome User
+                  Welcome {displayName}
                   <div
                     style={{
                       color: "#8a96a9",
@@ -805,7 +1034,9 @@ export default function DashboardPage() {
           </header>
 
           <div id="overview">
-            <div className="vn-eyebrow">VOINNECT ECOSYSTEM</div>
+            <div className="vn-eyebrow">
+              VOINNECT ECOSYSTEM
+            </div>
 
             <h1 className="vn-heading">Dashboard</h1>
 
@@ -830,28 +1061,43 @@ export default function DashboardPage() {
 
           <div className="vn-profile-panel" id="profiles">
             <div>
-              <div className="vn-eyebrow">ACTIVE PROFILE</div>
+              <div className="vn-eyebrow">
+                ACTIVE PROFILE
+              </div>
 
               <div className="vn-profile-title">
                 Choose your workspace
               </div>
 
               <div className="vn-profile-description">
-                Switch between your personal and company identity.
+                {profile === "Company" && activeCompanyId
+                  ? `Active company: ${
+                      companies.find(
+                        (company) =>
+                          company.id === activeCompanyId
+                      )?.company_name || "Company Profile"
+                    }`
+                  : "Switch between your personal and company identity."}
               </div>
             </div>
 
             <div className="vn-switcher">
               <button
-                className={profile === "Personal" ? "selected" : ""}
-                onClick={() => setProfile("Personal")}
+                className={
+                  profile === "Personal" ? "selected" : ""
+                }
+                onClick={() => switchProfile("Personal")}
+                disabled={switching}
               >
                 ◎ Personal
               </button>
 
               <button
-                className={profile === "Company" ? "selected" : ""}
-                onClick={() => setProfile("Company")}
+                className={
+                  profile === "Company" ? "selected" : ""
+                }
+                onClick={() => switchProfile("Company")}
+                disabled={switching}
               >
                 ▣ Company
               </button>
@@ -873,7 +1119,10 @@ export default function DashboardPage() {
 
             <div className="vn-grid">
               {modules.map((item) => (
-                <article className="vn-module" key={item.number}>
+                <article
+                  className="vn-module"
+                  key={item.number}
+                >
                   <div className="vn-module-top">
                     <div className="vn-module-icon">
                       {item.icon}
