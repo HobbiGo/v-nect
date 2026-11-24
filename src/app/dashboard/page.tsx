@@ -61,16 +61,27 @@ export default function DashboardPage() {
     { name: "Activity", icon: "◷", id: "activity" },
   ];
 
+  const goToSection = (name: string, id: string) => {
+    setActive(name);
+    setMenuOpen(false);
+    document.getElementById(id)?.scrollIntoView({
+      behavior: "smooth",
+    });
+  };
+
   return (
     <main className="vn-dashboard">
       <style>{`
-        * { box-sizing: border-box; }
+        * {
+          box-sizing: border-box;
+        }
 
         .vn-dashboard {
           min-height: 100vh;
           background: #f4f7fc;
           color: #17243c;
           font-family: Arial, Helvetica, sans-serif;
+          overflow-x: hidden;
         }
 
         .vn-layout {
@@ -95,7 +106,9 @@ export default function DashboardPage() {
           padding: 5px 12px 35px;
         }
 
-        .vn-brand span { color: #55a4ff; }
+        .vn-brand span {
+          color: #55a4ff;
+        }
 
         .vn-side-label {
           color: #8291aa;
@@ -123,7 +136,8 @@ export default function DashboardPage() {
           font-family: inherit;
         }
 
-        .vn-nav:hover, .vn-nav.active {
+        .vn-nav:hover,
+        .vn-nav.active {
           background: #20395e;
           color: white;
         }
@@ -136,6 +150,7 @@ export default function DashboardPage() {
           font-size: 17px;
           width: 22px;
           text-align: center;
+          flex-shrink: 0;
         }
 
         .vn-sidebar-bottom {
@@ -200,6 +215,7 @@ export default function DashboardPage() {
           border-radius: 50%;
           font-weight: 800;
           font-size: 15px;
+          flex-shrink: 0;
         }
 
         .vn-eyebrow {
@@ -244,6 +260,7 @@ export default function DashboardPage() {
           line-height: 1;
           font-weight: 900;
           color: rgba(255,255,255,.055);
+          pointer-events: none;
         }
 
         .vn-hero-label {
@@ -324,6 +341,7 @@ export default function DashboardPage() {
           justify-content: space-between;
           align-items: center;
           margin-bottom: 18px;
+          gap: 10px;
         }
 
         .vn-section-head h2 {
@@ -337,6 +355,7 @@ export default function DashboardPage() {
           letter-spacing: 1px;
           color: #71819a;
           font-weight: 700;
+          white-space: nowrap;
         }
 
         .vn-grid {
@@ -352,6 +371,7 @@ export default function DashboardPage() {
           padding: 22px;
           min-height: 205px;
           transition: .2s ease;
+          min-width: 0;
         }
 
         .vn-module:hover {
@@ -416,55 +436,288 @@ export default function DashboardPage() {
           margin-top: 45px;
           padding-top: 22px;
           border-top: 1px solid #e6ebf2;
+          line-height: 1.8;
         }
 
         .vn-mobile-menu {
           display: none;
           border: 1px solid #e0e6f0;
           background: white;
+          color: #17243c;
           border-radius: 8px;
           padding: 9px 12px;
           font-size: 18px;
           cursor: pointer;
+          flex-shrink: 0;
         }
 
         @media (max-width: 1050px) {
-          .vn-grid { grid-template-columns: repeat(2, minmax(0, 1fr)); }
-          .vn-main { padding: 25px; }
+          .vn-grid {
+            grid-template-columns: repeat(2, minmax(0, 1fr));
+          }
+
+          .vn-main {
+            padding: 25px;
+          }
         }
 
+        /* MOBILE RESPONSIVE */
+
         @media (max-width: 700px) {
-          .vn-layout { display: block; }
+          .vn-layout {
+            display: block;
+            width: 100%;
+          }
+
           .vn-sidebar {
-            display: ${menuOpen ? "flex" : "none"};
+            display: none;
             width: 100%;
             min-height: auto;
-            padding: 20px;
+            padding: 18px 16px;
+            border-radius: 0 0 14px 14px;
           }
-          .vn-sidebar-bottom { margin-top: 20px; }
-          .vn-mobile-brand { display: block; }
-          .vn-mobile-menu { display: block; }
-          .vn-main { padding: 20px 16px 35px; }
-          .vn-topbar { margin-bottom: 27px; }
-          .vn-search { display: none; }
-          .vn-user-name { display: none; }
-          .vn-heading { font-size: 27px; }
-          .vn-hero { padding: 25px 22px; }
-          .vn-hero h2 { font-size: 23px; }
-          .vn-hero::after { right: 5px; font-size: 150px; }
+
+          .vn-sidebar.open {
+            display: flex;
+          }
+
+          .vn-brand {
+            font-size: 22px;
+            padding: 5px 10px 18px;
+          }
+
+          .vn-side-label {
+            margin: 14px 10px 9px;
+          }
+
+          .vn-nav {
+            padding: 12px;
+            min-height: 44px;
+          }
+
+          .vn-sidebar-bottom {
+            margin-top: 18px;
+            padding-top: 15px;
+          }
+
+          .vn-main {
+            width: 100%;
+            padding: 16px 15px 30px;
+          }
+
+          .vn-topbar {
+            width: 100%;
+            gap: 10px;
+            margin-bottom: 27px;
+            min-height: 42px;
+          }
+
+          .vn-mobile-menu {
+            display: block;
+            width: 42px;
+            height: 42px;
+            padding: 0;
+            font-size: 19px;
+          }
+
+          .vn-mobile-brand {
+            display: block;
+            font-size: 18px;
+            letter-spacing: .5px;
+            white-space: nowrap;
+          }
+
+          .vn-top-right {
+            gap: 8px;
+            margin-left: auto;
+          }
+
+          .vn-search {
+            display: none;
+          }
+
+          .vn-user {
+            gap: 0;
+          }
+
+          .vn-user-name {
+            display: none;
+          }
+
+          .vn-avatar {
+            width: 35px;
+            height: 35px;
+            font-size: 14px;
+          }
+
+          .vn-eyebrow {
+            font-size: 9px;
+            letter-spacing: 1.5px;
+            margin-bottom: 8px;
+          }
+
+          .vn-heading {
+            font-size: 27px;
+            letter-spacing: -.5px;
+          }
+
+          .vn-subtitle {
+            font-size: 12px;
+            line-height: 1.6;
+          }
+
+          .vn-hero {
+            padding: 25px 20px;
+            margin: 22px 0 20px;
+            border-radius: 14px;
+          }
+
+          .vn-hero-label {
+            font-size: 9px;
+            letter-spacing: 1.5px;
+            margin-bottom: 12px;
+          }
+
+          .vn-hero h2 {
+            font-size: 22px;
+            line-height: 1.3;
+            max-width: 250px;
+          }
+
+          .vn-hero p {
+            font-size: 12px;
+            line-height: 1.75;
+            max-width: 100%;
+          }
+
+          .vn-hero::after {
+            right: 0;
+            top: -15px;
+            font-size: 125px;
+          }
+
           .vn-profile-panel {
-            align-items: flex-start;
             flex-direction: column;
+            align-items: stretch;
+            gap: 17px;
+            padding: 18px;
+            margin-bottom: 27px;
           }
-          .vn-switcher { width: 100%; }
-          .vn-switcher button { flex: 1; }
-          .vn-grid { grid-template-columns: 1fr; }
-          .vn-module { min-height: 185px; }
+
+          .vn-profile-title {
+            font-size: 14px;
+          }
+
+          .vn-profile-description {
+            font-size: 11px;
+            line-height: 1.6;
+          }
+
+          .vn-switcher {
+            width: 100%;
+            display: flex;
+          }
+
+          .vn-switcher button {
+            flex: 1;
+            padding: 12px 8px;
+            font-size: 12px;
+            min-height: 42px;
+          }
+
+          .vn-section-head {
+            align-items: flex-end;
+            margin-bottom: 15px;
+          }
+
+          .vn-section-head h2 {
+            font-size: 19px;
+          }
+
+          .vn-count {
+            font-size: 9px;
+            letter-spacing: .5px;
+          }
+
+          .vn-grid {
+            grid-template-columns: minmax(0, 1fr);
+            gap: 12px;
+          }
+
+          .vn-module {
+            min-height: auto;
+            padding: 18px;
+            border-radius: 12px;
+          }
+
+          .vn-module-top {
+            margin-bottom: 14px;
+          }
+
+          .vn-module-icon {
+            width: 40px;
+            height: 40px;
+            font-size: 20px;
+          }
+
+          .vn-module h3 {
+            font-size: 15px;
+            margin-bottom: 7px;
+          }
+
+          .vn-module p {
+            font-size: 12px;
+            line-height: 1.65;
+            min-height: 0;
+            margin-bottom: 13px;
+          }
+
+          .vn-coming {
+            font-size: 9px;
+            padding: 6px 9px;
+          }
+
+          .vn-footer {
+            margin-top: 30px;
+            padding-top: 18px;
+            font-size: 9px;
+          }
+        }
+
+        @media (max-width: 380px) {
+          .vn-main {
+            padding-left: 12px;
+            padding-right: 12px;
+          }
+
+          .vn-mobile-brand {
+            font-size: 16px;
+          }
+
+          .vn-heading {
+            font-size: 25px;
+          }
+
+          .vn-hero {
+            padding: 22px 17px;
+          }
+
+          .vn-hero h2 {
+            font-size: 20px;
+          }
+
+          .vn-profile-panel {
+            padding: 15px;
+          }
+
+          .vn-module {
+            padding: 16px;
+          }
         }
       `}</style>
 
       <div className="vn-layout">
-        <aside className="vn-sidebar">
+        <aside className={`vn-sidebar ${menuOpen ? "open" : ""}`}>
           <div className="vn-brand">
             VOIN<span>NECT</span>
           </div>
@@ -475,10 +728,7 @@ export default function DashboardPage() {
             <button
               key={item.name}
               className={`vn-nav ${active === item.name ? "active" : ""}`}
-              onClick={() => {
-                setActive(item.name);
-                setMenuOpen(false);
-              }}
+              onClick={() => goToSection(item.name, item.id)}
             >
               <span className="vn-nav-icon">{item.icon}</span>
               {item.name}
@@ -491,13 +741,7 @@ export default function DashboardPage() {
             <button
               key={item.name}
               className="vn-nav"
-              onClick={() => {
-                setActive(item.name);
-                setMenuOpen(false);
-                document.getElementById("applications")?.scrollIntoView({
-                  behavior: "smooth",
-                });
-              }}
+              onClick={() => goToSection(item.name, "applications")}
             >
               <span className="vn-nav-icon">{item.icon}</span>
               {item.name}
@@ -505,7 +749,13 @@ export default function DashboardPage() {
           ))}
 
           <div className="vn-sidebar-bottom">
-            <button className="vn-nav" onClick={() => setActive("Settings")}>
+            <button
+              className="vn-nav"
+              onClick={() => {
+                setActive("Settings");
+                setMenuOpen(false);
+              }}
+            >
               <span className="vn-nav-icon">⚙</span>
               Settings
             </button>
@@ -523,8 +773,9 @@ export default function DashboardPage() {
               className="vn-mobile-menu"
               onClick={() => setMenuOpen(!menuOpen)}
               aria-label="Toggle navigation"
+              aria-expanded={menuOpen}
             >
-              ☰
+              {menuOpen ? "✕" : "☰"}
             </button>
 
             <div className="vn-mobile-brand">
@@ -533,11 +784,19 @@ export default function DashboardPage() {
 
             <div className="vn-top-right">
               <div className="vn-search">⌕ Search workspace...</div>
+
               <div className="vn-user">
                 <div className="vn-avatar">U</div>
+
                 <div className="vn-user-name">
                   Welcome User
-                  <div style={{ color: "#8a96a9", fontWeight: 400, marginTop: 4 }}>
+                  <div
+                    style={{
+                      color: "#8a96a9",
+                      fontWeight: 400,
+                      marginTop: 4,
+                    }}
+                  >
                     {profile} Profile
                   </div>
                 </div>
@@ -547,15 +806,21 @@ export default function DashboardPage() {
 
           <div id="overview">
             <div className="vn-eyebrow">VOINNECT ECOSYSTEM</div>
+
             <h1 className="vn-heading">Dashboard</h1>
+
             <p className="vn-subtitle">
               Your connected workspace. Everything starts here.
             </p>
           </div>
 
           <div className="vn-hero">
-            <div className="vn-hero-label">YOUR DIGITAL ECOSYSTEM</div>
+            <div className="vn-hero-label">
+              YOUR DIGITAL ECOSYSTEM
+            </div>
+
             <h2>Welcome to VOINNECT.</h2>
+
             <p>
               One account. Multiple profiles. One ecosystem.
               Everything you need to connect, communicate and grow
@@ -566,7 +831,11 @@ export default function DashboardPage() {
           <div className="vn-profile-panel" id="profiles">
             <div>
               <div className="vn-eyebrow">ACTIVE PROFILE</div>
-              <div className="vn-profile-title">Choose your workspace</div>
+
+              <div className="vn-profile-title">
+                Choose your workspace
+              </div>
+
               <div className="vn-profile-description">
                 Switch between your personal and company identity.
               </div>
@@ -579,6 +848,7 @@ export default function DashboardPage() {
               >
                 ◎ Personal
               </button>
+
               <button
                 className={profile === "Company" ? "selected" : ""}
                 onClick={() => setProfile("Company")}
@@ -591,9 +861,13 @@ export default function DashboardPage() {
           <div id="applications">
             <div className="vn-section-head">
               <div>
-                <div className="vn-eyebrow">YOUR APPLICATIONS</div>
+                <div className="vn-eyebrow">
+                  YOUR APPLICATIONS
+                </div>
+
                 <h2>Explore VOINNECT</h2>
               </div>
+
               <div className="vn-count">06 MODULES</div>
             </div>
 
@@ -601,13 +875,22 @@ export default function DashboardPage() {
               {modules.map((item) => (
                 <article className="vn-module" key={item.number}>
                   <div className="vn-module-top">
-                    <div className="vn-module-icon">{item.icon}</div>
-                    <div className="vn-module-number">{item.number}</div>
+                    <div className="vn-module-icon">
+                      {item.icon}
+                    </div>
+
+                    <div className="vn-module-number">
+                      {item.number}
+                    </div>
                   </div>
 
                   <h3>{item.name}</h3>
+
                   <p>{item.description}</p>
-                  <span className="vn-coming">COMING SOON</span>
+
+                  <span className="vn-coming">
+                    COMING SOON
+                  </span>
                 </article>
               ))}
             </div>
