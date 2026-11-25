@@ -50,6 +50,45 @@ const modules = [
   },
 ];
 
+const guidelines = [
+  {
+    number: "01",
+    title: "Sexual and Explicit Content",
+    description:
+      "No pornography, nudity, sexually explicit material, or inappropriate sexual content.",
+  },
+  {
+    number: "02",
+    title: "Violence and Graphic Content",
+    description:
+      "No graphic violence, disturbing imagery, or content that promotes physical harm.",
+  },
+  {
+    number: "03",
+    title: "Harassment and Hate Speech",
+    description:
+      "No bullying, threats, harassment, discrimination, or hate speech against others.",
+  },
+  {
+    number: "04",
+    title: "Scams and Misleading Information",
+    description:
+      "No fraud, spam, impersonation, fake business information, or deceptive activities.",
+  },
+  {
+    number: "05",
+    title: "Illegal and Copyright-Infringing Content",
+    description:
+      "No illegal activities, unauthorized copyrighted material, or content shared without proper rights.",
+  },
+  {
+    number: "06",
+    title: "Harmful and Dangerous Content",
+    description:
+      "No content that encourages dangerous activities or puts other people at risk.",
+  },
+];
+
 type Company = {
   id: string;
   company_name: string;
@@ -82,6 +121,7 @@ export default function DashboardPage() {
     { name: "Applications", icon: "◇", id: "applications" },
     { name: "My Profiles", icon: "◎", id: "profiles" },
     { name: "Activity", icon: "◷", id: "activity" },
+    { name: "Community Guidelines", icon: "✓", id: "guidelines" },
   ];
 
   useEffect(() => {
@@ -609,6 +649,134 @@ export default function DashboardPage() {
           z-index: 1;
         }
 
+        .vn-tagline {
+          display: block;
+          color: #b7d6ff;
+          font-size: 11px;
+          font-weight: 700;
+          letter-spacing: 1.5px;
+          margin-top: 18px;
+          position: relative;
+          z-index: 1;
+        }
+
+        .vn-intro {
+          background: white;
+          border: 1px solid #e8edf5;
+          border-radius: 13px;
+          padding: 24px;
+          margin-bottom: 25px;
+        }
+
+        .vn-intro h2 {
+          font-size: 18px;
+          margin: 0 0 10px;
+          color: #17243c;
+        }
+
+        .vn-intro p {
+          color: #718096;
+          font-size: 12px;
+          line-height: 1.85;
+          margin: 0;
+        }
+
+        .vn-guidelines {
+          background: white;
+          border: 1px solid #e4eaf3;
+          border-radius: 15px;
+          padding: 25px;
+          margin: 25px 0 30px;
+          scroll-margin-top: 20px;
+        }
+
+        .vn-guidelines-heading {
+          display: flex;
+          justify-content: space-between;
+          align-items: flex-start;
+          gap: 15px;
+          margin-bottom: 12px;
+        }
+
+        .vn-guidelines-heading h2 {
+          font-size: 20px;
+          margin: 0 0 8px;
+          color: #17243c;
+        }
+
+        .vn-guidelines-heading p {
+          font-size: 12px;
+          line-height: 1.7;
+          color: #8490a2;
+          margin: 0;
+        }
+
+        .vn-guidelines-badge {
+          background: #edf4ff;
+          color: #286fbe;
+          border-radius: 7px;
+          padding: 8px 10px;
+          font-size: 9px;
+          font-weight: 800;
+          letter-spacing: 1px;
+          white-space: nowrap;
+        }
+
+        .vn-guideline-list {
+          display: grid;
+          grid-template-columns: repeat(2, minmax(0, 1fr));
+          gap: 12px;
+          margin-top: 20px;
+        }
+
+        .vn-guideline-item {
+          display: flex;
+          align-items: flex-start;
+          gap: 12px;
+          background: #f7f9fc;
+          border: 1px solid #edf0f5;
+          border-radius: 10px;
+          padding: 15px;
+          min-width: 0;
+        }
+
+        .vn-guideline-number {
+          width: 30px;
+          height: 30px;
+          flex-shrink: 0;
+          display: grid;
+          place-items: center;
+          background: #e7f0fd;
+          color: #286fbe;
+          border-radius: 8px;
+          font-size: 10px;
+          font-weight: 800;
+        }
+
+        .vn-guideline-item h3 {
+          font-size: 12px;
+          margin: 1px 0 6px;
+          color: #243650;
+        }
+
+        .vn-guideline-item p {
+          font-size: 11px;
+          line-height: 1.7;
+          color: #8490a2;
+          margin: 0;
+        }
+
+        .vn-guidelines-warning {
+          background: #fff8eb;
+          border: 1px solid #f3e5c9;
+          border-radius: 9px;
+          padding: 14px 16px;
+          margin-top: 17px;
+          color: #86642a;
+          font-size: 11px;
+          line-height: 1.8;
+        }
+
         .vn-profile-panel {
           background: white;
           border: 1px solid #e8edf5;
@@ -1082,6 +1250,37 @@ export default function DashboardPage() {
             font-size: 125px;
           }
 
+          .vn-tagline {
+            font-size: 10px;
+            line-height: 1.6;
+          }
+
+          .vn-intro {
+            padding: 19px;
+          }
+
+          .vn-guidelines {
+            padding: 18px;
+            margin: 20px 0 25px;
+          }
+
+          .vn-guidelines-heading {
+            flex-direction: column;
+          }
+
+          .vn-guidelines-heading h2 {
+            font-size: 18px;
+          }
+
+          .vn-guideline-list {
+            grid-template-columns: minmax(0, 1fr);
+            gap: 10px;
+          }
+
+          .vn-guideline-item {
+            padding: 13px;
+          }
+
           .vn-profile-panel {
             flex-direction: column;
             align-items: stretch;
@@ -1329,7 +1528,7 @@ export default function DashboardPage() {
 
           <div id="overview">
             <div className="vn-eyebrow">
-              VOINNECT ECOSYSTEM
+              GLOBAL BUSINESS COMMUNICATION & ECOSYSTEM PLATFORM
             </div>
 
             <h1 className="vn-heading">Dashboard</h1>
@@ -1347,11 +1546,79 @@ export default function DashboardPage() {
             <h2>Welcome to VOINNECT.</h2>
 
             <p>
-              One account. Multiple profiles. One ecosystem.
-              Everything you need to connect, communicate and grow
-              in a connected business world.
+              VOINNECT is an integrated digital platform designed
+              to connect businesses, professionals, communities,
+              and opportunities through communication,
+              collaboration, networking, and business solutions.
             </p>
+
+            <span className="vn-tagline">
+              CONNECT BEYOND BOUNDARIES.
+            </span>
           </div>
+
+          <section className="vn-intro">
+            <div className="vn-eyebrow">ABOUT VOINNECT</div>
+
+            <h2>Building a More Connected Business World.</h2>
+
+            <p>
+              Our vision is to build a connected global business
+              ecosystem where people and organizations can
+              communicate, collaborate, discover opportunities,
+              and grow together. VOINNECT brings communication,
+              professional networking, business discovery,
+              product presentations, communities, and marketplace
+              capabilities into one connected environment.
+            </p>
+          </section>
+
+          <section className="vn-guidelines" id="guidelines">
+            <div className="vn-guidelines-heading">
+              <div>
+                <div className="vn-eyebrow">
+                  COMMUNITY STANDARDS
+                </div>
+
+                <h2>VOINNECT Community Guidelines</h2>
+
+                <p>
+                  Help us maintain a safe, respectful, and
+                  professional environment for everyone.
+                </p>
+              </div>
+
+              <span className="vn-guidelines-badge">
+                PLEASE READ
+              </span>
+            </div>
+
+            <div className="vn-guideline-list">
+              {guidelines.map((item) => (
+                <article
+                  className="vn-guideline-item"
+                  key={item.number}
+                >
+                  <div className="vn-guideline-number">
+                    {item.number}
+                  </div>
+
+                  <div>
+                    <h3>{item.title}</h3>
+                    <p>{item.description}</p>
+                  </div>
+                </article>
+              ))}
+            </div>
+
+            <div className="vn-guidelines-warning">
+              <strong>Important:</strong> Content that violates
+              these guidelines may be rejected, removed, or result
+              in account restrictions in accordance with VOINNECT
+              policies. Users are responsible for the content they
+              publish and share.
+            </div>
+          </section>
 
           <div className="vn-profile-panel" id="profiles">
             <div>
@@ -1562,6 +1829,8 @@ export default function DashboardPage() {
 
           <div id="activity" className="vn-footer">
             © 2026 VOINNECT. All rights reserved.
+            <br />
+            Global Business Communication & Ecosystem Platform.
             <br />
             Connect Beyond Boundaries.
           </div>
