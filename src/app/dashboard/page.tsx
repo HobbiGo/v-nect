@@ -2,7 +2,6 @@
 "use client";
 
 import { useEffect, useState } from "react";
-import Link from "next/link";
 import { useRouter } from "next/navigation";
 import { createClient } from "@/lib/supabase";
 
@@ -72,6 +71,12 @@ export default function DashboardPage() {
   const [switching, setSwitching] = useState(false);
   const [signingOut, setSigningOut] = useState(false);
 
+  const [showCompanyForm, setShowCompanyForm] = useState(false);
+  const [companyName, setCompanyName] = useState("");
+  const [companyDescription, setCompanyDescription] = useState("");
+  const [creatingCompany, setCreatingCompany] = useState(false);
+  const [companyError, setCompanyError] = useState("");
+
   const navigation = [
     { name: "Overview", icon: "▦", id: "overview" },
     { name: "Applications", icon: "◇", id: "applications" },
@@ -101,9 +106,9 @@ export default function DashboardPage() {
         setUserId(user.id);
 
         const [
-          { data: profileData },
-          { data: companyData },
-          { data: settingsData },
+          { data: profileData, error: profileError },
+          { data: companyData, error: companyError },
+          { data: settingsData, error: settingsError },
         ] = await Promise.all([
           supabase
             .from("profiles")
@@ -123,6 +128,10 @@ export default function DashboardPage() {
             .maybeSingle(),
         ]);
 
+        if (profileError) throw profileError;
+        if (companyError) throw companyError;
+        if (settingsError) throw settingsError;
+
         if (!mounted) return;
 
         const name =
@@ -132,7 +141,9 @@ export default function DashboardPage() {
           "VOINNECT User";
 
         setFullName(name);
-        setCompanies(companyData || []);
+
+        const userCompanies = companyData || [];
+        setCompanies(userCompanies);
 
         const savedProfile =
           settingsData?.active_profile_type || "personal";
@@ -140,14 +151,11 @@ export default function DashboardPage() {
         const savedCompanyId =
           settingsData?.active_company_id || "";
 
-        const validCompany = (companyData || []).find(
+        const validCompany = userCompanies.find(
           (company) => company.id === savedCompanyId
         );
 
-        if (
-          savedProfile === "company" &&
-          validCompany
-        ) {
+        if (savedProfile === "company" && validCompany) {
           setProfile("Company");
           setActiveCompanyId(validCompany.id);
         } else {
@@ -156,7 +164,12 @@ export default function DashboardPage() {
         }
       } catch (error) {
         console.error("Dashboard loading error:", error);
-        router.replace("/login");
+
+        if (mounted) {
+          alert(
+            "Unable to load dashboard data. Please refresh the page."
+          );
+        }
       } finally {
         if (mounted) {
           setLoading(false);
@@ -180,13 +193,90 @@ export default function DashboardPage() {
     });
   };
 
-  async function switchProfile(type: "Personal" | "Company") {
-    if (switching || type === profile) return;
+  async function createCompany(
+    event: React.FormEvent<HTMLFormElement>
+  ) {
+    event.preventDefault();
+
+    if (!companyName.trim()) {
+      setCompanyError("Please enter your company name.");
+      return;
+    }
+
+    if (!userId) {
+      setCompanyError(
+        "User session not found. Please sign in again."
+      );
+      return;
+    }
+
+    setCreatingCompany(true);
+    setCompanyError("");
+
+    try {
+      const supabase = createClient();
+
+      const { data: newCompany, error: insertError } =
+        await supabase
+          .from("companies")
+          .insert({
+            owner_id: userId,
+            company_name: companyName.trim(),
+            description: companyDescription.trim() || null,
+          })
+          .select("id, company_name")
+          .single();
+
+      if (insertError) throw insertError;
+
+      const { error: settingsError } = await supabase
+        .from("account_settings")
+        .update({
+          active_profile_type: "company",
+          active_company_id: newCompany.id,
+        })
+        .eq("user_id", userId);
+
+      if (settingsError) {
+        throw settingsError;
+      }
+
+      setCompanies((previous) => [
+        ...previous,
+        newCompany as Company,
+      ]);
+
+      setActiveCompanyId(newCompany.id);
+      setProfile("Company");
+
+      setCompanyName("");
+      setCompanyDescription("");
+      setShowCompanyForm(false);
+
+      alert("Company Profile created successfully!");
+    } catch (error) {
+      console.error("Create company error:", error);
+
+      setCompanyError(
+        error instanceof Error
+          ? error.message
+          : "Unable to create Company Profile."
+      );
+    } finally {
+      setCreatingCompany(false);
+    }
+  }
+
+  async function switchProfile(
+    type: "Personal" | "Company",
+    selectedCompanyId?: string
+  ) {
+    if (switching || (type === profile && !selectedCompanyId)) {
+      return;
+    }
 
     if (type === "Company" && companies.length === 0) {
-      alert(
-        "You don't have a Company Profile yet. Create one first."
-      );
+      setShowCompanyForm(true);
       return;
     }
 
@@ -196,7 +286,9 @@ export default function DashboardPage() {
       const supabase = createClient();
 
       const companyId =
-        type === "Company" ? companies[0].id : null;
+        type === "Company"
+          ? selectedCompanyId || activeCompanyId || companies[0].id
+          : null;
 
       const { error } = await supabase
         .from("account_settings")
@@ -207,9 +299,7 @@ export default function DashboardPage() {
         })
         .eq("user_id", userId);
 
-      if (error) {
-        throw error;
-      }
+      if (error) throw error;
 
       setProfile(type);
       setActiveCompanyId(companyId || "");
@@ -228,12 +318,9 @@ export default function DashboardPage() {
 
     try {
       const supabase = createClient();
-
       const { error } = await supabase.auth.signOut();
 
-      if (error) {
-        throw error;
-      }
+      if (error) throw error;
 
       router.replace("/login");
       router.refresh();
@@ -245,12 +332,17 @@ export default function DashboardPage() {
   }
 
   const displayName = fullName || "VOINNECT User";
+
   const initials = displayName
     .trim()
     .split(/\s+/)
     .slice(0, 2)
     .map((part) => part.charAt(0).toUpperCase())
     .join("");
+
+  const activeCompany = companies.find(
+    (company) => company.id === activeCompanyId
+  );
 
   if (loading) {
     return (
@@ -511,7 +603,7 @@ export default function DashboardPage() {
           justify-content: space-between;
           align-items: center;
           gap: 18px;
-          margin-bottom: 35px;
+          margin-bottom: 20px;
         }
 
         .vn-profile-title {
@@ -553,6 +645,168 @@ export default function DashboardPage() {
         .vn-switcher button:disabled {
           opacity: .6;
           cursor: not-allowed;
+        }
+
+        .vn-create-company {
+          background: white;
+          border: 1px solid #e4eaf3;
+          border-radius: 13px;
+          padding: 22px;
+          margin-bottom: 30px;
+          display: flex;
+          justify-content: space-between;
+          align-items: center;
+          gap: 15px;
+        }
+
+        .vn-create-company h3 {
+          font-size: 15px;
+          margin: 0 0 7px;
+        }
+
+        .vn-create-company p {
+          color: #8490a2;
+          font-size: 12px;
+          line-height: 1.6;
+          margin: 0;
+        }
+
+        .vn-create-company button {
+          border: 0;
+          border-radius: 8px;
+          padding: 12px 17px;
+          font-size: 12px;
+          font-weight: 700;
+          cursor: pointer;
+          background: #2469b9;
+          color: white;
+        }
+
+        .vn-company-form {
+          background: white;
+          border: 1px solid #e4eaf3;
+          border-radius: 14px;
+          padding: 25px;
+          margin-bottom: 30px;
+        }
+
+        .vn-company-form h2 {
+          font-size: 22px;
+          margin: 8px 0;
+          color: #17243c;
+        }
+
+        .vn-company-form p {
+          color: #8490a2;
+          font-size: 12px;
+          line-height: 1.7;
+          margin-bottom: 22px;
+        }
+
+        .vn-company-form form {
+          display: flex;
+          flex-direction: column;
+          gap: 10px;
+        }
+
+        .vn-company-form label {
+          font-size: 12px;
+          font-weight: 700;
+          color: #34445d;
+          margin-top: 8px;
+        }
+
+        .vn-company-form input,
+        .vn-company-form textarea {
+          width: 100%;
+          padding: 12px 14px;
+          border: 1px solid #dfe6f0;
+          border-radius: 8px;
+          font-family: inherit;
+          font-size: 13px;
+          outline: none;
+          resize: vertical;
+        }
+
+        .vn-company-form input:focus,
+        .vn-company-form textarea:focus {
+          border-color: #438ce0;
+        }
+
+        .vn-company-actions {
+          display: flex;
+          justify-content: flex-end;
+          gap: 10px;
+          margin-top: 15px;
+        }
+
+        .vn-company-actions button {
+          border: 0;
+          border-radius: 8px;
+          padding: 12px 17px;
+          font-size: 12px;
+          font-weight: 700;
+          cursor: pointer;
+        }
+
+        .vn-company-actions button:first-child {
+          background: #edf1f7;
+          color: #52627a;
+        }
+
+        .vn-company-actions button:last-child {
+          background: #2469b9;
+          color: white;
+        }
+
+        .vn-company-actions button:disabled {
+          opacity: .6;
+          cursor: not-allowed;
+        }
+
+        .vn-company-error {
+          color: #c0392b;
+          background: #fff0ef;
+          border-radius: 7px;
+          padding: 11px;
+          font-size: 12px;
+        }
+
+        .vn-company-list {
+          background: white;
+          border: 1px solid #e8edf5;
+          border-radius: 13px;
+          padding: 20px;
+          margin-bottom: 30px;
+        }
+
+        .vn-company-list h3 {
+          font-size: 15px;
+          margin: 0 0 14px;
+        }
+
+        .vn-company-item {
+          display: flex;
+          justify-content: space-between;
+          align-items: center;
+          gap: 12px;
+          padding: 13px 0;
+          border-top: 1px solid #edf0f5;
+        }
+
+        .vn-company-item strong {
+          font-size: 13px;
+        }
+
+        .vn-company-item button {
+          border: 0;
+          background: #edf4ff;
+          color: #2469b9;
+          padding: 9px 12px;
+          border-radius: 7px;
+          font-size: 11px;
+          font-weight: 700;
+          cursor: pointer;
         }
 
         .vn-section-head {
@@ -818,7 +1072,7 @@ export default function DashboardPage() {
             align-items: stretch;
             gap: 17px;
             padding: 18px;
-            margin-bottom: 27px;
+            margin-bottom: 20px;
           }
 
           .vn-profile-title {
@@ -840,6 +1094,31 @@ export default function DashboardPage() {
             padding: 12px 8px;
             font-size: 12px;
             min-height: 42px;
+          }
+
+          .vn-create-company {
+            flex-direction: column;
+            align-items: stretch;
+          }
+
+          .vn-create-company button {
+            width: 100%;
+          }
+
+          .vn-company-form {
+            padding: 18px;
+          }
+
+          .vn-company-actions {
+            flex-direction: column-reverse;
+          }
+
+          .vn-company-actions button {
+            width: 100%;
+          }
+
+          .vn-company-item {
+            align-items: flex-start;
           }
 
           .vn-section-head {
@@ -1070,13 +1349,8 @@ export default function DashboardPage() {
               </div>
 
               <div className="vn-profile-description">
-                {profile === "Company" && activeCompanyId
-                  ? `Active company: ${
-                      companies.find(
-                        (company) =>
-                          company.id === activeCompanyId
-                      )?.company_name || "Company Profile"
-                    }`
+                {profile === "Company" && activeCompany
+                  ? `Active company: ${activeCompany.company_name}`
                   : "Switch between your personal and company identity."}
               </div>
             </div>
@@ -1103,6 +1377,132 @@ export default function DashboardPage() {
               </button>
             </div>
           </div>
+
+          {showCompanyForm && (
+            <div className="vn-company-form">
+              <div className="vn-eyebrow">
+                COMPANY REGISTRATION
+              </div>
+
+              <h2>Create Your Company Profile</h2>
+
+              <p>
+                Build your company's identity and become part of
+                the VOINNECT business ecosystem.
+              </p>
+
+              <form onSubmit={createCompany}>
+                <label htmlFor="companyName">
+                  Company Name
+                </label>
+
+                <input
+                  id="companyName"
+                  type="text"
+                  placeholder="Enter your company name"
+                  value={companyName}
+                  onChange={(event) =>
+                    setCompanyName(event.target.value)
+                  }
+                  required
+                  maxLength={150}
+                />
+
+                <label htmlFor="companyDescription">
+                  Company Description
+                </label>
+
+                <textarea
+                  id="companyDescription"
+                  placeholder="Tell us about your company..."
+                  value={companyDescription}
+                  onChange={(event) =>
+                    setCompanyDescription(event.target.value)
+                  }
+                  rows={4}
+                  maxLength={2000}
+                />
+
+                {companyError && (
+                  <div className="vn-company-error">
+                    {companyError}
+                  </div>
+                )}
+
+                <div className="vn-company-actions">
+                  <button
+                    type="button"
+                    onClick={() => {
+                      setShowCompanyForm(false);
+                      setCompanyError("");
+                    }}
+                    disabled={creatingCompany}
+                  >
+                    Cancel
+                  </button>
+
+                  <button
+                    type="submit"
+                    disabled={creatingCompany}
+                  >
+                    {creatingCompany
+                      ? "Creating..."
+                      : "Create Company"}
+                  </button>
+                </div>
+              </form>
+            </div>
+          )}
+
+          {!showCompanyForm && (
+            <div className="vn-create-company">
+              <div>
+                <h3>Build Your Business Identity</h3>
+                <p>
+                  Create a company profile to access your
+                  VOINNECT business workspace.
+                </p>
+              </div>
+
+              <button
+                onClick={() => {
+                  setCompanyError("");
+                  setShowCompanyForm(true);
+                }}
+              >
+                + Create Company Profile
+              </button>
+            </div>
+          )}
+
+          {companies.length > 0 && (
+            <div className="vn-company-list">
+              <h3>My Company Profiles</h3>
+
+              {companies.map((company) => (
+                <div
+                  className="vn-company-item"
+                  key={company.id}
+                >
+                  <strong>{company.company_name}</strong>
+
+                  <button
+                    onClick={() =>
+                      switchProfile("Company", company.id)
+                    }
+                    disabled={
+                      switching &&
+                      activeCompanyId === company.id
+                    }
+                  >
+                    {activeCompanyId === company.id
+                      ? "Active Company"
+                      : "Switch to Company"}
+                  </button>
+                </div>
+              ))}
+            </div>
+          )}
 
           <div id="applications">
             <div className="vn-section-head">
