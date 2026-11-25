@@ -93,72 +93,121 @@ export default function BusinessFeedPage() {
     return () => URL.revokeObjectURL(objectUrl);
   }, [imageFile]);
 
+  // ==========================================
+  // LOAD BUSINESS FEED AND ACTIVE COMPANY
+  // ==========================================
+
   async function loadFeed() {
     setLoading(true);
     setError("");
 
-    const {
-      data: { user },
-    } = await supabase.auth.getUser();
+    try {
+      const {
+        data: { user },
+        error: authError,
+      } = await supabase.auth.getUser();
 
-    if (user) {
-      setUserId(user.id);
+      if (authError) {
+        throw new Error(`Authentication: ${authError.message}`);
+      }
 
-      const { data: settings } = await supabase
-        .from("account_settings")
-        .select("active_profile_type, active_company_id")
-        .eq("user_id", user.id)
-        .maybeSingle();
+      if (!user) {
+        setUserId("");
+        setCompany(null);
+      } else {
+        setUserId(user.id);
 
-      if (
-        settings?.active_profile_type === "company" &&
-        settings.active_company_id
-      ) {
-        const { data: companyData } = await supabase
-          .from("companies")
-          .select("id, company_name, logo_url")
-          .eq("id", settings.active_company_id)
-          .eq("owner_id", user.id)
+        const { data: settings, error: settingsError } = await supabase
+          .from("account_settings")
+          .select("active_profile_type, active_company_id")
+          .eq("user_id", user.id)
           .maybeSingle();
 
-        setCompany(companyData as Company | null);
-      } else {
-        setCompany(null);
+        if (settingsError) {
+          throw new Error(
+            `Account Settings: ${settingsError.message}`
+          );
+        }
+
+        if (!settings) {
+          setCompany(null);
+          throw new Error(
+            "Account settings were not found for this account."
+          );
+        }
+
+        if (
+          settings.active_profile_type === "company" &&
+          settings.active_company_id
+        ) {
+          const { data: companyData, error: companyError } =
+            await supabase
+              .from("companies")
+              .select("id, company_name, logo_url")
+              .eq("id", settings.active_company_id)
+              .eq("owner_id", user.id)
+              .maybeSingle();
+
+          if (companyError) {
+            throw new Error(
+              `Company Lookup: ${companyError.message}`
+            );
+          }
+
+          if (!companyData) {
+            setCompany(null);
+            throw new Error(
+              "Company profile could not be found. Please check company access permissions."
+            );
+          }
+
+          setCompany(companyData as Company);
+        } else {
+          setCompany(null);
+        }
       }
-    } else {
-      setUserId("");
-      setCompany(null);
-    }
 
-    const { data, error: feedError } = await supabase
-      .from("business_posts")
-      .select(`
-        id,
-        company_id,
-        author_id,
-        title,
-        content,
-        post_type,
-        image_url,
-        status,
-        created_at,
-        companies (
-          company_name,
-          logo_url
-        )
-      `)
-      .eq("status", "published")
-      .order("created_at", { ascending: false });
+      const { data, error: feedError } = await supabase
+        .from("business_posts")
+        .select(`
+          id,
+          company_id,
+          author_id,
+          title,
+          content,
+          post_type,
+          image_url,
+          status,
+          created_at,
+          companies (
+            company_name,
+            logo_url
+          )
+        `)
+        .eq("status", "published")
+        .order("created_at", { ascending: false });
 
-    if (feedError) {
-      setError(feedError.message);
-      setPosts([]);
-    } else {
+      if (feedError) {
+        throw new Error(`Business Feed: ${feedError.message}`);
+      }
+
       setPosts((data || []) as unknown as Post[]);
-    }
+    } catch (err) {
+      const message =
+        err instanceof Error
+          ? err.message
+          : "Something went wrong.";
 
-    setLoading(false);
+      console.error("VOINNECT Business Feed Error:", err);
+      setError(message);
+    } finally {
+      setLoading(false);
+    }
   }
+
+  // ==========================================
+  // RESET COMPOSER
+  // ==========================================
 
   function resetComposer() {
     setTitle("");
@@ -171,10 +220,16 @@ export default function BusinessFeedPage() {
     setShowComposer(false);
   }
 
+  // ==========================================
+  // STORAGE HELPERS
+  // ==========================================
+
   function getStoragePath(publicUrl: string | null) {
     if (!publicUrl) return null;
 
-    const marker = `/storage/v1/object/public/${BUCKET_NAME}/`;
+    const marker =
+      `/storage/v1/object/public/${BUCKET_NAME}/`;
+
     const markerIndex = publicUrl.indexOf(marker);
 
     if (markerIndex === -1) return null;
@@ -210,7 +265,8 @@ export default function BusinessFeedPage() {
       .replace(/[^a-z0-9.-]/g, "-")
       .replace(/-+/g, "-");
 
-    const filePath = `${company.id}/${Date.now()}-${safeName}`;
+    const filePath =
+      `${company.id}/${Date.now()}-${safeName}`;
 
     const { error: uploadError } = await supabase.storage
       .from(BUCKET_NAME)
@@ -244,9 +300,16 @@ export default function BusinessFeedPage() {
       .remove([path]);
 
     if (storageError) {
-      console.error("Image cleanup failed:", storageError.message);
+      console.error(
+        "Image cleanup failed:",
+        storageError.message
+      );
     }
   }
+
+  // ==========================================
+  // IMAGE SELECTION
+  // ==========================================
 
   function handleImageChange(file: File | null) {
     setError("");
@@ -270,7 +333,13 @@ export default function BusinessFeedPage() {
     setRemoveCurrentImage(false);
   }
 
-  async function handleSubmit(event: FormEvent<HTMLFormElement>) {
+  // ==========================================
+  // CREATE AND EDIT POST
+  // ==========================================
+
+  async function handleSubmit(
+    event: FormEvent<HTMLFormElement>
+  ) {
     event.preventDefault();
 
     if (!userId || !company) {
@@ -296,15 +365,21 @@ export default function BusinessFeedPage() {
         : null;
 
       if (editingPostId && !oldPost) {
-        throw new Error("The post could not be found. Please refresh.");
+        throw new Error(
+          "The post could not be found. Please refresh."
+        );
       }
 
       if (
         oldPost &&
-        (oldPost.author_id !== userId ||
-          oldPost.company_id !== company.id)
+        (
+          oldPost.author_id !== userId ||
+          oldPost.company_id !== company.id
+        )
       ) {
-        throw new Error("You cannot edit this post from the current company.");
+        throw new Error(
+          "You cannot edit this post from the current company."
+        );
       }
 
       if (imageFile) {
@@ -330,7 +405,8 @@ export default function BusinessFeedPage() {
             updated_at: new Date().toISOString(),
           })
           .eq("id", editingPostId)
-          .eq("author_id", userId);
+          .eq("author_id", userId)
+          .eq("company_id", company.id);
 
         if (updateError) {
           if (uploadedPath) {
@@ -349,7 +425,9 @@ export default function BusinessFeedPage() {
           await removeStoredImage(oldPost.image_url);
         }
 
-        setSuccess("Your post has been updated successfully!");
+        setSuccess(
+          "Your post has been updated successfully!"
+        );
       } else {
         const { error: insertError } = await supabase
           .from("business_posts")
@@ -373,14 +451,18 @@ export default function BusinessFeedPage() {
           throw new Error(insertError.message);
         }
 
-        setSuccess("Your post has been published successfully!");
+        setSuccess(
+          "Your post has been published successfully!"
+        );
       }
 
       resetComposer();
       await loadFeed();
     } catch (err) {
       const message =
-        err instanceof Error ? err.message : "Something went wrong.";
+        err instanceof Error
+          ? err.message
+          : "Something went wrong.";
 
       setError(message);
     } finally {
@@ -388,9 +470,15 @@ export default function BusinessFeedPage() {
     }
   }
 
+  // ==========================================
+  // START EDITING
+  // ==========================================
+
   function startEditing(post: Post) {
     if (!company || post.company_id !== company.id) {
-      setError("Please switch to the correct company profile first.");
+      setError(
+        "Please switch to the correct company profile first."
+      );
       return;
     }
 
@@ -405,10 +493,29 @@ export default function BusinessFeedPage() {
     setError("");
     setSuccess("");
 
-    window.scrollTo({ top: 0, behavior: "smooth" });
+    window.scrollTo({
+      top: 0,
+      behavior: "smooth",
+    });
   }
 
+  // ==========================================
+  // DELETE POST
+  // ==========================================
+
   async function deletePost(post: Post) {
+    if (
+      !userId ||
+      !company ||
+      post.author_id !== userId ||
+      post.company_id !== company.id
+    ) {
+      setError(
+        "You cannot delete this post from the current company."
+      );
+      return;
+    }
+
     const confirmed = window.confirm(
       "Are you sure you want to delete this post?"
     );
@@ -422,7 +529,8 @@ export default function BusinessFeedPage() {
       .from("business_posts")
       .delete()
       .eq("id", post.id)
-      .eq("author_id", userId);
+      .eq("author_id", userId)
+      .eq("company_id", company.id);
 
     if (deleteError) {
       setError(deleteError.message);
@@ -438,10 +546,16 @@ export default function BusinessFeedPage() {
     setSuccess("Post deleted successfully.");
   }
 
+  // ==========================================
+  // FILTER AND DATE
+  // ==========================================
+
   const filteredPosts =
     filter === "all"
       ? posts
-      : posts.filter((post) => post.post_type === filter);
+      : posts.filter(
+          (post) => post.post_type === filter
+        );
 
   function formatDate(date: string) {
     return new Date(date).toLocaleDateString("en-US", {
@@ -450,6 +564,10 @@ export default function BusinessFeedPage() {
       year: "numeric",
     });
   }
+
+  // ==========================================
+  // PAGE UI
+  // ==========================================
 
   return (
     <main className="feed-page">
@@ -467,8 +585,14 @@ export default function BusinessFeedPage() {
       <section className="feed-container">
         <div className="hero">
           <div>
-            <div className="eyebrow">VOIN NETWORK ECOSYSTEM</div>
-            <h1>Business <span>Feed.</span></h1>
+            <div className="eyebrow">
+              VOIN NETWORK ECOSYSTEM
+            </div>
+
+            <h1>
+              Business <span>Feed.</span>
+            </h1>
+
             <p>
               Discover company updates, business announcements,
               innovations, and new opportunities.
@@ -487,7 +611,9 @@ export default function BusinessFeedPage() {
                 <button
                   key={item.value}
                   className={
-                    filter === item.value ? "category active" : "category"
+                    filter === item.value
+                      ? "category active"
+                      : "category"
                   }
                   onClick={() => setFilter(item.value)}
                 >
@@ -496,27 +622,37 @@ export default function BusinessFeedPage() {
                       ? "🌐"
                       : categoryIcons[item.value]}
                   </span>
+
                   {item.label}
                 </button>
               ))}
             </div>
 
             <div className="panel-card company-card">
-              <div className="panel-heading">YOUR COMPANY</div>
+              <div className="panel-heading">
+                YOUR COMPANY
+              </div>
 
               {company ? (
                 <>
                   <div className="company-identity">
                     {company.logo_url ? (
-                      <img src={company.logo_url} alt="Company logo" />
+                      <img
+                        src={company.logo_url}
+                        alt="Company logo"
+                      />
                     ) : (
                       <div className="company-avatar">
-                        {company.company_name.charAt(0).toUpperCase()}
+                        {company.company_name
+                          .charAt(0)
+                          .toUpperCase()}
                       </div>
                     )}
 
                     <div>
-                      <strong>{company.company_name}</strong>
+                      <strong>
+                        {company.company_name}
+                      </strong>
                       <small>Company Profile</small>
                     </div>
                   </div>
@@ -542,16 +678,24 @@ export default function BusinessFeedPage() {
                     + Create Post
                   </button>
 
-                  <Link href="/company" className="manage-link">
+                  <Link
+                    href="/company"
+                    className="manage-link"
+                  >
                     Manage Company →
                   </Link>
                 </>
               ) : (
                 <>
                   <p className="muted">
-                    Switch to your company profile to publish business updates.
+                    Switch to your company profile to publish
+                    business updates.
                   </p>
-                  <Link href="/company" className="create-button">
+
+                  <Link
+                    href="/company"
+                    className="create-button"
+                  >
                     Go to Company Dashboard
                   </Link>
                 </>
@@ -560,18 +704,32 @@ export default function BusinessFeedPage() {
           </aside>
 
           <section className="timeline">
-            {error && <div className="alert error">{error}</div>}
-            {success && <div className="alert success">{success}</div>}
+            {error && (
+              <div className="alert error">
+                {error}
+              </div>
+            )}
+
+            {success && (
+              <div className="alert success">
+                {success}
+              </div>
+            )}
 
             {showComposer && company && (
               <div className="composer">
                 <div className="composer-heading">
                   <div>
                     <span className="eyebrow">
-                      {editingPostId ? "UPDATE YOUR POST" : "PUBLISH UPDATE"}
+                      {editingPostId
+                        ? "UPDATE YOUR POST"
+                        : "PUBLISH UPDATE"}
                     </span>
+
                     <h2>
-                      {editingPostId ? "Edit Post" : "Create a Post"}
+                      {editingPostId
+                        ? "Edit Post"
+                        : "Create a Post"}
                     </h2>
                   </div>
 
@@ -586,55 +744,77 @@ export default function BusinessFeedPage() {
 
                 <form onSubmit={handleSubmit}>
                   <label>Post Title</label>
+
                   <input
                     value={title}
-                    onChange={(e) => setTitle(e.target.value)}
+                    onChange={(e) =>
+                      setTitle(e.target.value)
+                    }
                     placeholder="Enter your post title"
                     maxLength={150}
                     required
                   />
 
                   <label>Category</label>
+
                   <select
                     value={postType}
-                    onChange={(e) => setPostType(e.target.value)}
+                    onChange={(e) =>
+                      setPostType(e.target.value)
+                    }
                   >
                     {categories.slice(1).map((item) => (
-                      <option key={item.value} value={item.value}>
+                      <option
+                        key={item.value}
+                        value={item.value}
+                      >
                         {item.label}
                       </option>
                     ))}
                   </select>
 
                   <label>Content</label>
+
                   <textarea
                     value={content}
-                    onChange={(e) => setContent(e.target.value)}
+                    onChange={(e) =>
+                      setContent(e.target.value)
+                    }
                     placeholder="Share something about your company..."
                     rows={5}
                     required
                   />
 
                   <label>Upload Image</label>
+
                   <div className="upload-area">
                     <input
                       type="file"
                       accept="image/*"
                       onChange={(e) =>
-                        handleImageChange(e.target.files?.[0] || null)
+                        handleImageChange(
+                          e.target.files?.[0] || null
+                        )
                       }
                     />
-                    <small>Image files only · Maximum size 5 MB</small>
+
+                    <small>
+                      Image files only · Maximum size 5 MB
+                    </small>
                   </div>
 
                   {(previewUrl ||
-                    (!imageFile && imageUrl && !removeCurrentImage)) && (
+                    (!imageFile &&
+                      imageUrl &&
+                      !removeCurrentImage)) && (
                     <div className="image-preview">
                       <span>IMAGE PREVIEW</span>
+
                       <img
                         src={previewUrl || imageUrl}
                         alt="Selected image preview"
                       />
+
                       <button
                         type="button"
                         className="remove-image-button"
@@ -649,7 +829,10 @@ export default function BusinessFeedPage() {
                     </div>
                   )}
 
-                  <label>Or use an Image URL (optional)</label>
+                  <label>
+                    Or use an Image URL (optional)
+                  </label>
+
                   <input
                     type="url"
                     value={imageUrl}
@@ -687,7 +870,10 @@ export default function BusinessFeedPage() {
 
             <div className="timeline-heading">
               <div>
-                <span className="eyebrow">COMMUNITY UPDATES</span>
+                <span className="eyebrow">
+                  COMMUNITY UPDATES
+                </span>
+
                 <h2>Latest Updates</h2>
               </div>
 
@@ -704,16 +890,20 @@ export default function BusinessFeedPage() {
             ) : filteredPosts.length === 0 ? (
               <div className="empty-state">
                 <div className="empty-icon">◈</div>
+
                 <h3>No posts yet</h3>
+
                 <p>
-                  Business updates will appear here when companies
-                  publish their posts.
+                  Business updates will appear here when
+                  companies publish their posts.
                 </p>
 
                 {company && (
                   <button
                     className="create-button"
-                    onClick={() => setShowComposer(true)}
+                    onClick={() =>
+                      setShowComposer(true)
+                    }
                   >
                     Create the First Post
                   </button>
@@ -723,11 +913,15 @@ export default function BusinessFeedPage() {
               filteredPosts.map((post) => {
                 const isOwner =
                   Boolean(userId) &&
+                  Boolean(company) &&
                   post.author_id === userId &&
                   company?.id === post.company_id;
 
                 return (
-                  <article className="post-card" key={post.id}>
+                  <article
+                    className="post-card"
+                    key={post.id}
+                  >
                     <div className="post-header">
                       <div className="company-identity">
                         {post.companies?.logo_url ? (
@@ -745,15 +939,20 @@ export default function BusinessFeedPage() {
 
                         <div>
                           <strong>
-                            {post.companies?.company_name || "Company"}
+                            {post.companies?.company_name ||
+                              "Company"}
                           </strong>
-                          <small>{formatDate(post.created_at)}</small>
+
+                          <small>
+                            {formatDate(post.created_at)}
+                          </small>
                         </div>
                       </div>
 
                       <span className="post-category">
                         {categoryIcons[post.post_type]}{" "}
-                        {categoryLabels[post.post_type] || post.post_type}
+                        {categoryLabels[post.post_type] ||
+                          post.post_type}
                       </span>
                     </div>
 
@@ -771,20 +970,26 @@ export default function BusinessFeedPage() {
                     </div>
 
                     <div className="post-footer">
-                      <span>◈ VOIN Business Feed</span>
+                      <span>
+                        ◈ VOIN Business Feed
+                      </span>
 
                       {isOwner && (
                         <div className="post-actions">
                           <button
                             className="edit-button"
-                            onClick={() => startEditing(post)}
+                            onClick={() =>
+                              startEditing(post)
+                            }
                           >
                             Edit Post
                           </button>
 
                           <button
                             className="delete-button"
-                            onClick={() => deletePost(post)}
+                            onClick={() =>
+                              deletePost(post)
+                            }
                           >
                             Delete Post
                           </button>
@@ -994,6 +1199,7 @@ export default function BusinessFeedPage() {
           font-weight: 700;
           text-decoration: none;
           cursor: pointer;
+          box-sizing: border-box;
         }
 
         .manage-link {
