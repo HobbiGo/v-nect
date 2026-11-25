@@ -30,6 +30,12 @@ type Company = {
 const BUCKET_NAME = "business-posts";
 const MAX_IMAGE_SIZE = 5 * 1024 * 1024;
 
+const ALLOWED_IMAGE_TYPES: Record<string, string> = {
+  "image/jpeg": "jpg",
+  "image/png": "png",
+  "image/webp": "webp",
+};
+
 const categories = [
   { value: "all", label: "All Posts" },
   { value: "announcement", label: "Announcements" },
@@ -79,6 +85,7 @@ export default function BusinessFeedPage() {
 
   useEffect(() => {
     loadFeed();
+    // eslint-disable-next-line react-hooks/exhaustive-deps
   }, []);
 
   useEffect(() => {
@@ -124,9 +131,7 @@ export default function BusinessFeedPage() {
           .maybeSingle();
 
         if (settingsError) {
-          throw new Error(
-            `Account Settings: ${settingsError.message}`
-          );
+          throw new Error(`Account Settings: ${settingsError.message}`);
         }
 
         if (!settings) {
@@ -140,18 +145,15 @@ export default function BusinessFeedPage() {
           settings.active_profile_type === "company" &&
           settings.active_company_id
         ) {
-          const { data: companyData, error: companyError } =
-            await supabase
-              .from("companies")
-              .select("id, company_name, logo_url")
-              .eq("id", settings.active_company_id)
-              .eq("owner_id", user.id)
-              .maybeSingle();
+          const { data: companyData, error: companyError } = await supabase
+            .from("companies")
+            .select("id, company_name, logo_url")
+            .eq("id", settings.active_company_id)
+            .eq("owner_id", user.id)
+            .maybeSingle();
 
           if (companyError) {
-            throw new Error(
-              `Company Lookup: ${companyError.message}`
-            );
+            throw new Error(`Company Lookup: ${companyError.message}`);
           }
 
           if (!companyData) {
@@ -194,9 +196,7 @@ export default function BusinessFeedPage() {
       setPosts((data || []) as unknown as Post[]);
     } catch (err) {
       const message =
-        err instanceof Error
-          ? err.message
-          : "Something went wrong.";
+        err instanceof Error ? err.message : "Something went wrong.";
 
       console.error("VOINNECT Business Feed Error:", err);
       setError(message);
@@ -221,15 +221,51 @@ export default function BusinessFeedPage() {
   }
 
   // ==========================================
+  // IMAGE VALIDATION
+  // ==========================================
+
+  function getSupportedImageType(file: File): string | null {
+    if (ALLOWED_IMAGE_TYPES[file.type]) {
+      return file.type;
+    }
+
+    const extension = file.name.split(".").pop()?.toLowerCase();
+
+    if (extension === "jpg" || extension === "jpeg") {
+      return "image/jpeg";
+    }
+
+    if (extension === "png") {
+      return "image/png";
+    }
+
+    if (extension === "webp") {
+      return "image/webp";
+    }
+
+    return null;
+  }
+
+  function validateImage(file: File): string | null {
+    if (file.size > MAX_IMAGE_SIZE) {
+      return "Ukuran gambar maksimal 5 MB.";
+    }
+
+    if (!getSupportedImageType(file)) {
+      return "Format gambar belum didukung. Gunakan JPG, PNG, atau WebP.";
+    }
+
+    return null;
+  }
+
+  // ==========================================
   // STORAGE HELPERS
   // ==========================================
 
   function getStoragePath(publicUrl: string | null) {
     if (!publicUrl) return null;
 
-    const marker =
-      `/storage/v1/object/public/${BUCKET_NAME}/`;
-
+    const marker = `/storage/v1/object/public/${BUCKET_NAME}/`;
     const markerIndex = publicUrl.indexOf(marker);
 
     if (markerIndex === -1) return null;
@@ -252,37 +288,45 @@ export default function BusinessFeedPage() {
       throw new Error("Company profile is not available.");
     }
 
-    if (!file.type.startsWith("image/")) {
-      throw new Error("Please select a valid image file.");
+    const validationError = validateImage(file);
+
+    if (validationError) {
+      throw new Error(validationError);
     }
 
-    if (file.size > MAX_IMAGE_SIZE) {
-      throw new Error("Image size must not exceed 5 MB.");
+    const contentType = getSupportedImageType(file);
+
+    if (!contentType) {
+      throw new Error("Unsupported image format.");
     }
 
-    const safeName = file.name
-      .toLowerCase()
-      .replace(/[^a-z0-9.-]/g, "-")
-      .replace(/-+/g, "-");
+    const extension = ALLOWED_IMAGE_TYPES[contentType];
 
-    const filePath =
-      `${company.id}/${Date.now()}-${safeName}`;
+    const uniqueName =
+      `${Date.now()}-${Math.random().toString(36).slice(2, 10)}.${extension}`;
+
+    const filePath = `${company.id}/${uniqueName}`;
 
     const { error: uploadError } = await supabase.storage
       .from(BUCKET_NAME)
       .upload(filePath, file, {
         cacheControl: "3600",
         upsert: false,
-        contentType: file.type,
+        contentType,
       });
 
     if (uploadError) {
-      throw new Error(uploadError.message);
+      throw new Error(`Image upload failed: ${uploadError.message}`);
     }
 
     const { data } = supabase.storage
       .from(BUCKET_NAME)
       .getPublicUrl(filePath);
+
+    if (!data.publicUrl) {
+      await supabase.storage.from(BUCKET_NAME).remove([filePath]);
+      throw new Error("Could not generate the public image URL.");
+    }
 
     return {
       publicUrl: data.publicUrl,
@@ -300,10 +344,7 @@ export default function BusinessFeedPage() {
       .remove([path]);
 
     if (storageError) {
-      console.error(
-        "Image cleanup failed:",
-        storageError.message
-      );
+      console.error("Image cleanup failed:", storageError.message);
     }
   }
 
@@ -319,13 +360,11 @@ export default function BusinessFeedPage() {
       return;
     }
 
-    if (!file.type.startsWith("image/")) {
-      setError("Please select an image file.");
-      return;
-    }
+    const validationError = validateImage(file);
 
-    if (file.size > MAX_IMAGE_SIZE) {
-      setError("Image size must not exceed 5 MB.");
+    if (validationError) {
+      setImageFile(null);
+      setError(validationError);
       return;
     }
 
@@ -337,9 +376,7 @@ export default function BusinessFeedPage() {
   // CREATE AND EDIT POST
   // ==========================================
 
-  async function handleSubmit(
-    event: FormEvent<HTMLFormElement>
-  ) {
+  async function handleSubmit(event: FormEvent<HTMLFormElement>) {
     event.preventDefault();
 
     if (!userId || !company) {
@@ -365,17 +402,12 @@ export default function BusinessFeedPage() {
         : null;
 
       if (editingPostId && !oldPost) {
-        throw new Error(
-          "The post could not be found. Please refresh."
-        );
+        throw new Error("The post could not be found. Please refresh.");
       }
 
       if (
         oldPost &&
-        (
-          oldPost.author_id !== userId ||
-          oldPost.company_id !== company.id
-        )
+        (oldPost.author_id !== userId || oldPost.company_id !== company.id)
       ) {
         throw new Error(
           "You cannot edit this post from the current company."
@@ -410,24 +442,17 @@ export default function BusinessFeedPage() {
 
         if (updateError) {
           if (uploadedPath) {
-            await supabase.storage
-              .from(BUCKET_NAME)
-              .remove([uploadedPath]);
+            await supabase.storage.from(BUCKET_NAME).remove([uploadedPath]);
           }
 
           throw new Error(updateError.message);
         }
 
-        if (
-          oldPost?.image_url &&
-          oldPost.image_url !== finalImageUrl
-        ) {
+        if (oldPost?.image_url && oldPost.image_url !== finalImageUrl) {
           await removeStoredImage(oldPost.image_url);
         }
 
-        setSuccess(
-          "Your post has been updated successfully!"
-        );
+        setSuccess("Your post has been updated successfully!");
       } else {
         const { error: insertError } = await supabase
           .from("business_posts")
@@ -443,27 +468,22 @@ export default function BusinessFeedPage() {
 
         if (insertError) {
           if (uploadedPath) {
-            await supabase.storage
-              .from(BUCKET_NAME)
-              .remove([uploadedPath]);
+            await supabase.storage.from(BUCKET_NAME).remove([uploadedPath]);
           }
 
           throw new Error(insertError.message);
         }
 
-        setSuccess(
-          "Your post has been published successfully!"
-        );
+        setSuccess("Your post has been published successfully!");
       }
 
       resetComposer();
       await loadFeed();
     } catch (err) {
       const message =
-        err instanceof Error
-          ? err.message
-          : "Something went wrong.";
+        err instanceof Error ? err.message : "Something went wrong.";
 
+      console.error("VOINNECT post submission error:", err);
       setError(message);
     } finally {
       setSubmitting(false);
@@ -476,9 +496,7 @@ export default function BusinessFeedPage() {
 
   function startEditing(post: Post) {
     if (!company || post.company_id !== company.id) {
-      setError(
-        "Please switch to the correct company profile first."
-      );
+      setError("Please switch to the correct company profile first.");
       return;
     }
 
@@ -510,9 +528,7 @@ export default function BusinessFeedPage() {
       post.author_id !== userId ||
       post.company_id !== company.id
     ) {
-      setError(
-        "You cannot delete this post from the current company."
-      );
+      setError("You cannot delete this post from the current company.");
       return;
     }
 
@@ -553,9 +569,7 @@ export default function BusinessFeedPage() {
   const filteredPosts =
     filter === "all"
       ? posts
-      : posts.filter(
-          (post) => post.post_type === filter
-        );
+      : posts.filter((post) => post.post_type === filter);
 
   function formatDate(date: string) {
     return new Date(date).toLocaleDateString("en-US", {
@@ -585,9 +599,7 @@ export default function BusinessFeedPage() {
       <section className="feed-container">
         <div className="hero">
           <div>
-            <div className="eyebrow">
-              VOIN NETWORK ECOSYSTEM
-            </div>
+            <div className="eyebrow">VOIN NETWORK ECOSYSTEM</div>
 
             <h1>
               Business <span>Feed.</span>
@@ -610,10 +622,9 @@ export default function BusinessFeedPage() {
               {categories.map((item) => (
                 <button
                   key={item.value}
+                  type="button"
                   className={
-                    filter === item.value
-                      ? "category active"
-                      : "category"
+                    filter === item.value ? "category active" : "category"
                   }
                   onClick={() => setFilter(item.value)}
                 >
@@ -629,35 +640,27 @@ export default function BusinessFeedPage() {
             </div>
 
             <div className="panel-card company-card">
-              <div className="panel-heading">
-                YOUR COMPANY
-              </div>
+              <div className="panel-heading">YOUR COMPANY</div>
 
               {company ? (
                 <>
                   <div className="company-identity">
                     {company.logo_url ? (
-                      <img
-                        src={company.logo_url}
-                        alt="Company logo"
-                      />
+                      <img src={company.logo_url} alt="Company logo" />
                     ) : (
                       <div className="company-avatar">
-                        {company.company_name
-                          .charAt(0)
-                          .toUpperCase()}
+                        {company.company_name.charAt(0).toUpperCase()}
                       </div>
                     )}
 
                     <div>
-                      <strong>
-                        {company.company_name}
-                      </strong>
+                      <strong>{company.company_name}</strong>
                       <small>Company Profile</small>
                     </div>
                   </div>
 
                   <button
+                    type="button"
                     className="create-button"
                     onClick={() => {
                       if (showComposer) {
@@ -678,24 +681,17 @@ export default function BusinessFeedPage() {
                     + Create Post
                   </button>
 
-                  <Link
-                    href="/company"
-                    className="manage-link"
-                  >
+                  <Link href="/company" className="manage-link">
                     Manage Company →
                   </Link>
                 </>
               ) : (
                 <>
                   <p className="muted">
-                    Switch to your company profile to publish
-                    business updates.
+                    Switch to your company profile to publish business updates.
                   </p>
 
-                  <Link
-                    href="/company"
-                    className="create-button"
-                  >
+                  <Link href="/company" className="create-button">
                     Go to Company Dashboard
                   </Link>
                 </>
@@ -704,33 +700,18 @@ export default function BusinessFeedPage() {
           </aside>
 
           <section className="timeline">
-            {error && (
-              <div className="alert error">
-                {error}
-              </div>
-            )}
-
-            {success && (
-              <div className="alert success">
-                {success}
-              </div>
-            )}
+            {error && <div className="alert error">{error}</div>}
+            {success && <div className="alert success">{success}</div>}
 
             {showComposer && company && (
               <div className="composer">
                 <div className="composer-heading">
                   <div>
                     <span className="eyebrow">
-                      {editingPostId
-                        ? "UPDATE YOUR POST"
-                        : "PUBLISH UPDATE"}
+                      {editingPostId ? "UPDATE YOUR POST" : "PUBLISH UPDATE"}
                     </span>
 
-                    <h2>
-                      {editingPostId
-                        ? "Edit Post"
-                        : "Create a Post"}
-                    </h2>
+                    <h2>{editingPostId ? "Edit Post" : "Create a Post"}</h2>
                   </div>
 
                   <button
@@ -747,9 +728,7 @@ export default function BusinessFeedPage() {
 
                   <input
                     value={title}
-                    onChange={(e) =>
-                      setTitle(e.target.value)
-                    }
+                    onChange={(e) => setTitle(e.target.value)}
                     placeholder="Enter your post title"
                     maxLength={150}
                     required
@@ -759,15 +738,10 @@ export default function BusinessFeedPage() {
 
                   <select
                     value={postType}
-                    onChange={(e) =>
-                      setPostType(e.target.value)
-                    }
+                    onChange={(e) => setPostType(e.target.value)}
                   >
                     {categories.slice(1).map((item) => (
-                      <option
-                        key={item.value}
-                        value={item.value}
-                      >
+                      <option key={item.value} value={item.value}>
                         {item.label}
                       </option>
                     ))}
@@ -777,9 +751,7 @@ export default function BusinessFeedPage() {
 
                   <textarea
                     value={content}
-                    onChange={(e) =>
-                      setContent(e.target.value)
-                    }
+                    onChange={(e) => setContent(e.target.value)}
                     placeholder="Share something about your company..."
                     rows={5}
                     required
@@ -790,29 +762,29 @@ export default function BusinessFeedPage() {
                   <div className="upload-area">
                     <input
                       type="file"
-                      accept="image/*"
-                      onChange={(e) =>
-                        handleImageChange(
-                          e.target.files?.[0] || null
-                        )
-                      }
+                      accept=".jpg,.jpeg,.png,.webp,image/jpeg,image/png,image/webp"
+                      onChange={(e) => {
+                        handleImageChange(e.target.files?.[0] || null);
+                        e.currentTarget.value = "";
+                      }}
                     />
 
                     <small>
-                      Image files only · Maximum size 5 MB
+                      JPG, PNG, or WebP · Maximum size 5 MB
                     </small>
                   </div>
 
                   {(previewUrl ||
-                    (!imageFile &&
-                      imageUrl &&
-                      !removeCurrentImage)) && (
+                    (!imageFile && imageUrl && !removeCurrentImage)) && (
                     <div className="image-preview">
                       <span>IMAGE PREVIEW</span>
 
                       <img
                         src={previewUrl || imageUrl}
                         alt="Selected image preview"
+                        onError={(e) => {
+                          e.currentTarget.style.display = "none";
+                        }}
                       />
 
                       <button
@@ -829,9 +801,7 @@ export default function BusinessFeedPage() {
                     </div>
                   )}
 
-                  <label>
-                    Or use an Image URL (optional)
-                  </label>
+                  <label>Or use an Image URL (optional)</label>
 
                   <input
                     type="url"
@@ -870,10 +840,7 @@ export default function BusinessFeedPage() {
 
             <div className="timeline-heading">
               <div>
-                <span className="eyebrow">
-                  COMMUNITY UPDATES
-                </span>
-
+                <span className="eyebrow">COMMUNITY UPDATES</span>
                 <h2>Latest Updates</h2>
               </div>
 
@@ -894,16 +861,15 @@ export default function BusinessFeedPage() {
                 <h3>No posts yet</h3>
 
                 <p>
-                  Business updates will appear here when
-                  companies publish their posts.
+                  Business updates will appear here when companies publish
+                  their posts.
                 </p>
 
                 {company && (
                   <button
+                    type="button"
                     className="create-button"
-                    onClick={() =>
-                      setShowComposer(true)
-                    }
+                    onClick={() => setShowComposer(true)}
                   >
                     Create the First Post
                   </button>
@@ -918,10 +884,7 @@ export default function BusinessFeedPage() {
                   company?.id === post.company_id;
 
                 return (
-                  <article
-                    className="post-card"
-                    key={post.id}
-                  >
+                  <article className="post-card" key={post.id}>
                     <div className="post-header">
                       <div className="company-identity">
                         {post.companies?.logo_url ? (
@@ -939,20 +902,16 @@ export default function BusinessFeedPage() {
 
                         <div>
                           <strong>
-                            {post.companies?.company_name ||
-                              "Company"}
+                            {post.companies?.company_name || "Company"}
                           </strong>
 
-                          <small>
-                            {formatDate(post.created_at)}
-                          </small>
+                          <small>{formatDate(post.created_at)}</small>
                         </div>
                       </div>
 
                       <span className="post-category">
                         {categoryIcons[post.post_type]}{" "}
-                        {categoryLabels[post.post_type] ||
-                          post.post_type}
+                        {categoryLabels[post.post_type] || post.post_type}
                       </span>
                     </div>
 
@@ -961,35 +920,57 @@ export default function BusinessFeedPage() {
                       <p>{post.content}</p>
 
                       {post.image_url && (
-                        <img
-                          className="post-image"
-                          src={post.image_url}
-                          alt={post.title}
-                        />
+                        <div className="post-image-container">
+                          <img
+                            className="post-image"
+                            src={post.image_url}
+                            alt={post.title}
+                            loading="lazy"
+                            decoding="async"
+                            onError={(e) => {
+                              console.error(
+                                "Business Feed image failed:",
+                                post.image_url
+                              );
+
+                              e.currentTarget.style.display = "none";
+
+                              const fallback =
+                                e.currentTarget.nextElementSibling as
+                                  | HTMLElement
+                                  | null;
+
+                              if (fallback) {
+                                fallback.style.display = "block";
+                              }
+                            }}
+                          />
+
+                          <div className="image-error">
+                            Image could not be displayed. Please check the
+                            image format or upload a new JPG, PNG, or WebP image.
+                          </div>
+                        </div>
                       )}
                     </div>
 
                     <div className="post-footer">
-                      <span>
-                        ◈ VOIN Business Feed
-                      </span>
+                      <span>◈ VOIN Business Feed</span>
 
                       {isOwner && (
                         <div className="post-actions">
                           <button
+                            type="button"
                             className="edit-button"
-                            onClick={() =>
-                              startEditing(post)
-                            }
+                            onClick={() => startEditing(post)}
                           >
                             Edit Post
                           </button>
 
                           <button
+                            type="button"
                             className="delete-button"
-                            onClick={() =>
-                              deletePost(post)
-                            }
+                            onClick={() => deletePost(post)}
                           >
                             Delete Post
                           </button>
@@ -1017,12 +998,13 @@ export default function BusinessFeedPage() {
         }
 
         .topbar {
-          height: 70px;
+          min-height: 70px;
           padding: 0 7%;
           background: #07111f;
           display: flex;
           align-items: center;
           justify-content: space-between;
+          gap: 12px;
         }
 
         .brand {
@@ -1031,6 +1013,7 @@ export default function BusinessFeedPage() {
           font-weight: 900;
           text-decoration: none;
           letter-spacing: 1px;
+          white-space: nowrap;
         }
 
         .brand span,
@@ -1228,6 +1211,7 @@ export default function BusinessFeedPage() {
           display: flex;
           justify-content: space-between;
           align-items: center;
+          gap: 10px;
           padding: 5px 2px;
         }
 
@@ -1244,6 +1228,7 @@ export default function BusinessFeedPage() {
           border-radius: 20px;
           font-size: 11px;
           font-weight: 700;
+          white-space: nowrap;
         }
 
         .composer-heading {
@@ -1251,6 +1236,7 @@ export default function BusinessFeedPage() {
           justify-content: space-between;
           align-items: center;
           margin-bottom: 20px;
+          gap: 10px;
         }
 
         .close-button {
@@ -1324,6 +1310,7 @@ export default function BusinessFeedPage() {
           border: 1px solid #e4eaf2;
           border-radius: 10px;
           background: #fbfcfe;
+          min-width: 0;
         }
 
         .image-preview span {
@@ -1336,9 +1323,12 @@ export default function BusinessFeedPage() {
         }
 
         .image-preview img {
+          display: block;
           width: 100%;
-          max-height: 240px;
+          height: auto;
+          max-height: 300px;
           object-fit: contain;
+          object-position: center;
           border-radius: 8px;
           background: #edf1f6;
         }
@@ -1391,6 +1381,7 @@ export default function BusinessFeedPage() {
 
         .post-body {
           padding: 20px 0;
+          min-width: 0;
         }
 
         .post-body h3 {
@@ -1408,13 +1399,31 @@ export default function BusinessFeedPage() {
           overflow-wrap: anywhere;
         }
 
+        .post-image-container {
+          width: 100%;
+          margin-top: 18px;
+          overflow: hidden;
+          border-radius: 11px;
+          background: #edf1f6;
+        }
+
         .post-image {
           display: block;
           width: 100%;
-          max-height: 380px;
-          object-fit: cover;
+          height: auto;
+          max-height: 450px;
+          object-fit: contain;
+          object-position: center;
           border-radius: 11px;
-          margin-top: 18px;
+        }
+
+        .image-error {
+          display: none;
+          padding: 30px 15px;
+          text-align: center;
+          color: #bd3d3d;
+          font-size: 12px;
+          line-height: 1.6;
         }
 
         .post-footer {
@@ -1547,7 +1556,7 @@ export default function BusinessFeedPage() {
         @media (max-width: 540px) {
           .topbar {
             padding: 0 18px;
-            height: 62px;
+            min-height: 62px;
           }
 
           .brand {
@@ -1595,6 +1604,14 @@ export default function BusinessFeedPage() {
 
           .post-body h3 {
             font-size: 17px;
+          }
+
+          .post-image {
+            max-height: 350px;
+          }
+
+          .post-actions {
+            gap: 10px;
           }
         }
       `}</style>
