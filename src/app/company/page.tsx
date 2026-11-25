@@ -54,9 +54,7 @@ export default function CompanyDashboard() {
             .eq("user_id", user.id)
             .maybeSingle();
 
-        if (settingsError) {
-          throw settingsError;
-        }
+        if (settingsError) throw settingsError;
 
         if (
           !settings ||
@@ -69,16 +67,12 @@ export default function CompanyDashboard() {
 
         const { data, error: companyError } = await supabase
           .from("companies")
-          .select(
-            "id, owner_id, company_name, description, logo_url"
-          )
+          .select("id, owner_id, company_name, description, logo_url")
           .eq("id", settings.active_company_id)
           .eq("owner_id", user.id)
           .maybeSingle();
 
-        if (companyError) {
-          throw companyError;
-        }
+        if (companyError) throw companyError;
 
         if (!mounted) return;
 
@@ -147,9 +141,7 @@ export default function CompanyDashboard() {
         })
         .eq("id", company.id)
         .eq("owner_id", user.id)
-        .select(
-          "id, owner_id, company_name, description, logo_url"
-        )
+        .select("id, owner_id, company_name, description, logo_url")
         .single();
 
       if (updateError) throw updateError;
@@ -238,11 +230,13 @@ export default function CompanyDashboard() {
 
   const profileCompletion = company
     ? Math.round(
-        [
+        ([
           Boolean(company.company_name),
           Boolean(company.description),
           Boolean(company.logo_url),
-        ].filter(Boolean).length / 3 * 100
+        ].filter(Boolean).length /
+          3) *
+          100
       )
     : 0;
 
@@ -264,21 +258,17 @@ export default function CompanyDashboard() {
             color: white;
             font-family: Arial, sans-serif;
           }
-
           .loading-card {
             text-align: center;
           }
-
           .loading-card h2 {
             letter-spacing: 2px;
             margin: 15px 0 8px;
           }
-
           .loading-card p {
             color: #9aa9bd;
             font-size: 13px;
           }
-
           .loader {
             width: 38px;
             height: 38px;
@@ -288,7 +278,6 @@ export default function CompanyDashboard() {
             animation: spin .8s linear infinite;
             margin: auto;
           }
-
           @keyframes spin {
             to { transform: rotate(360deg); }
           }
@@ -323,7 +312,6 @@ export default function CompanyDashboard() {
             color: white;
             font-family: Arial, sans-serif;
           }
-
           .empty-card {
             width: 100%;
             max-width: 440px;
@@ -333,23 +321,19 @@ export default function CompanyDashboard() {
             background: #101e32;
             text-align: center;
           }
-
           .empty-icon {
             font-size: 42px;
             margin-bottom: 16px;
           }
-
           .empty-card h1 {
             margin: 0 0 12px;
             font-size: 25px;
           }
-
           .empty-card p {
             color: #9aa9bd;
             line-height: 1.7;
             margin-bottom: 24px;
           }
-
           .primary-button {
             display: inline-block;
             padding: 12px 20px;
@@ -376,36 +360,28 @@ export default function CompanyDashboard() {
 
         <nav>
           <button
-            className={`nav-item ${
-              activeSection === "overview" ? "active" : ""
-            }`}
+            className={`nav-item ${activeSection === "overview" ? "active" : ""}`}
             onClick={() => navigateTo("overview")}
           >
             <span>▦</span> Overview
           </button>
 
           <button
-            className={`nav-item ${
-              activeSection === "profile" ? "active" : ""
-            }`}
+            className={`nav-item ${activeSection === "profile" ? "active" : ""}`}
             onClick={() => navigateTo("profile")}
           >
             <span>◉</span> Company Profile
           </button>
 
           <button
-            className={`nav-item ${
-              activeSection === "business" ? "active" : ""
-            }`}
+            className={`nav-item ${activeSection === "business" ? "active" : ""}`}
             onClick={() => navigateTo("business")}
           >
             <span>▤</span> Business Modules
           </button>
 
           <button
-            className={`nav-item ${
-              activeSection === "settings" ? "active" : ""
-            }`}
+            className={`nav-item ${activeSection === "settings" ? "active" : ""}`}
             onClick={() => navigateTo("settings")}
           >
             <span>⚙</span> Settings
@@ -423,9 +399,7 @@ export default function CompanyDashboard() {
             onClick={switchToPersonal}
             disabled={switching}
           >
-            {switching
-              ? "Switching..."
-              : "← Switch to Personal"}
+            {switching ? "Switching..." : "← Switch to Personal"}
           </button>
         </div>
       </aside>
@@ -433,9 +407,7 @@ export default function CompanyDashboard() {
       <section className="main-content">
         <header className="topbar">
           <div>
-            <div className="breadcrumb">
-              Workspace / Company
-            </div>
+            <div className="breadcrumb">Workspace / Company</div>
             <h1>Company Dashboard</h1>
           </div>
 
@@ -455,20 +427,12 @@ export default function CompanyDashboard() {
         </header>
 
         <div className="content">
-          {error && (
-            <div className="error-message">
-              {error}
-            </div>
-          )}
+          {error && <div className="error-message">{error}</div>}
 
           <section className="welcome-banner" id="overview">
             <div>
-              <div className="eyebrow">
-                WELCOME TO YOUR WORKSPACE
-              </div>
-
+              <div className="eyebrow">WELCOME TO YOUR WORKSPACE</div>
               <h2>{company.company_name}</h2>
-
               <p>
                 Manage your company presence, build your brand
                 and grow your business with VOINNECT.
@@ -491,9 +455,7 @@ export default function CompanyDashboard() {
             <div className="stat-card">
               <div className="stat-icon teal">◉</div>
               <div className="stat-label">PROFILE STATUS</div>
-              <div className="stat-value">
-                {profileCompletion}%
-              </div>
+              <div className="stat-value">{profileCompletion}%</div>
               <div className="progress-track">
                 <div
                   className="progress-fill"
@@ -514,9 +476,7 @@ export default function CompanyDashboard() {
 
           <section className="section-heading" id="profile">
             <div>
-              <div className="section-eyebrow">
-                COMPANY IDENTITY
-              </div>
+              <div className="section-eyebrow">COMPANY IDENTITY</div>
               <h2>Company Profile</h2>
               <p>
                 Manage how your company appears across VOINNECT.
@@ -547,12 +507,8 @@ export default function CompanyDashboard() {
               </div>
 
               <div>
-                <div className="profile-label">
-                  COMPANY NAME
-                </div>
-
+                <div className="profile-label">COMPANY NAME</div>
                 <h3>{company.company_name}</h3>
-
                 <span className="profile-status">
                   ● Active Company
                 </span>
@@ -563,10 +519,7 @@ export default function CompanyDashboard() {
 
             {editing ? (
               <form className="edit-form" onSubmit={saveCompany}>
-                <label htmlFor="companyName">
-                  Company Name
-                </label>
-
+                <label htmlFor="companyName">Company Name</label>
                 <input
                   id="companyName"
                   value={companyName}
@@ -576,10 +529,7 @@ export default function CompanyDashboard() {
                   required
                 />
 
-                <label htmlFor="description">
-                  Company Description
-                </label>
-
+                <label htmlFor="description">Company Description</label>
                 <textarea
                   id="description"
                   value={description}
@@ -589,10 +539,7 @@ export default function CompanyDashboard() {
                   maxLength={2000}
                 />
 
-                <label htmlFor="logoUrl">
-                  Company Logo URL
-                </label>
-
+                <label htmlFor="logoUrl">Company Logo URL</label>
                 <input
                   id="logoUrl"
                   type="url"
@@ -652,14 +599,13 @@ export default function CompanyDashboard() {
             )}
           </section>
 
-          <section className="section-heading modules-heading" id="business">
+          <section
+            className="section-heading modules-heading"
+            id="business"
+          >
             <div>
-              <div className="section-eyebrow">
-                VOINNECT ECOSYSTEM
-              </div>
-
+              <div className="section-eyebrow">VOINNECT ECOSYSTEM</div>
               <h2>Business Modules</h2>
-
               <p>
                 Your company's connected business tools.
               </p>
@@ -678,16 +624,19 @@ export default function CompanyDashboard() {
               </span>
             </div>
 
-            <div className="module-card">
+            <Link
+              href="/business-feed"
+              className="module-card module-link"
+            >
               <div className="module-icon teal">▤</div>
               <h3>VOIN Business Feed</h3>
               <p>
                 Publish company announcements, news and updates.
               </p>
-              <span className="module-status planned">
-                Coming Soon
+              <span className="module-status active-status">
+                ● Active · Open Business Feed →
               </span>
-            </div>
+            </Link>
 
             <div className="module-card">
               <div className="module-icon purple">◇</div>
@@ -1266,6 +1215,31 @@ export default function CompanyDashboard() {
           color: #8a96a8;
         }
 
+        /* Active Business Feed card */
+        .module-link {
+          display: block;
+          color: inherit;
+          text-decoration: none;
+          cursor: pointer;
+          transition: transform .2s ease, box-shadow .2s ease, border-color .2s ease;
+          -webkit-tap-highlight-color: transparent;
+        }
+
+        .module-link:hover {
+          transform: translateY(-3px);
+          border-color: #4f8cff;
+          box-shadow: 0 8px 24px rgba(57, 121, 232, .12);
+        }
+
+        .module-link:active {
+          transform: scale(.98);
+        }
+
+        .module-link:focus-visible {
+          outline: 3px solid #4f8cff;
+          outline-offset: 3px;
+        }
+
         .settings-card {
           margin-top: 30px;
           padding: 23px;
@@ -1409,6 +1383,11 @@ export default function CompanyDashboard() {
 
           .module-card p {
             min-height: auto;
+          }
+
+          .module-link {
+            min-height: 44px;
+            -webkit-tap-highlight-color: rgba(79, 140, 255, .12);
           }
 
           .settings-card {
