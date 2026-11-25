@@ -3,7 +3,6 @@
 
 import { useEffect, useState, type FormEvent } from "react";
 import Link from "next/link";
-import { useRouter } from "next/navigation";
 import { createClient } from "@/lib/supabase";
 
 type Post = {
@@ -28,6 +27,9 @@ type Company = {
   logo_url: string | null;
 };
 
+const BUCKET_NAME = "business-posts";
+const MAX_IMAGE_SIZE = 5 * 1024 * 1024;
+
 const categories = [
   { value: "all", label: "All Posts" },
   { value: "announcement", label: "Announcements" },
@@ -51,7 +53,6 @@ const categoryIcons: Record<string, string> = {
 };
 
 export default function BusinessFeedPage() {
-  const router = useRouter();
   const supabase = createClient();
 
   const [posts, setPosts] = useState<Post[]>([]);
@@ -62,6 +63,8 @@ export default function BusinessFeedPage() {
   const [loading, setLoading] = useState(true);
   const [submitting, setSubmitting] = useState(false);
   const [showComposer, setShowComposer] = useState(false);
+  const [editingPostId, setEditingPostId] = useState<string | null>(null);
+
   const [error, setError] = useState("");
   const [success, setSuccess] = useState("");
 
@@ -70,9 +73,25 @@ export default function BusinessFeedPage() {
   const [postType, setPostType] = useState("announcement");
   const [imageUrl, setImageUrl] = useState("");
 
+  const [imageFile, setImageFile] = useState<File | null>(null);
+  const [previewUrl, setPreviewUrl] = useState("");
+  const [removeCurrentImage, setRemoveCurrentImage] = useState(false);
+
   useEffect(() => {
     loadFeed();
   }, []);
+
+  useEffect(() => {
+    if (!imageFile) {
+      setPreviewUrl("");
+      return;
+    }
+
+    const objectUrl = URL.createObjectURL(imageFile);
+    setPreviewUrl(objectUrl);
+
+    return () => URL.revokeObjectURL(objectUrl);
+  }, [imageFile]);
 
   async function loadFeed() {
     setLoading(true);
@@ -103,7 +122,12 @@ export default function BusinessFeedPage() {
           .maybeSingle();
 
         setCompany(companyData as Company | null);
+      } else {
+        setCompany(null);
       }
+    } else {
+      setUserId("");
+      setCompany(null);
     }
 
     const { data, error: feedError } = await supabase
@@ -136,7 +160,117 @@ export default function BusinessFeedPage() {
     setLoading(false);
   }
 
-  async function createPost(event: FormEvent<HTMLFormElement>) {
+  function resetComposer() {
+    setTitle("");
+    setContent("");
+    setPostType("announcement");
+    setImageUrl("");
+    setImageFile(null);
+    setRemoveCurrentImage(false);
+    setEditingPostId(null);
+    setShowComposer(false);
+  }
+
+  function getStoragePath(publicUrl: string | null) {
+    if (!publicUrl) return null;
+
+    const marker = `/storage/v1/object/public/${BUCKET_NAME}/`;
+    const markerIndex = publicUrl.indexOf(marker);
+
+    if (markerIndex === -1) return null;
+
+    const path = publicUrl
+      .slice(markerIndex + marker.length)
+      .split("?")[0];
+
+    if (!path || path.startsWith("/")) return null;
+
+    try {
+      return decodeURIComponent(path);
+    } catch {
+      return path;
+    }
+  }
+
+  async function uploadImage(file: File) {
+    if (!company) {
+      throw new Error("Company profile is not available.");
+    }
+
+    if (!file.type.startsWith("image/")) {
+      throw new Error("Please select a valid image file.");
+    }
+
+    if (file.size > MAX_IMAGE_SIZE) {
+      throw new Error("Image size must not exceed 5 MB.");
+    }
+
+    const safeName = file.name
+      .toLowerCase()
+      .replace(/[^a-z0-9.-]/g, "-")
+      .replace(/-+/g, "-");
+
+    const filePath = `${company.id}/${Date.now()}-${safeName}`;
+
+    const { error: uploadError } = await supabase.storage
+      .from(BUCKET_NAME)
+      .upload(filePath, file, {
+        cacheControl: "3600",
+        upsert: false,
+        contentType: file.type,
+      });
+
+    if (uploadError) {
+      throw new Error(uploadError.message);
+    }
+
+    const { data } = supabase.storage
+      .from(BUCKET_NAME)
+      .getPublicUrl(filePath);
+
+    return {
+      publicUrl: data.publicUrl,
+      filePath,
+    };
+  }
+
+  async function removeStoredImage(publicUrl: string | null) {
+    const path = getStoragePath(publicUrl);
+
+    if (!path) return;
+
+    const { error: storageError } = await supabase.storage
+      .from(BUCKET_NAME)
+      .remove([path]);
+
+    if (storageError) {
+      console.error("Image cleanup failed:", storageError.message);
+    }
+  }
+
+  function handleImageChange(file: File | null) {
+    setError("");
+
+    if (!file) {
+      setImageFile(null);
+      return;
+    }
+
+    if (!file.type.startsWith("image/")) {
+      setError("Please select an image file.");
+      return;
+    }
+
+    if (file.size > MAX_IMAGE_SIZE) {
+      setError("Image size must not exceed 5 MB.");
+      return;
+    }
+
+    setImageFile(file);
+    setRemoveCurrentImage(false);
+  }
+
+  async function handleSubmit(event: FormEvent<HTMLFormElement>) {
     event.preventDefault();
 
     if (!userId || !company) {
@@ -153,37 +287,128 @@ export default function BusinessFeedPage() {
     setError("");
     setSuccess("");
 
-    const { error: insertError } = await supabase
-      .from("business_posts")
-      .insert({
-        company_id: company.id,
-        author_id: userId,
-        title: title.trim(),
-        content: content.trim(),
-        post_type: postType,
-        image_url: imageUrl.trim() || null,
-        status: "published",
-      });
+    let uploadedUrl: string | null = null;
+    let uploadedPath: string | null = null;
 
-    if (insertError) {
-      setError(insertError.message);
+    try {
+      const oldPost = editingPostId
+        ? posts.find((post) => post.id === editingPostId)
+        : null;
+
+      if (editingPostId && !oldPost) {
+        throw new Error("The post could not be found. Please refresh.");
+      }
+
+      if (
+        oldPost &&
+        (oldPost.author_id !== userId ||
+          oldPost.company_id !== company.id)
+      ) {
+        throw new Error("You cannot edit this post from the current company.");
+      }
+
+      if (imageFile) {
+        const uploaded = await uploadImage(imageFile);
+        uploadedUrl = uploaded.publicUrl;
+        uploadedPath = uploaded.filePath;
+      }
+
+      const finalImageUrl = uploadedUrl
+        ? uploadedUrl
+        : removeCurrentImage
+          ? null
+          : imageUrl.trim() || null;
+
+      if (editingPostId) {
+        const { error: updateError } = await supabase
+          .from("business_posts")
+          .update({
+            title: title.trim(),
+            content: content.trim(),
+            post_type: postType,
+            image_url: finalImageUrl,
+            updated_at: new Date().toISOString(),
+          })
+          .eq("id", editingPostId)
+          .eq("author_id", userId);
+
+        if (updateError) {
+          if (uploadedPath) {
+            await supabase.storage
+              .from(BUCKET_NAME)
+              .remove([uploadedPath]);
+          }
+
+          throw new Error(updateError.message);
+        }
+
+        if (
+          oldPost?.image_url &&
+          oldPost.image_url !== finalImageUrl
+        ) {
+          await removeStoredImage(oldPost.image_url);
+        }
+
+        setSuccess("Your post has been updated successfully!");
+      } else {
+        const { error: insertError } = await supabase
+          .from("business_posts")
+          .insert({
+            company_id: company.id,
+            author_id: userId,
+            title: title.trim(),
+            content: content.trim(),
+            post_type: postType,
+            image_url: finalImageUrl,
+            status: "published",
+          });
+
+        if (insertError) {
+          if (uploadedPath) {
+            await supabase.storage
+              .from(BUCKET_NAME)
+              .remove([uploadedPath]);
+          }
+
+          throw new Error(insertError.message);
+        }
+
+        setSuccess("Your post has been published successfully!");
+      }
+
+      resetComposer();
+      await loadFeed();
+    } catch (err) {
+      const message =
+        err instanceof Error ? err.message : "Something went wrong.";
+
+      setError(message);
+    } finally {
       setSubmitting(false);
+    }
+  }
+
+  function startEditing(post: Post) {
+    if (!company || post.company_id !== company.id) {
+      setError("Please switch to the correct company profile first.");
       return;
     }
 
-    setTitle("");
-    setContent("");
-    setImageUrl("");
-    setPostType("announcement");
-    setShowComposer(false);
+    setEditingPostId(post.id);
+    setTitle(post.title);
+    setContent(post.content);
+    setPostType(post.post_type);
+    setImageUrl(post.image_url || "");
+    setImageFile(null);
+    setRemoveCurrentImage(false);
+    setShowComposer(true);
+    setError("");
+    setSuccess("");
 
-    setSuccess("Your post has been published successfully!");
-    await loadFeed();
-
-    setSubmitting(false);
+    window.scrollTo({ top: 0, behavior: "smooth" });
   }
 
-  async function deletePost(postId: string) {
+  async function deletePost(post: Post) {
     const confirmed = window.confirm(
       "Are you sure you want to delete this post?"
     );
@@ -196,14 +421,20 @@ export default function BusinessFeedPage() {
     const { error: deleteError } = await supabase
       .from("business_posts")
       .delete()
-      .eq("id", postId);
+      .eq("id", post.id)
+      .eq("author_id", userId);
 
     if (deleteError) {
       setError(deleteError.message);
       return;
     }
 
-    setPosts((current) => current.filter((post) => post.id !== postId));
+    await removeStoredImage(post.image_url);
+
+    setPosts((current) =>
+      current.filter((item) => item.id !== post.id)
+    );
+
     setSuccess("Post deleted successfully.");
   }
 
@@ -252,14 +483,7 @@ export default function BusinessFeedPage() {
             <div className="panel-card">
               <div className="panel-heading">EXPLORE</div>
 
-              <button
-                className={filter === "all" ? "category active" : "category"}
-                onClick={() => setFilter("all")}
-              >
-                <span>🌐</span> All Posts
-              </button>
-
-              {categories.slice(1).map((item) => (
+              {categories.map((item) => (
                 <button
                   key={item.value}
                   className={
@@ -267,7 +491,11 @@ export default function BusinessFeedPage() {
                   }
                   onClick={() => setFilter(item.value)}
                 >
-                  <span>{categoryIcons[item.value]}</span>
+                  <span>
+                    {item.value === "all"
+                      ? "🌐"
+                      : categoryIcons[item.value]}
+                  </span>
                   {item.label}
                 </button>
               ))}
@@ -296,8 +524,19 @@ export default function BusinessFeedPage() {
                   <button
                     className="create-button"
                     onClick={() => {
-                      setShowComposer(!showComposer);
-                      setError("");
+                      if (showComposer) {
+                        resetComposer();
+                      } else {
+                        setEditingPostId(null);
+                        setTitle("");
+                        setContent("");
+                        setPostType("announcement");
+                        setImageUrl("");
+                        setImageFile(null);
+                        setRemoveCurrentImage(false);
+                        setShowComposer(true);
+                        setError("");
+                      }
                     }}
                   >
                     + Create Post
@@ -328,18 +567,24 @@ export default function BusinessFeedPage() {
               <div className="composer">
                 <div className="composer-heading">
                   <div>
-                    <span className="eyebrow">PUBLISH UPDATE</span>
-                    <h2>Create a Post</h2>
+                    <span className="eyebrow">
+                      {editingPostId ? "UPDATE YOUR POST" : "PUBLISH UPDATE"}
+                    </span>
+                    <h2>
+                      {editingPostId ? "Edit Post" : "Create a Post"}
+                    </h2>
                   </div>
+
                   <button
+                    type="button"
                     className="close-button"
-                    onClick={() => setShowComposer(false)}
+                    onClick={resetComposer}
                   >
                     ✕
                   </button>
                 </div>
 
-                <form onSubmit={createPost}>
+                <form onSubmit={handleSubmit}>
                   <label>Post Title</label>
                   <input
                     value={title}
@@ -370,11 +615,48 @@ export default function BusinessFeedPage() {
                     required
                   />
 
-                  <label>Image URL (optional)</label>
+                  <label>Upload Image</label>
+                  <div className="upload-area">
+                    <input
+                      type="file"
+                      accept="image/*"
+                      onChange={(e) =>
+                        handleImageChange(e.target.files?.[0] || null)
+                      }
+                    />
+                    <small>Image files only · Maximum size 5 MB</small>
+                  </div>
+
+                  {(previewUrl ||
+                    (!imageFile && imageUrl && !removeCurrentImage)) && (
+                    <div className="image-preview">
+                      <span>IMAGE PREVIEW</span>
+                      <img
+                        src={previewUrl || imageUrl}
+                        alt="Selected image preview"
+                      />
+                      <button
+                        type="button"
+                        className="remove-image-button"
+                        onClick={() => {
+                          setImageFile(null);
+                          setImageUrl("");
+                          setRemoveCurrentImage(true);
+                        }}
+                      >
+                        Remove Image
+                      </button>
+                    </div>
+                  )}
+
+                  <label>Or use an Image URL (optional)</label>
                   <input
                     type="url"
                     value={imageUrl}
-                    onChange={(e) => setImageUrl(e.target.value)}
+                    onChange={(e) => {
+                      setImageUrl(e.target.value);
+                      setRemoveCurrentImage(false);
+                    }}
                     placeholder="https://example.com/image.jpg"
                   />
 
@@ -383,8 +665,22 @@ export default function BusinessFeedPage() {
                     className="publish-button"
                     disabled={submitting}
                   >
-                    {submitting ? "Publishing..." : "Publish Post →"}
+                    {submitting
+                      ? "Please wait..."
+                      : editingPostId
+                        ? "Save Changes →"
+                        : "Publish Post →"}
                   </button>
+
+                  {editingPostId && (
+                    <button
+                      type="button"
+                      className="cancel-button"
+                      onClick={resetComposer}
+                    >
+                      Cancel Editing
+                    </button>
+                  )}
                 </form>
               </div>
             )}
@@ -427,7 +723,8 @@ export default function BusinessFeedPage() {
               filteredPosts.map((post) => {
                 const isOwner =
                   Boolean(userId) &&
-                  post.author_id === userId;
+                  post.author_id === userId &&
+                  company?.id === post.company_id;
 
                 return (
                   <article className="post-card" key={post.id}>
@@ -477,12 +774,21 @@ export default function BusinessFeedPage() {
                       <span>◈ VOIN Business Feed</span>
 
                       {isOwner && (
-                        <button
-                          className="delete-button"
-                          onClick={() => deletePost(post.id)}
-                        >
-                          Delete Post
-                        </button>
+                        <div className="post-actions">
+                          <button
+                            className="edit-button"
+                            onClick={() => startEditing(post)}
+                          >
+                            Edit Post
+                          </button>
+
+                          <button
+                            className="delete-button"
+                            onClick={() => deletePost(post)}
+                          >
+                            Delete Post
+                          </button>
+                        </div>
                       )}
                     </div>
                   </article>
@@ -787,9 +1093,75 @@ export default function BusinessFeedPage() {
           resize: vertical;
         }
 
+        .upload-area {
+          padding: 14px;
+          background: #f7faff;
+          border: 1px dashed #b9cce6;
+          border-radius: 9px;
+        }
+
+        .upload-area input {
+          border: none;
+          background: transparent;
+          padding: 5px 0;
+        }
+
+        .upload-area small {
+          display: block;
+          color: #8b9bb0;
+          font-size: 10px;
+          margin-top: 7px;
+        }
+
+        .image-preview {
+          padding: 13px;
+          border: 1px solid #e4eaf2;
+          border-radius: 10px;
+          background: #fbfcfe;
+        }
+
+        .image-preview span {
+          display: block;
+          color: #8291a5;
+          font-size: 9px;
+          font-weight: 800;
+          letter-spacing: 1.5px;
+          margin-bottom: 10px;
+        }
+
+        .image-preview img {
+          width: 100%;
+          max-height: 240px;
+          object-fit: contain;
+          border-radius: 8px;
+          background: #edf1f6;
+        }
+
+        .remove-image-button {
+          display: block;
+          margin-top: 10px;
+          border: none;
+          background: transparent;
+          color: #d95353;
+          font-size: 11px;
+          font-weight: 700;
+          cursor: pointer;
+        }
+
         .publish-button:disabled {
           opacity: 0.6;
           cursor: not-allowed;
+        }
+
+        .cancel-button {
+          width: 100%;
+          padding: 11px;
+          border: 1px solid #dfe6ef;
+          border-radius: 9px;
+          background: white;
+          color: #64758a;
+          font-size: 12px;
+          cursor: pointer;
         }
 
         .post-header {
@@ -844,19 +1216,34 @@ export default function BusinessFeedPage() {
           justify-content: space-between;
           align-items: center;
           gap: 10px;
+          flex-wrap: wrap;
           border-top: 1px solid #edf0f5;
           padding-top: 15px;
           color: #96a4b5;
           font-size: 10px;
         }
 
+        .post-actions {
+          display: flex;
+          align-items: center;
+          gap: 15px;
+        }
+
+        .edit-button,
         .delete-button {
           background: transparent;
           border: none;
-          color: #d95353;
           font-size: 11px;
           font-weight: 700;
           cursor: pointer;
+        }
+
+        .edit-button {
+          color: #347cf0;
+        }
+
+        .delete-button {
+          color: #d95353;
         }
 
         .empty-state {
