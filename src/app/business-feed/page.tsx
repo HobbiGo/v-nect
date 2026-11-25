@@ -1,7 +1,6 @@
-
 "use client";
 
-import { useEffect, useState, type FormEvent } from "react";
+import { useEffect, useRef, useState, type FormEvent } from "react";
 import Link from "next/link";
 import { createClient } from "@/lib/supabase";
 
@@ -60,8 +59,14 @@ const categoryIcons: Record<string, string> = {
   presentation: "📊",
 };
 
+function normalizePostTypeForDb(type: string): string {
+  if (type === "company_news") return "news";
+  return type;
+}
+
 export default function BusinessFeedPage() {
   const supabase = createClient();
+  const feedbackRef = useRef<HTMLDivElement | null>(null);
 
   const [posts, setPosts] = useState<Post[]>([]);
   const [company, setCompany] = useState<Company | null>(null);
@@ -99,9 +104,14 @@ export default function BusinessFeedPage() {
     return () => URL.revokeObjectURL(objectUrl);
   }, [imageFile]);
 
-  // ==========================================
-  // LOAD BUSINESS FEED AND ACTIVE COMPANY
-  // ==========================================
+  useEffect(() => {
+    if (error || success) {
+      feedbackRef.current?.scrollIntoView({
+        behavior: "smooth",
+        block: "nearest",
+      });
+    }
+  }, [error, success]);
 
   async function loadFeed() {
     setLoading(true);
@@ -212,10 +222,6 @@ export default function BusinessFeedPage() {
     }
   }
 
-  // ==========================================
-  // RESET COMPOSER
-  // ==========================================
-
   function resetComposer() {
     setTitle("");
     setContent("");
@@ -223,10 +229,6 @@ export default function BusinessFeedPage() {
     setImageFile(null);
     setShowComposer(false);
   }
-
-  // ==========================================
-  // IMAGE VALIDATION
-  // ==========================================
 
   function getSupportedImageType(file: File): string | null {
     if (ALLOWED_IMAGE_TYPES[file.type]) {
@@ -266,10 +268,6 @@ export default function BusinessFeedPage() {
     return null;
   }
 
-  // ==========================================
-  // IMAGE SELECTION
-  // ==========================================
-
   function handleImageChange(file: File | null) {
     setError("");
 
@@ -288,10 +286,6 @@ export default function BusinessFeedPage() {
 
     setImageFile(file);
   }
-
-  // ==========================================
-  // CREATE POST THROUGH AI MODERATION
-  // ==========================================
 
   async function handleSubmit(event: FormEvent<HTMLFormElement>) {
     event.preventDefault();
@@ -330,7 +324,6 @@ export default function BusinessFeedPage() {
     setSuccess("");
 
     try {
-      // Verify current session.
       const {
         data: { session },
         error: sessionError,
@@ -342,20 +335,20 @@ export default function BusinessFeedPage() {
         );
       }
 
-      // Prepare multipart form data.
       const formData = new FormData();
 
       formData.append("company_id", company.id);
       formData.append("title", title.trim());
       formData.append("content", content.trim());
-      formData.append("post_type", postType);
+      formData.append(
+        "post_type",
+        normalizePostTypeForDb(postType)
+      );
 
       if (imageFile) {
         formData.append("image", imageFile);
       }
 
-      // Send directly to the Edge Function.
-      // No direct browser upload to the public bucket.
       const { data, error: functionError } =
         await supabase.functions.invoke(
           "moderate-business-post",
@@ -408,7 +401,6 @@ export default function BusinessFeedPage() {
 
       resetComposer();
       await loadFeed();
-
     } catch (err) {
       const message =
         err instanceof Error
@@ -421,15 +413,10 @@ export default function BusinessFeedPage() {
       );
 
       setError(message);
-
     } finally {
       setSubmitting(false);
     }
   }
-
-  // ==========================================
-  // DELETE POST
-  // ==========================================
 
   function getStoragePath(publicUrl: string | null) {
     if (!publicUrl) return null;
@@ -514,10 +501,6 @@ export default function BusinessFeedPage() {
     setSuccess("Post deleted successfully.");
   }
 
-  // ==========================================
-  // FILTER AND DATE
-  // ==========================================
-
   const filteredPosts =
     filter === "all"
       ? posts
@@ -539,10 +522,6 @@ export default function BusinessFeedPage() {
       year: "numeric",
     });
   }
-
-  // ==========================================
-  // PAGE UI
-  // ==========================================
 
   return (
     <main className="feed-page">
@@ -677,13 +656,15 @@ export default function BusinessFeedPage() {
           </aside>
 
           <section className="timeline">
-            {error && (
-              <div className="alert error">{error}</div>
-            )}
+            <div ref={feedbackRef}>
+              {error && (
+                <div className="alert error">{error}</div>
+              )}
 
-            {success && (
-              <div className="alert success">{success}</div>
-            )}
+              {success && (
+                <div className="alert success">{success}</div>
+              )}
+            </div>
 
             {showComposer && company && (
               <div className="composer">
