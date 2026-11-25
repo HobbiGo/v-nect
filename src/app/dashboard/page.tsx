@@ -237,9 +237,7 @@ export default function DashboardPage() {
         })
         .eq("user_id", userId);
 
-      if (settingsError) {
-        throw settingsError;
-      }
+      if (settingsError) throw settingsError;
 
       setCompanies((previous) => [
         ...previous,
@@ -253,7 +251,7 @@ export default function DashboardPage() {
       setCompanyDescription("");
       setShowCompanyForm(false);
 
-      alert("Company Profile created successfully!");
+      router.push("/company");
     } catch (error) {
       console.error("Create company error:", error);
 
@@ -271,7 +269,18 @@ export default function DashboardPage() {
     type: "Personal" | "Company",
     selectedCompanyId?: string
   ) {
-    if (switching || (type === profile && !selectedCompanyId)) {
+    if (switching) return;
+
+    if (type === "Personal" && profile === "Personal") {
+      return;
+    }
+
+    if (
+      type === "Company" &&
+      profile === "Company" &&
+      !selectedCompanyId
+    ) {
+      router.push("/company");
       return;
     }
 
@@ -303,6 +312,12 @@ export default function DashboardPage() {
 
       setProfile(type);
       setActiveCompanyId(companyId || "");
+
+      if (type === "Company") {
+        router.push("/company");
+      } else {
+        router.push("/dashboard");
+      }
     } catch (error) {
       console.error("Profile switching error:", error);
       alert("Unable to switch profile. Please try again.");
