@@ -1,4 +1,3 @@
-
 "use client";
 
 import Link from "next/link";
@@ -16,6 +15,15 @@ type EcosystemSectionProps = {
   exploreHref?: string;
 };
 
+const moduleHighlights = [
+  { tag: "CHAT & MESSAGING", accent: "#36b9ff", border: "rgba(54, 185, 255, 0.34)" },
+  { tag: "LIVE MEETINGS", accent: "#bd78ff", border: "rgba(189, 120, 255, 0.34)" },
+  { tag: "IDENTITY HUB", accent: "#32dce9", border: "rgba(50, 220, 233, 0.34)" },
+  { tag: "BUSINESS FEED", accent: "#559fff", border: "rgba(85, 159, 255, 0.34)" },
+  { tag: "NETWORK CIRCLE", accent: "#f472b6", border: "rgba(244, 114, 182, 0.34)" },
+  { tag: "MARKETPLACE", accent: "#fbbf24", border: "rgba(251, 191, 36, 0.34)" },
+];
+
 export function EcosystemSection({
   modules,
   exploreHref = "/business-feed",
@@ -23,89 +31,84 @@ export function EcosystemSection({
   return (
     <section className="platform-section" id="platform">
       <div className="ecosystem-shell">
-
-        {/* HEADER */}
         <div className="ecosystem-topbar">
           <div className="ecosystem-heading">
-            <span className="ecosystem-eyebrow">
-              THE V-NECT PLATFORM
-            </span>
+            <span className="ecosystem-eyebrow">THE V-NECT PLATFORM</span>
 
             <div className="ecosystem-title">
-              <span
-                className="ecosystem-bar"
-                aria-hidden="true"
-              />
+              <span className="ecosystem-bar" aria-hidden="true" />
               <h2>One Ecosystem. Every Connection.</h2>
             </div>
 
             <p className="ecosystem-subtitle">
-              Everything you need to communicate, collaborate,
-              build communities, and grow your business — all
-              connected in one platform.
+              Everything you need to communicate, collaborate, build communities,
+              and grow your business — all connected in one platform.
             </p>
           </div>
 
-          <Link
-            href={exploreHref}
-            className="ecosystem-link"
-          >
+          <Link href={exploreHref} className="ecosystem-link">
             Explore the ecosystem
             <span aria-hidden="true">↗</span>
           </Link>
         </div>
 
-        {/* ECOSYSTEM MODULES */}
         <div className="ecosystem-grid">
-          {modules.map((module, idx) => (
-            <Link
-              href={module.href}
-              className={`eco-card eco-tone-${idx % 6}`}
-              key={module.number}
-            >
-              <div className="eco-card-top">
-                <div
-                  className="eco-icon-box"
+          {modules.map((module, idx) => {
+            const toneIdx = idx % 6;
+            const highlight = moduleHighlights[toneIdx];
+
+            return (
+              <Link
+                href={module.href}
+                className={`eco-card eco-tone-${toneIdx}`}
+                key={module.number}
+                style={{
+                  borderColor: highlight.border,
+                }}
+              >
+                <span
+                  className="eco-top-stripe"
+                  style={{ background: highlight.accent }}
                   aria-hidden="true"
-                >
-                  {module.icon}
+                />
+
+                <div className="eco-card-top">
+                  <div className="eco-icon-box" aria-hidden="true">
+                    {module.icon}
+                  </div>
+
+                  <span className="eco-number">{module.number}</span>
                 </div>
 
-                <span className="eco-number">
-                  {module.number}
-                </span>
-              </div>
+                <div className="eco-card-content">
+                  <span
+                    className="eco-module-tag"
+                    style={{ color: highlight.accent }}
+                  >
+                    {highlight.tag}
+                  </span>
+                  <h3>{module.name}</h3>
+                  <p>{module.description}</p>
+                </div>
 
-              <div className="eco-card-content">
-                <h3>{module.name}</h3>
-                <p>{module.description}</p>
-              </div>
+                <div className="eco-card-bottom">
+                  <span>Explore module</span>
 
-              <div className="eco-card-bottom">
-                <span>Explore module</span>
-
-                <span
-                  className="eco-circle-arrow"
-                  aria-hidden="true"
-                >
-                  ↗
-                </span>
-              </div>
-            </Link>
-          ))}
+                  <span className="eco-circle-arrow" aria-hidden="true">
+                    ↗
+                  </span>
+                </div>
+              </Link>
+            );
+          })}
         </div>
 
-        {/* FOOTER */}
         <div className="ecosystem-footer">
           <span className="ecosystem-footer-dot" />
-          <span>
-            ONE PLATFORM. CONNECTED POSSIBILITIES.
-          </span>
+          <span>ONE PLATFORM. CONNECTED POSSIBILITIES.</span>
         </div>
-
       </div>
 
-      {/* COMPONENT STYLES */}
       <style jsx>{`
         .platform-section {
           max-width: 1320px;
@@ -119,29 +122,23 @@ export function EcosystemSection({
           overflow: hidden;
           padding: 38px;
           border-radius: 26px;
-          border: 1px solid rgba(100, 160, 255, 0.2);
+          border: 1px solid rgba(120, 172, 255, 0.28);
           background:
             radial-gradient(
               circle at 8% 0%,
-              rgba(29, 100, 220, 0.2),
-              transparent 38%
+              rgba(29, 100, 220, 0.24),
+              transparent 40%
             ),
             radial-gradient(
               circle at 100% 100%,
-              rgba(14, 165, 233, 0.12),
-              transparent 36%
+              rgba(14, 165, 233, 0.14),
+              transparent 40%
             ),
-            linear-gradient(
-              145deg,
-              #101c38 0%,
-              #080f22 100%
-            );
+            linear-gradient(145deg, #111f3f 0%, #070e22 100%);
           box-shadow:
-            0 24px 70px rgba(0, 0, 0, 0.3),
-            inset 0 1px 0 rgba(255, 255, 255, 0.07);
+            0 24px 70px rgba(0, 0, 0, 0.36),
+            inset 0 1px 0 rgba(255, 255, 255, 0.08);
         }
-
-        /* HEADER */
 
         .ecosystem-topbar {
           display: flex;
@@ -175,11 +172,7 @@ export function EcosystemSection({
           width: 4px;
           height: 30px;
           border-radius: 99px;
-          background: linear-gradient(
-            180deg,
-            #67e8f9,
-            #318bff
-          );
+          background: linear-gradient(180deg, #67e8f9, #318bff);
           box-shadow: 0 0 16px rgba(56, 189, 248, 0.5);
         }
 
@@ -195,7 +188,7 @@ export function EcosystemSection({
         .ecosystem-subtitle {
           max-width: 620px;
           margin: 13px 0 0 16px;
-          color: #a6b6d3;
+          color: #b4c4e0;
           font-size: 14px;
           line-height: 1.8;
         }
@@ -206,10 +199,10 @@ export function EcosystemSection({
           align-items: center;
           gap: 12px;
           padding: 13px 18px;
-          border: 1px solid rgba(111, 183, 255, 0.35);
+          border: 1px solid rgba(111, 183, 255, 0.4);
           border-radius: 12px;
-          color: #d9edff;
-          background: rgba(41, 104, 190, 0.13);
+          color: #e8f3ff;
+          background: rgba(41, 104, 190, 0.18);
           font-size: 12px;
           font-weight: 700;
           text-decoration: none;
@@ -222,35 +215,34 @@ export function EcosystemSection({
         }
 
         .ecosystem-link:hover {
-          background: rgba(41, 133, 230, 0.25);
-          border-color: rgba(103, 213, 255, 0.7);
+          background: rgba(41, 133, 230, 0.3);
+          border-color: rgba(103, 213, 255, 0.75);
           transform: translateY(-2px);
         }
-
-        /* MODULE GRID */
 
         .ecosystem-grid {
           display: grid;
           grid-template-columns: repeat(3, minmax(0, 1fr));
-          gap: 16px;
+          gap: 18px;
         }
 
         .eco-card {
           position: relative;
-          min-height: 220px;
+          min-height: 226px;
           display: flex;
           flex-direction: column;
           padding: 23px;
           overflow: hidden;
-          border: 1px solid rgba(132, 165, 220, 0.17);
+          border: 1px solid rgba(132, 165, 220, 0.24);
           border-radius: 18px;
           background: linear-gradient(
-            145deg,
-            rgba(28, 48, 87, 0.83),
-            rgba(13, 25, 51, 0.95)
+            155deg,
+            rgba(31, 55, 102, 0.9),
+            rgba(12, 23, 49, 0.97)
           );
           color: inherit;
           text-decoration: none;
+          box-shadow: 0 10px 26px rgba(0, 0, 0, 0.26);
           transition:
             transform 0.25s ease,
             border-color 0.25s ease,
@@ -258,40 +250,30 @@ export function EcosystemSection({
             background 0.25s ease;
         }
 
-        .eco-card::before {
-          content: "";
+        .eco-top-stripe {
           position: absolute;
           top: 0;
-          left: 22px;
-          right: 22px;
-          height: 1px;
-          background: linear-gradient(
-            90deg,
-            transparent,
-            rgba(117, 196, 255, 0.55),
-            transparent
-          );
-          opacity: 0.6;
+          left: 0;
+          right: 0;
+          height: 3px;
+          opacity: 0.9;
         }
 
         .eco-card:hover {
           transform: translateY(-5px);
-          border-color: rgba(92, 183, 255, 0.55);
           background: linear-gradient(
-            145deg,
-            rgba(35, 65, 117, 0.95),
-            rgba(14, 30, 62, 0.98)
+            155deg,
+            rgba(40, 71, 128, 0.96),
+            rgba(15, 29, 60, 0.99)
           );
-          box-shadow: 0 18px 36px rgba(0, 0, 0, 0.24);
+          box-shadow: 0 18px 36px rgba(0, 0, 0, 0.36);
         }
-
-        /* ICON */
 
         .eco-card-top {
           display: flex;
           align-items: center;
           justify-content: space-between;
-          margin-bottom: 25px;
+          margin-bottom: 20px;
         }
 
         .eco-icon-box {
@@ -303,44 +285,42 @@ export function EcosystemSection({
           color: #ffffff;
           font-size: 25px;
           line-height: 1;
-          border: 1px solid rgba(255, 255, 255, 0.22);
+          border: 1px solid rgba(255, 255, 255, 0.26);
         }
 
         .eco-tone-0 .eco-icon-box {
           background: linear-gradient(145deg, #36b9ff, #1763e9);
-          box-shadow: 0 8px 24px rgba(34, 134, 255, 0.28);
+          box-shadow: 0 8px 24px rgba(34, 134, 255, 0.34);
         }
 
         .eco-tone-1 .eco-icon-box {
           background: linear-gradient(145deg, #bd78ff, #7041e9);
-          box-shadow: 0 8px 24px rgba(145, 72, 255, 0.28);
+          box-shadow: 0 8px 24px rgba(145, 72, 255, 0.34);
         }
 
         .eco-tone-2 .eco-icon-box {
           background: linear-gradient(145deg, #32dce9, #137dbd);
-          box-shadow: 0 8px 24px rgba(24, 188, 224, 0.25);
+          box-shadow: 0 8px 24px rgba(24, 188, 224, 0.32);
         }
 
         .eco-tone-3 .eco-icon-box {
           background: linear-gradient(145deg, #559fff, #2458d8);
-          box-shadow: 0 8px 24px rgba(42, 122, 255, 0.25);
+          box-shadow: 0 8px 24px rgba(42, 122, 255, 0.32);
         }
 
         .eco-tone-4 .eco-icon-box {
-          background: linear-gradient(145deg, #b66dff, #6337dc);
-          box-shadow: 0 8px 24px rgba(138, 66, 245, 0.25);
+          background: linear-gradient(145deg, #f472b6, #9d174d);
+          box-shadow: 0 8px 24px rgba(244, 114, 182, 0.32);
         }
 
         .eco-tone-5 .eco-icon-box {
-          background: linear-gradient(145deg, #36b7ed, #155bbd);
-          box-shadow: 0 8px 24px rgba(30, 132, 224, 0.25);
+          background: linear-gradient(145deg, #fbbf24, #b45309);
+          box-shadow: 0 8px 24px rgba(251, 191, 36, 0.32);
         }
 
-        /* CARD CONTENT */
-
         .eco-number {
-          color: rgba(165, 190, 230, 0.38);
-          font-size: 28px;
+          color: rgba(203, 219, 248, 0.55);
+          font-size: 26px;
           font-weight: 800;
           letter-spacing: -1px;
         }
@@ -349,8 +329,16 @@ export function EcosystemSection({
           flex: 1;
         }
 
+        .eco-module-tag {
+          display: inline-block;
+          font-size: 9.5px;
+          font-weight: 800;
+          letter-spacing: 1.4px;
+          margin-bottom: 6px;
+        }
+
         .eco-card h3 {
-          margin: 0 0 9px;
+          margin: 0 0 8px;
           color: #ffffff;
           font-size: 19px;
           font-weight: 750;
@@ -360,21 +348,19 @@ export function EcosystemSection({
         .eco-card p {
           max-width: 300px;
           margin: 0;
-          color: #a9bad8;
+          color: #b7c7e2;
           font-size: 13px;
           line-height: 1.7;
         }
-
-        /* CARD FOOTER */
 
         .eco-card-bottom {
           display: flex;
           justify-content: space-between;
           align-items: center;
-          margin-top: 22px;
-          padding-top: 15px;
-          border-top: 1px solid rgba(150, 180, 225, 0.13);
-          color: #8faedb;
+          margin-top: 20px;
+          padding-top: 14px;
+          border-top: 1px solid rgba(150, 180, 225, 0.16);
+          color: #a8c2eb;
           font-size: 11px;
           font-weight: 700;
           letter-spacing: 0.3px;
@@ -385,7 +371,7 @@ export function EcosystemSection({
           height: 29px;
           display: grid;
           place-items: center;
-          border: 1px solid rgba(130, 180, 240, 0.3);
+          border: 1px solid rgba(130, 180, 240, 0.35);
           border-radius: 50%;
           color: #80d8ff;
           font-size: 15px;
@@ -399,15 +385,13 @@ export function EcosystemSection({
           transform: rotate(45deg);
         }
 
-        /* SECTION FOOTER */
-
         .ecosystem-footer {
           display: flex;
           justify-content: center;
           align-items: center;
           gap: 9px;
           margin-top: 27px;
-          color: #7188ad;
+          color: #7d95bc;
           font-size: 9px;
           font-weight: 800;
           letter-spacing: 2.5px;
@@ -420,8 +404,6 @@ export function EcosystemSection({
           background: #39c7ed;
           box-shadow: 0 0 10px rgba(57, 199, 237, 0.8);
         }
-
-        /* TABLET */
 
         @media (max-width: 900px) {
           .ecosystem-shell {
@@ -437,8 +419,6 @@ export function EcosystemSection({
             flex-direction: column;
           }
         }
-
-        /* MOBILE */
 
         @media (max-width: 540px) {
           .platform-section {
@@ -470,7 +450,7 @@ export function EcosystemSection({
           }
 
           .eco-card-top {
-            margin-bottom: 19px;
+            margin-bottom: 18px;
           }
 
           .eco-card h3 {
@@ -487,8 +467,6 @@ export function EcosystemSection({
             letter-spacing: 1.5px;
           }
         }
-
-        /* ACCESSIBILITY */
 
         @media (prefers-reduced-motion: reduce) {
           .eco-card,
