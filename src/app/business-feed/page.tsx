@@ -351,15 +351,15 @@ export default function BusinessFeedPage() {
         endSec: item.endSec,
         playUrl,
         storageUploaded,
-        caption: "",
+        caption: (item.caption || "").trim(),
       });
     }
 
     setPublishedVideoClips((prev) => [...uploadedClips, ...prev]);
     setSuccess(
       cloudSuccessCount > 0
-        ? `${items.length} klip video (batas max ${maxDurationSec}s) diproses (${cloudSuccessCount} tersimpan ke Storage). Tambahkan teks klip lalu klik Post ke Halaman Utama.`
-        : `${items.length} klip video (batas max ${maxDurationSec}s) diproses ke daftar unggahan. Tambahkan teks klip sebelum memposting.`
+        ? `${items.length} klip video (batas max ${maxDurationSec}s) diproses (${cloudSuccessCount} tersimpan ke Storage). Teks video sudah terbawa—klik Post ke Halaman Utama untuk menayangkan.`
+        : `${items.length} klip video (batas max ${maxDurationSec}s) diproses ke daftar unggahan. Teks video sudah terbawa—klik Post ke Halaman Utama untuk menayangkan.`
     );
   }
 
