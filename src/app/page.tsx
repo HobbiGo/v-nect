@@ -1,3 +1,4 @@
+
 "use client";
 
 import { useEffect, useState } from "react";
@@ -32,6 +33,14 @@ type FocusTarget = {
   trigger: number;
 };
 
+type ModuleIconName =
+  | "chat"
+  | "video"
+  | "hub"
+  | "feed"
+  | "circle"
+  | "market";
+
 const MAX_IMAGES = 5;
 const LOCAL_CAPTIONS_STORAGE_KEY =
   "v-nect_business_post_image_captions_v1";
@@ -39,44 +48,127 @@ const LOCAL_CAPTIONS_STORAGE_KEY =
 const BRAND_LOGO_SRC = "/images/V-NECT-logo.png";
 const HERO_NETWORK_IMG_SRC = "/images/logonew-v-nect.png";
 
-const modules = [
+const modules: {
+  name: string;
+  description: string;
+  href: string;
+  icon: ModuleIconName;
+  label: string;
+}[] = [
   {
-    number: "01",
     name: "v-chat",
     description: "Connect and communicate.",
     href: "/business-feed",
+    icon: "chat",
+    label: "Instant Communication",
   },
   {
-    number: "02",
     name: "v-meet",
     description: "Voice & video meetings.",
     href: "/v-meet",
+    icon: "video",
+    label: "Voice & Video",
   },
   {
-    number: "03",
     name: "v-hub",
     description: "Build your professional identity.",
     href: "/v-hub",
+    icon: "hub",
+    label: "Professional Network",
   },
   {
-    number: "04",
     name: "v-business feed",
     description: "Business updates & opportunities.",
     href: "/business-feed",
+    icon: "feed",
+    label: "Business Updates",
   },
   {
-    number: "05",
     name: "v-circle",
     description: "Grow your network.",
     href: "/v-circle",
+    icon: "circle",
+    label: "People & Community",
   },
   {
-    number: "06",
     name: "v-market",
     description: "Products & suppliers.",
     href: "/v-market",
+    icon: "market",
+    label: "Business Marketplace",
   },
 ];
+
+function ModuleIcon({ name }: { name: ModuleIconName }) {
+  const props = {
+    width: 29,
+    height: 29,
+    viewBox: "0 0 24 24",
+    fill: "none",
+    stroke: "currentColor",
+    strokeWidth: 1.7,
+    strokeLinecap: "round" as const,
+    strokeLinejoin: "round" as const,
+    "aria-hidden": true as const,
+  };
+
+  switch (name) {
+    case "chat":
+      return (
+        <svg {...props}>
+          <path d="M21 11.5a8.4 8.4 0 0 1-.9 3.8 8.5 8.5 0 0 1-7.6 4.7 8.4 8.4 0 0 1-3.8-.9L3 21l1.9-5.7a8.4 8.4 0 0 1-.9-3.8 8.5 8.5 0 0 1 4.7-7.6 8.4 8.4 0 0 1 3.8-.9h.5a8.5 8.5 0 0 1 8 8v.5Z" />
+          <path d="M8 12h.01M12 12h.01M16 12h.01" />
+        </svg>
+      );
+
+    case "video":
+      return (
+        <svg {...props}>
+          <rect x="3" y="5" width="13" height="14" rx="3" />
+          <path d="m16 10 5-3v10l-5-3" />
+        </svg>
+      );
+
+    case "hub":
+      return (
+        <svg {...props}>
+          <circle cx="12" cy="5" r="3" />
+          <circle cx="5" cy="18" r="3" />
+          <circle cx="19" cy="18" r="3" />
+          <path d="m10.5 7.5-4 7.8M13.5 7.5l4 7.8M8 18h8" />
+        </svg>
+      );
+
+    case "feed":
+      return (
+        <svg {...props}>
+          <rect x="4" y="3" width="16" height="18" rx="2" />
+          <path d="M8 7h8M8 11h8M8 15h5M16 15h.01" />
+        </svg>
+      );
+
+    case "circle":
+      return (
+        <svg {...props}>
+          <circle cx="9" cy="8" r="3" />
+          <path d="M3 20v-1a6 6 0 0 1 12 0v1" />
+          <path d="M16 5.5a3 3 0 0 1 0 5.8M18 14a5 5 0 0 1 3 4.5V20" />
+        </svg>
+      );
+
+    case "market":
+      return (
+        <svg {...props}>
+          <path d="M3 9h18l-2 12H5L3 9Z" />
+          <path d="M3 9 6 3h12l3 6" />
+          <path d="M9 9a3 3 0 0 0 6 0" />
+        </svg>
+      );
+
+    default:
+      return null;
+  }
+}
 
 const categoryLabels: Record<string, string> = {
   announcement: "Official Update",
@@ -519,30 +611,51 @@ export default function Home() {
         <div className="section-top-bar">
           <div className="section-heading">
             <span className="section-bar-tag">v-nect Ecosystem</span>
+            <h2 className="ecosystem-heading">
+              One Platform. Endless Connections.
+            </h2>
+            <p className="ecosystem-subtitle">
+              Explore the tools that bring your business world together.
+            </p>
           </div>
 
           <Link href="/business-feed" className="section-top-link">
-            Discover all powerful features in one platform →
+            Discover all features →
           </Link>
         </div>
 
         <div className="module-grid">
-          {modules.map((module) => (
+          {modules.map((module, index) => (
             <Link
               href={module.href}
-              className="module-card module-card-link"
-              key={module.number}
+              className={`module-card module-card-link module-card-${module.icon}`}
+              key={module.name}
+              aria-label={`Open ${module.name}`}
             >
-              <span className="module-icon-badge">{module.number}</span>
+              <div className="module-card-top">
+                <span className="module-icon-badge">
+                  <ModuleIcon name={module.icon} />
+                </span>
+
+                <span className="module-index">
+                  {String(index + 1).padStart(2, "0")}
+                </span>
+              </div>
+
+              <span className="module-label">{module.label}</span>
+
               <h3>{module.name}</h3>
+
               <p>{module.description}</p>
-              <span className="module-arrow">→</span>
+
+              <span className="module-card-footer">
+                <span>Explore feature</span>
+                <span className="module-arrow">↗</span>
+              </span>
             </Link>
           ))}
         </div>
       </section>
-
-      {/* LATEST POSTS & DISCUSSION (UNIFIED LIGHT HUB) */}
 
       <section className="home-posts-section" id="community-posts">
         <div className="home-posts-inner">
@@ -584,7 +697,6 @@ export default function Home() {
             </div>
           ) : (
             <div className="hub-bento-grid">
-              {/* 1. FEATURED POST */}
               {featuredPost && (
                 <article className="hub-featured-card">
                   <img
@@ -616,7 +728,6 @@ export default function Home() {
                 </article>
               )}
 
-              {/* 2. OFFICIAL / SPOTLIGHT POST + FULL THREAD */}
               {spotlightPost && (() => {
                 const postImages = getPostImages(spotlightPost);
                 const postImageCaptions = getPostImageCaptions(
@@ -703,6 +814,7 @@ export default function Home() {
                         >
                           {postImages.map((imgUrl, idx) => {
                             const captionText = postImageCaptions[idx] || "";
+
                             return (
                               <div
                                 className="home-image-card"
@@ -750,15 +862,16 @@ export default function Home() {
                           postImageCaptions[idx] || `Image ${idx + 1}`
                       )}
                       focusedImageIndex={
-                        isFocusedPost ? focusTarget.imageIndex : null
+                        isFocusedPost ? focusTarget?.imageIndex ?? null : null
                       }
-                      focusTrigger={isFocusedPost ? focusTarget.trigger : 0}
+                      focusTrigger={
+                        isFocusedPost ? focusTarget?.trigger ?? 0 : 0
+                      }
                     />
                   </article>
                 );
               })()}
 
-              {/* 3. TRENDING DISCUSSIONS, BUSINESS INSIGHTS & COMMUNITY UPDATES */}
               <aside className="hub-side-stack">
                 {sideFeedPosts.map((item, idx) => {
                   const itemImages = getPostImages(item);
@@ -766,6 +879,7 @@ export default function Home() {
                     itemImages[0] ||
                     item.companies?.logo_url ||
                     HERO_NETWORK_IMG_SRC;
+
                   const badgeText =
                     categoryLabels[item.post_type] ||
                     (idx === 0
@@ -805,7 +919,6 @@ export default function Home() {
             </div>
           )}
 
-          {/* JOIN V-NECT TODAY BANNER */}
           <div className="join-cta-banner" id="business">
             <div className="join-cta-left">
               <div className="join-cta-icon">📈</div>
@@ -853,8 +966,8 @@ export default function Home() {
         .navbar {
           min-height: 72px;
           padding: 10px 6%;
-          background: rgba(6, 11, 34, 0.84);
-          backdrop-filter: blur(12px);
+          background: rgba(6, 11, 34, 0.88);
+          backdrop-filter: blur(14px);
           border-bottom: 1px solid rgba(138, 165, 255, 0.14);
           display: flex;
           align-items: center;
@@ -875,8 +988,8 @@ export default function Home() {
         }
 
         .logo-mark-wrap {
-          width: 30px;
-          height: 30px;
+          width: 34px;
+          height: 34px;
           display: grid;
           place-items: center;
           overflow: hidden;
@@ -895,7 +1008,7 @@ export default function Home() {
         }
 
         .logo-main {
-          font-size: 19px;
+          font-size: 20px;
           font-weight: 800;
           letter-spacing: 0.3px;
           white-space: nowrap;
@@ -911,7 +1024,7 @@ export default function Home() {
           font-weight: 700;
           letter-spacing: 1.2px;
           color: #9cb0d9;
-          margin-top: 2px;
+          margin-top: 3px;
           white-space: nowrap;
         }
 
@@ -972,7 +1085,7 @@ export default function Home() {
         .navbar nav a.nav-button {
           background: linear-gradient(110deg, #4b6bff, #7854ff);
           color: #fff;
-          padding: 8px 15px;
+          padding: 9px 15px;
           border-radius: 10px;
           font-size: 12.5px;
           font-weight: 700;
@@ -1148,15 +1261,9 @@ export default function Home() {
           animation: voinFlowDash 2.2s linear infinite;
         }
 
-        .pulse-two {
-          animation-delay: -0.55s;
-        }
-        .pulse-three {
-          animation-delay: -1.1s;
-        }
-        .pulse-four {
-          animation-delay: -1.65s;
-        }
+        .pulse-two { animation-delay: -0.55s; }
+        .pulse-three { animation-delay: -1.1s; }
+        .pulse-four { animation-delay: -1.65s; }
 
         .connector-node {
           fill: #8bb4ff;
@@ -1167,17 +1274,12 @@ export default function Home() {
         }
 
         @keyframes voinFlowDash {
-          from {
-            stroke-dashoffset: 0;
-          }
-          to {
-            stroke-dashoffset: -48;
-          }
+          from { stroke-dashoffset: 0; }
+          to { stroke-dashoffset: -48; }
         }
 
         @keyframes voinNodePulse {
-          0%,
-          100% {
+          0%, 100% {
             opacity: 0.65;
             transform: scale(0.95);
           }
@@ -1210,36 +1312,26 @@ export default function Home() {
           border-radius: 999px;
         }
 
-        .label-one {
-          top: 10px;
-          left: 3%;
-        }
-        .label-two {
-          top: 10px;
-          right: 3%;
-        }
-        .label-three {
-          bottom: 10px;
-          left: 3%;
-        }
-        .label-four {
-          bottom: 10px;
-          right: 3%;
-        }
+        .label-one { top: 10px; left: 3%; }
+        .label-two { top: 10px; right: 3%; }
+        .label-three { bottom: 10px; left: 3%; }
+        .label-four { bottom: 10px; right: 3%; }
+
+        /* ECOSYSTEM */
 
         .platform-section {
           max-width: 1220px;
           margin: 0 auto;
-          padding: 14px 24px 44px;
+          padding: 20px 24px 58px;
         }
 
         .section-top-bar {
           display: flex;
-          align-items: center;
+          align-items: flex-end;
           justify-content: space-between;
-          gap: 14px;
+          gap: 18px;
           flex-wrap: wrap;
-          margin-bottom: 14px;
+          margin-bottom: 25px;
         }
 
         .section-bar-tag {
@@ -1254,9 +1346,23 @@ export default function Home() {
         .section-bar-tag::before {
           content: "";
           width: 3px;
-          height: 15px;
+          height: 16px;
           border-radius: 999px;
           background: linear-gradient(180deg, #5f85ff, #13c8b5);
+        }
+
+        .ecosystem-heading {
+          color: #ffffff;
+          font-size: clamp(22px, 2.8vw, 30px);
+          font-weight: 800;
+          letter-spacing: -0.5px;
+          margin: 12px 0 5px;
+        }
+
+        .ecosystem-subtitle {
+          color: #a9bce2;
+          font-size: 13px;
+          margin: 0;
         }
 
         .section-top-link {
@@ -1264,6 +1370,7 @@ export default function Home() {
           font-size: 12px;
           font-weight: 600;
           text-decoration: none;
+          padding-bottom: 4px;
         }
 
         .section-top-link:hover {
@@ -1272,70 +1379,170 @@ export default function Home() {
 
         .module-grid {
           display: grid;
-          grid-template-columns: repeat(6, minmax(0, 1fr));
-          gap: 12px;
+          grid-template-columns: repeat(3, minmax(0, 1fr));
+          gap: 18px;
         }
 
         .module-card {
-          background: linear-gradient(
-            165deg,
-            rgba(23, 41, 102, 0.85),
-            rgba(12, 22, 60, 0.92)
-          );
-          border: 1px solid rgba(145, 173, 255, 0.22);
-          border-radius: 16px;
-          padding: 18px 14px;
+          --module-accent: #75a5ff;
+          position: relative;
+          min-width: 0;
+          min-height: 218px;
+          overflow: hidden;
+          background:
+            radial-gradient(
+              circle at 90% 10%,
+              rgba(91, 125, 255, 0.18),
+              transparent 42%
+            ),
+            linear-gradient(
+              145deg,
+              rgba(25, 45, 108, 0.94),
+              rgba(9, 20, 58, 0.98)
+            );
+          border: 1px solid rgba(145, 173, 255, 0.2);
+          border-radius: 20px;
+          padding: 22px 21px 17px;
           display: flex;
           flex-direction: column;
-          align-items: center;
-          text-align: center;
-          gap: 6px;
+          align-items: flex-start;
           color: inherit;
           text-decoration: none;
-          transition: transform 0.2s ease, border-color 0.2s ease;
+          transition:
+            transform 0.25s ease,
+            border-color 0.25s ease,
+            box-shadow 0.25s ease,
+            background 0.25s ease;
         }
 
-        .module-card-link:hover {
-          border-color: #8ab4ff;
-          transform: translateY(-3px);
+        .module-card::before {
+          content: "";
+          position: absolute;
+          width: 150px;
+          height: 150px;
+          right: -65px;
+          top: -75px;
+          border-radius: 50%;
+          background: var(--module-accent);
+          opacity: 0.08;
+          filter: blur(28px);
+          transition: opacity 0.25s ease;
+          pointer-events: none;
+        }
+
+        .module-card:hover {
+          transform: translateY(-6px);
+          border-color: var(--module-accent);
+          box-shadow: 0 16px 34px rgba(38, 88, 200, 0.2);
+        }
+
+        .module-card:hover::before {
+          opacity: 0.2;
+        }
+
+        .module-card-chat { --module-accent: #5ed9ff; }
+        .module-card-video { --module-accent: #9b91ff; }
+        .module-card-hub { --module-accent: #6fe4cf; }
+        .module-card-feed { --module-accent: #70aaff; }
+        .module-card-circle { --module-accent: #ff9bc7; }
+        .module-card-market { --module-accent: #ffc879; }
+
+        .module-card-top {
+          width: 100%;
+          display: flex;
+          align-items: center;
+          justify-content: space-between;
+          margin-bottom: 17px;
         }
 
         .module-icon-badge {
-          width: 36px;
-          height: 36px;
-          border-radius: 11px;
-          background: linear-gradient(135deg, #5677ff, #7c58ff);
-          color: #fff;
-          font-size: 12px;
-          font-weight: 800;
+          width: 58px;
+          height: 58px;
+          border-radius: 17px;
           display: grid;
           place-items: center;
-          margin-bottom: 4px;
+          color: var(--module-accent);
+          background: linear-gradient(
+            145deg,
+            rgba(255, 255, 255, 0.13),
+            rgba(255, 255, 255, 0.035)
+          );
+          border: 1px solid rgba(255, 255, 255, 0.14);
+          box-shadow:
+            0 8px 20px rgba(0, 0, 0, 0.16),
+            inset 0 1px 0 rgba(255, 255, 255, 0.1);
+          transition: transform 0.25s ease;
+        }
+
+        .module-card:hover .module-icon-badge {
+          transform: translateY(-3px) scale(1.04);
+        }
+
+        .module-index {
+          color: rgba(180, 201, 255, 0.48);
+          font-size: 12px;
+          font-weight: 800;
+          letter-spacing: 1px;
+        }
+
+        .module-label {
+          color: var(--module-accent);
+          font-size: 9px;
+          font-weight: 800;
+          letter-spacing: 1.3px;
+          text-transform: uppercase;
+          margin-bottom: 7px;
         }
 
         .module-card h3 {
-          margin: 0;
-          font-size: 14px;
-          font-weight: 700;
-          color: #fff;
+          position: relative;
+          margin: 0 0 7px;
+          font-size: 17px;
+          font-weight: 800;
+          color: #ffffff;
+          overflow-wrap: anywhere;
         }
 
         .module-card p {
+          position: relative;
           margin: 0;
           color: #a9bce2;
-          font-size: 11.5px;
-          line-height: 1.45;
+          font-size: 12px;
+          line-height: 1.55;
         }
 
-        .module-arrow {
+        .module-card-footer {
+          width: 100%;
+          display: flex;
+          align-items: center;
+          justify-content: space-between;
           margin-top: auto;
-          padding-top: 6px;
-          font-size: 12px;
-          color: #9cb8ff;
+          padding-top: 18px;
+          color: #a8c2ff;
+          font-size: 11px;
           font-weight: 700;
         }
 
-        /* LATEST POSTS & DISCUSSION (UNIFIED LIGHT HUB) */
+        .module-arrow {
+          width: 27px;
+          height: 27px;
+          display: grid;
+          place-items: center;
+          border-radius: 50%;
+          background: rgba(119, 153, 255, 0.13);
+          color: #c4d7ff;
+          font-size: 15px;
+          transition:
+            transform 0.25s ease,
+            background 0.25s ease;
+        }
+
+        .module-card:hover .module-arrow {
+          transform: translate(3px, -3px);
+          background: rgba(119, 153, 255, 0.28);
+        }
+
+        /* LATEST POSTS */
 
         .home-posts-section {
           position: relative;
@@ -1383,7 +1590,7 @@ export default function Home() {
           font-weight: 800;
           letter-spacing: -0.7px;
           line-height: 1.15;
-          margin: 6px 0 6px;
+          margin: 6px 0;
         }
 
         .home-posts-header h2 span {
@@ -1426,7 +1633,6 @@ export default function Home() {
           align-items: start;
         }
 
-        /* 1. FEATURED CARD */
         .hub-featured-card {
           position: relative;
           min-height: 360px;
@@ -1520,7 +1726,6 @@ export default function Home() {
           place-items: center;
         }
 
-        /* 2. SPOTLIGHT / OFFICIAL CARD */
         .hub-spotlight-card {
           min-width: 0;
           background: #ffffff;
@@ -1726,7 +1931,6 @@ export default function Home() {
           border-color: #4f63ff;
         }
 
-        /* 3. SIDE FEED STACK */
         .hub-side-stack {
           display: flex;
           flex-direction: column;
@@ -1807,7 +2011,6 @@ export default function Home() {
           flex-shrink: 0;
         }
 
-        /* JOIN BANNER */
         .join-cta-banner {
           margin-top: 24px;
           background: linear-gradient(110deg, #1b2d7a, #3c349c 60%, #1c3d82);
@@ -1900,9 +2103,7 @@ export default function Home() {
         }
 
         @keyframes loadingSpin {
-          to {
-            transform: rotate(360deg);
-          }
+          to { transform: rotate(360deg); }
         }
 
         .footer {
@@ -1934,6 +2135,8 @@ export default function Home() {
           font-size: 11.5px;
         }
 
+        /* RESPONSIVE */
+
         @media (max-width: 1024px) {
           .module-grid {
             grid-template-columns: repeat(3, minmax(0, 1fr));
@@ -1953,6 +2156,41 @@ export default function Home() {
           .hero {
             grid-template-columns: 1fr;
             padding-top: 34px;
+          }
+        }
+
+        @media (max-width: 600px) {
+          .module-grid {
+            grid-template-columns: repeat(2, minmax(0, 1fr));
+            gap: 12px;
+          }
+
+          .module-card {
+            min-height: 205px;
+            padding: 17px 13px 14px;
+          }
+
+          .module-icon-badge {
+            width: 50px;
+            height: 50px;
+            border-radius: 15px;
+          }
+
+          .module-icon-badge svg {
+            width: 25px;
+            height: 25px;
+          }
+
+          .module-card h3 {
+            font-size: 14px;
+          }
+
+          .module-card p {
+            font-size: 11px;
+          }
+
+          .module-label {
+            font-size: 8px;
           }
         }
 
@@ -1980,9 +2218,12 @@ export default function Home() {
             min-height: 265px;
           }
 
-          .module-grid,
-          .home-images-grid.multi {
-            grid-template-columns: 1fr;
+          .platform-section {
+            padding: 20px 15px 42px;
+          }
+
+          .section-top-bar {
+            align-items: flex-start;
           }
 
           .home-posts-section {
@@ -1990,8 +2231,28 @@ export default function Home() {
             border-radius: 20px 20px 0 0;
           }
 
+          .home-images-grid.multi {
+            grid-template-columns: repeat(2, minmax(0, 1fr));
+          }
+
           .join-cta-banner {
             padding: 18px 16px;
+          }
+        }
+
+        @media (max-width: 360px) {
+          .module-grid {
+            grid-template-columns: 1fr;
+          }
+        }
+
+        @media (prefers-reduced-motion: reduce) {
+          .home-page *,
+          .home-page *::before,
+          .home-page *::after {
+            animation-duration: 0.01ms !important;
+            animation-iteration-count: 1 !important;
+            transition-duration: 0.01ms !important;
           }
         }
       `}</style>
