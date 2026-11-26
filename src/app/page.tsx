@@ -54,7 +54,7 @@ const modules: EcosystemModule[] = [
     icon: "💬",
     tag: "CHAT & MESSAGING",
     accent: "#36b9ff",
-    border: "rgba(54, 185, 255, 0.36)",
+    border: "rgba(54, 185, 255, 0.34)",
     name: "v-chat",
     description: "Connect and communicate.",
     href: "/business-feed",
@@ -63,7 +63,7 @@ const modules: EcosystemModule[] = [
     icon: "🎥",
     tag: "LIVE MEETINGS",
     accent: "#bd78ff",
-    border: "rgba(189, 120, 255, 0.36)",
+    border: "rgba(189, 120, 255, 0.34)",
     name: "v-meet",
     description: "Voice & video meetings.",
     href: "/v-meet",
@@ -72,7 +72,7 @@ const modules: EcosystemModule[] = [
     icon: "✣",
     tag: "IDENTITY HUB",
     accent: "#32dce9",
-    border: "rgba(50, 220, 233, 0.36)",
+    border: "rgba(50, 220, 233, 0.34)",
     name: "v-hub",
     description: "Build your professional identity.",
     href: "/v-hub",
@@ -81,7 +81,7 @@ const modules: EcosystemModule[] = [
     icon: "▤",
     tag: "BUSINESS FEED",
     accent: "#559fff",
-    border: "rgba(85, 159, 255, 0.36)",
+    border: "rgba(85, 159, 255, 0.34)",
     name: "v-business feed",
     description: "Business updates & opportunities.",
     href: "/business-feed",
@@ -90,7 +90,7 @@ const modules: EcosystemModule[] = [
     icon: "👥",
     tag: "NETWORK CIRCLE",
     accent: "#f472b6",
-    border: "rgba(244, 114, 182, 0.36)",
+    border: "rgba(244, 114, 182, 0.34)",
     name: "v-circle",
     description: "Grow your network.",
     href: "/v-circle",
@@ -99,7 +99,7 @@ const modules: EcosystemModule[] = [
     icon: "🛒",
     tag: "MARKETPLACE",
     accent: "#fbbf24",
-    border: "rgba(251, 191, 36, 0.36)",
+    border: "rgba(251, 191, 36, 0.34)",
     name: "v-market",
     description: "Products & suppliers.",
     href: "/v-market",
@@ -541,12 +541,6 @@ export default function Home() {
                 key={module.name}
                 style={{ borderColor: module.border }}
               >
-                <span
-                  className="eco-top-stripe"
-                  style={{ background: module.accent }}
-                  aria-hidden="true"
-                />
-
                 <div className="eco-card-top">
                   <div className="eco-icon-box" aria-hidden="true">
                     {module.icon}
@@ -566,10 +560,6 @@ export default function Home() {
 
                 <div className="eco-card-bottom">
                   <span>Explore module</span>
-
-                  <span className="eco-circle-arrow" aria-hidden="true">
-                    ↗
-                  </span>
                 </div>
               </Link>
             ))}
@@ -1242,7 +1232,7 @@ export default function Home() {
         .label-three { bottom: 10px; left: 3%; }
         .label-four { bottom: 10px; right: 3%; }
 
-        /* ECOSYSTEM SECTION (BIRU TUA LEBIH TERANG + BATAS TEGAS) */
+        /* ECOSYSTEM SECTION */
 
         .platform-section {
           max-width: 1320px;
@@ -1256,7 +1246,7 @@ export default function Home() {
           overflow: hidden;
           padding: 36px;
           border-radius: 26px;
-          border: 1px solid rgba(130, 184, 255, 0.38);
+          border: 1px solid rgba(130, 184, 255, 0.24);
           background:
             radial-gradient(
               circle at 12% 0%,
@@ -1270,9 +1260,8 @@ export default function Home() {
             ),
             linear-gradient(150deg, #1a2f63 0%, #12224a 52%, #0e1a3a 100%);
           box-shadow:
-            0 -8px 28px rgba(56, 130, 246, 0.14),
             0 24px 64px rgba(2, 8, 26, 0.45),
-            inset 0 1px 0 rgba(255, 255, 255, 0.14);
+            inset 0 1px 0 rgba(255, 255, 255, 0.12);
         }
 
         .ecosystem-topbar {
@@ -1282,7 +1271,7 @@ export default function Home() {
           gap: 24px;
           margin-bottom: 28px;
           padding-bottom: 20px;
-          border-bottom: 1px solid rgba(148, 190, 255, 0.2);
+          border-bottom: 1px solid rgba(148, 190, 255, 0.18);
         }
 
         .ecosystem-heading {
@@ -1309,17 +1298,20 @@ export default function Home() {
           width: 4px;
           height: 30px;
           border-radius: 99px;
-          background: linear-gradient(180deg, #67e8f9, #4f6bff);
-          box-shadow: 0 0 16px rgba(56, 189, 248, 0.55);
+          background: linear-gradient(180deg, #67e8f9, #a78bfa);
+          box-shadow: 0 0 16px rgba(103, 232, 249, 0.5);
         }
 
         .ecosystem-title h2 {
           margin: 0;
-          color: #ffffff;
           font-size: clamp(23px, 3vw, 34px);
           line-height: 1.2;
-          font-weight: 800;
-          letter-spacing: -1px;
+          font-weight: 850;
+          letter-spacing: -0.8px;
+          background: linear-gradient(105deg, #67e8f9 0%, #93c5fd 45%, #e879f9 100%);
+          background-clip: text;
+          -webkit-background-clip: text;
+          color: transparent;
         }
 
         .ecosystem-subtitle {
@@ -1336,7 +1328,7 @@ export default function Home() {
           align-items: center;
           gap: 10px;
           padding: 12px 18px;
-          border: 1px solid rgba(125, 211, 252, 0.45);
+          border: 1px solid rgba(125, 211, 252, 0.42);
           border-radius: 12px;
           color: #eef6ff;
           background: rgba(56, 130, 246, 0.22);
@@ -1365,7 +1357,7 @@ export default function Home() {
 
         .eco-card {
           position: relative;
-          min-height: 214px;
+          min-height: 204px;
           display: flex;
           flex-direction: column;
           padding: 22px;
@@ -1385,15 +1377,6 @@ export default function Home() {
             border-color 0.25s ease,
             box-shadow 0.25s ease,
             background 0.25s ease;
-        }
-
-        .eco-top-stripe {
-          position: absolute;
-          top: 0;
-          left: 0;
-          right: 0;
-          height: 3px;
-          opacity: 0.95;
         }
 
         .eco-card:hover {
@@ -1487,32 +1470,13 @@ export default function Home() {
           display: flex;
           justify-content: space-between;
           align-items: center;
-          margin-top: 20px;
-          padding-top: 14px;
-          border-top: 1px solid rgba(160, 192, 240, 0.18);
+          margin-top: 18px;
+          padding-top: 12px;
+          border-top: 1px solid rgba(160, 192, 240, 0.16);
           color: #b8cef0;
           font-size: 11px;
           font-weight: 700;
           letter-spacing: 0.3px;
-        }
-
-        .eco-circle-arrow {
-          width: 29px;
-          height: 29px;
-          display: grid;
-          place-items: center;
-          border: 1px solid rgba(130, 180, 240, 0.38);
-          border-radius: 50%;
-          color: #80d8ff;
-          font-size: 15px;
-          transition: all 0.25s ease;
-        }
-
-        .eco-card:hover .eco-circle-arrow {
-          color: #ffffff;
-          background: #1879dc;
-          border-color: #55baff;
-          transform: rotate(45deg);
         }
 
         .ecosystem-footer {
@@ -2250,7 +2214,7 @@ export default function Home() {
           }
 
           .eco-card {
-            min-height: 190px;
+            min-height: 180px;
             padding: 20px;
           }
 
