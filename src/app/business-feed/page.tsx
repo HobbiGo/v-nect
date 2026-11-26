@@ -996,7 +996,6 @@ export default function BusinessFeedPage() {
               )}
             </div>
 
-            {/* STORIES LIVE & MULTI-UPLOAD VIDEO (30-60 DETIK) */}
             <div ref={videoSectionRef}>
               <LiveStoriesAndVideoComposer
                 currentAuthorName={company?.company_name || "Member"}
@@ -1438,6 +1437,8 @@ export default function BusinessFeedPage() {
                     </div>
 
                     <PostEngagementBar
+                      postId={post.id}
+                      currentUserId={userId || null}
                       onCommentClick={() => handleFocusImageComment(post.id, 0)}
                     />
 
