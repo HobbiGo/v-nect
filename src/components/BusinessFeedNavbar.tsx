@@ -52,6 +52,7 @@ export function BusinessFeedNavbar({ activePath = "/business-feed" }: BusinessFe
           background: #07111f;
           border-bottom: 1px solid rgba(255, 255, 255, 0.1);
           padding: 12px 24px;
+          font-family: var(--font-sans), Arial, sans-serif;
         }
 
         .bf-topbar-inner {
@@ -80,16 +81,16 @@ export function BusinessFeedNavbar({ activePath = "/business-feed" }: BusinessFe
         }
 
         .bf-brand-logo {
-          width: 30px;
-          height: 30px;
+          width: 32px;
+          height: 32px;
           border-radius: 7px;
           object-fit: cover;
         }
 
         .bf-brand-name {
-          font-size: 17px;
-          font-weight: 900;
-          letter-spacing: 0.8px;
+          font-size: 18px;
+          font-weight: 800;
+          letter-spacing: 0.6px;
           color: #ffffff;
         }
 
@@ -101,11 +102,11 @@ export function BusinessFeedNavbar({ activePath = "/business-feed" }: BusinessFe
           display: inline-flex;
           align-items: center;
           gap: 6px;
-          padding: 7px 13px;
+          padding: 8px 14px;
           border-radius: 8px;
           background: linear-gradient(110deg, #347cf0, #13bcae);
           color: #ffffff;
-          font-size: 12px;
+          font-size: 13px;
           font-weight: 700;
           text-decoration: none;
           white-space: nowrap;
@@ -123,11 +124,11 @@ export function BusinessFeedNavbar({ activePath = "/business-feed" }: BusinessFe
         }
 
         .bf-nav-item {
-          padding: 7px 12px;
+          padding: 8px 13px;
           border-radius: 8px;
           color: #d6e2f0;
-          font-size: 12px;
-          font-weight: 700;
+          font-size: 13px;
+          font-weight: 600;
           text-decoration: none;
           background: rgba(255, 255, 255, 0.05);
           border: 1px solid rgba(255, 255, 255, 0.1);
