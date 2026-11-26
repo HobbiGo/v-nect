@@ -1,6 +1,6 @@
 "use client";
 
-import { useEffect, useState } from "react";
+import { useEffect, useMemo, useState } from "react";
 import Link from "next/link";
 import { createClient } from "@/lib/supabase";
 import { AccountAuthModal } from "@/components/AccountAuthModal";
@@ -14,6 +14,26 @@ type HubCompany = {
   location?: string | null;
 };
 
+type FollowEntity = {
+  id: string;
+  name: string;
+  handle: string;
+  entityType: "personal" | "company";
+  subtitle: string;
+  destinationHref: string;
+  destinationLabel: string;
+};
+
+type RecentPostActivity = {
+  id: string;
+  title: string;
+  post_type: string;
+  created_at: string;
+  companies: {
+    company_name: string;
+  } | null;
+};
+
 type HubIdentityNote = {
   headline: string;
   summary: string;
@@ -21,6 +41,37 @@ type HubIdentityNote = {
 };
 
 const HUB_NOTE_STORAGE_KEY = "v-nect_v_hub_identity_v1";
+const FOLLOWS_STORAGE_KEY = "v-nect_v_hub_follows_v1";
+
+const DEFAULT_PERSONAL_PROFILES: FollowEntity[] = [
+  {
+    id: "personal-sophia",
+    name: "Sophia Lee",
+    handle: "@sophialee",
+    entityType: "personal",
+    subtitle: "Co-Founder & Product Lead · Personal Profile",
+    destinationHref: "/v-circle",
+    destinationLabel: "Connect in Circle →",
+  },
+  {
+    id: "personal-james",
+    name: "James Carter",
+    handle: "@jamescarter",
+    entityType: "personal",
+    subtitle: "Head of Strategic Partnerships · Personal Profile",
+    destinationHref: "/v-circle",
+    destinationLabel: "Connect in Circle →",
+  },
+  {
+    id: "personal-noah",
+    name: "Noah Smith",
+    handle: "@noahsmith",
+    entityType: "personal",
+    subtitle: "Full-Stack Platform Engineer · Personal Profile",
+    destinationHref: "/v-circle",
+    destinationLabel: "Connect in Circle →",
+  },
+];
 
 export default function VHubPage() {
   const supabase = createClient();
@@ -31,9 +82,16 @@ export default function VHubPage() {
   const [activeProfileType, setActiveProfileType] = useState<string>("personal");
   const [activeCompany, setActiveCompany] = useState<HubCompany | null>(null);
   const [allCompanies, setAllCompanies] = useState<HubCompany[]>([]);
+  const [recentPosts, setRecentPosts] = useState<RecentPostActivity[]>([]);
   const [authModalOpen, setAuthModalOpen] = useState(false);
   const [dbSyncActive, setDbSyncActive] = useState(false);
   const [savingIdentity, setSavingIdentity] = useState(false);
+
+  const [followedIds, setFollowedIds] = useState<string[]>(["personal-sophia"]);
+  const [followFilter, setFollowFilter] = useState<"all" | "company" | "personal">("all");
+  const [activityLog, setActivityLog] = useState<string[]>([
+    "Membuka dashboard v-hub & sinkronisasi aktivitas ekosistem.",
+  ]);
 
   const [identityNote, setIdentityNote] = useState<HubIdentityNote>({
     headline: "Global Business & Collaboration Hub",
@@ -45,9 +103,9 @@ export default function VHubPage() {
 
   useEffect(() => {
     try {
-      const raw = window.localStorage.getItem(HUB_NOTE_STORAGE_KEY);
-      if (raw) {
-        const parsed = JSON.parse(raw);
+      const rawNote = window.localStorage.getItem(HUB_NOTE_STORAGE_KEY);
+      if (rawNote) {
+        const parsed = JSON.parse(rawNote);
         if (parsed && typeof parsed === "object") {
           setIdentityNote((prev) => ({
             headline: typeof parsed.headline === "string" ? parsed.headline : prev.headline,
@@ -57,10 +115,26 @@ export default function VHubPage() {
           }));
         }
       }
+
+      const rawFollows = window.localStorage.getItem(FOLLOWS_STORAGE_KEY);
+      if (rawFollows) {
+        const parsedFollows = JSON.parse(rawFollows);
+        if (Array.isArray(parsedFollows)) {
+          setFollowedIds(parsedFollows.filter((x): x is string => typeof x === "string"));
+        }
+      }
     } catch {
-      // Ignore storage errors
+      // Ignore storage read errors
     }
   }, []);
+
+  function pushActivity(text: string) {
+    const timeStr = new Date().toLocaleTimeString("id-ID", {
+      hour: "2-digit",
+      minute: "2-digit",
+    });
+    setActivityLog((prev) => [`[${timeStr}] ${text}`, ...prev.slice(0, 7)]);
+  }
 
   async function loadUserIdentityFromDb(uid: string) {
     const { data, error } = await supabase
@@ -84,6 +158,20 @@ export default function VHubPage() {
     }
   }
 
+  async function loadUserFollowsFromDb(uid: string) {
+    const { data, error } = await supabase
+      .from("v_follows")
+      .select("target_key")
+      .eq("user_id", uid);
+
+    if (!error && Array.isArray(data)) {
+      setDbSyncActive(true);
+      if (data.length > 0) {
+        setFollowedIds(data.map((r) => r.target_key));
+      }
+    }
+  }
+
   async function syncHubData() {
     const {
       data: { user },
@@ -93,10 +181,29 @@ export default function VHubPage() {
       .from("companies")
       .select("id, company_name, logo_url, industry, description, location")
       .order("created_at", { ascending: false })
-      .limit(10);
+      .limit(12);
 
     if (Array.isArray(companiesList)) {
       setAllCompanies(companiesList as HubCompany[]);
+    }
+
+    const { data: postsList } = await supabase
+      .from("business_posts")
+      .select(`
+        id,
+        title,
+        post_type,
+        created_at,
+        companies (
+          company_name
+        )
+      `)
+      .eq("status", "published")
+      .order("created_at", { ascending: false })
+      .limit(5);
+
+    if (Array.isArray(postsList)) {
+      setRecentPosts(postsList as unknown as RecentPostActivity[]);
     }
 
     if (!user) {
@@ -145,6 +252,7 @@ export default function VHubPage() {
     }
 
     await loadUserIdentityFromDb(user.id);
+    await loadUserFollowsFromDb(user.id);
   }
 
   useEffect(() => {
@@ -201,14 +309,79 @@ export default function VHubPage() {
       if (!error) {
         setDbSyncActive(true);
         setSavedNotice("Ringkasan identitas v-hub tersimpan ke Supabase.");
+        pushActivity(`Memperbarui headline v-hub: "${identityNote.headline.trim()}"`);
       } else {
-        setSavedNotice("Tersimpan secara lokal (tabel v_hub_identities belum aktif di DB).");
+        setSavedNotice(
+          "Tersimpan secara lokal — jalankan SQL tabel v_hub_identities di Supabase agar tersimpan di DB."
+        );
+        pushActivity("Menyimpan ringkasan v-hub secara lokal.");
       }
       return;
     }
 
     setSavingIdentity(false);
     setSavedNotice("Ringkasan identitas v-hub tersimpan secara lokal.");
+    pushActivity("Menyimpan ringkasan v-hub secara lokal.");
+  }
+
+  const followableEntities = useMemo<FollowEntity[]>(() => {
+    const companyEntities: FollowEntity[] = allCompanies.map((c) => ({
+      id: `company-${c.id}`,
+      name: c.company_name,
+      handle: `@${c.company_name.toLowerCase().replace(/[^a-z0-9]/g, "") || "company"}`,
+      entityType: "company",
+      subtitle: `${c.industry || "Company"} · ${c.location || "v-nect Business"}`,
+      destinationHref: "/business-feed",
+      destinationLabel: "Masuk ke Feed →",
+    }));
+
+    return [...companyEntities, ...DEFAULT_PERSONAL_PROFILES];
+  }, [allCompanies]);
+
+  const filteredFollowables = useMemo(() => {
+    if (followFilter === "all") return followableEntities;
+    return followableEntities.filter((item) => item.entityType === followFilter);
+  }, [followableEntities, followFilter]);
+
+  async function toggleFollowEntity(entity: FollowEntity) {
+    const isFollowing = followedIds.includes(entity.id);
+    const nextIds = isFollowing
+      ? followedIds.filter((id) => id !== entity.id)
+      : [...followedIds, entity.id];
+
+    setFollowedIds(nextIds);
+    try {
+      window.localStorage.setItem(FOLLOWS_STORAGE_KEY, JSON.stringify(nextIds));
+    } catch {
+      // Ignore storage errors
+    }
+
+    if (isFollowing) {
+      setSavedNotice(`Berhenti mengikuti ${entity.name}.`);
+      pushActivity(`Unfollow ${entity.entityType === "company" ? "company" : "profil"} ${entity.name}.`);
+      if (currentUserId) {
+        await supabase
+          .from("v_follows")
+          .delete()
+          .eq("user_id", currentUserId)
+          .eq("target_key", entity.id);
+      }
+      return;
+    }
+
+    setSavedNotice(`Sekarang mengikuti ${entity.name}.`);
+    pushActivity(`Follow ${entity.entityType === "company" ? "company" : "profil"} ${entity.name}.`);
+    if (currentUserId) {
+      await supabase.from("v_follows").upsert(
+        {
+          user_id: currentUserId,
+          target_key: entity.id,
+          target_name: entity.name,
+          target_type: entity.entityType,
+        },
+        { onConflict: "user_id,target_key" }
+      );
+    }
   }
 
   return (
@@ -256,7 +429,7 @@ export default function VHubPage() {
               v-<span>hub.</span>
             </h1>
             <p>
-              Build and manage your personal and company identity, connect active profiles, and jump across v-nect workspaces.
+              Build and manage your personal and company identity, follow profiles or companies, monitor activity, and jump straight into client workspaces.
             </p>
           </div>
 
@@ -308,6 +481,10 @@ export default function VHubPage() {
                     <strong>{activeCompany?.company_name || "Not selected yet"}</strong>
                   </div>
                   <div>
+                    <span>Following</span>
+                    <strong>{followedIds.length} profiles / companies</strong>
+                  </div>
+                  <div>
                     <span>Registered Companies</span>
                     <strong>{allCompanies.length} in database</strong>
                   </div>
@@ -316,7 +493,7 @@ export default function VHubPage() {
             ) : (
               <div className="hub-guest-box">
                 <p>
-                  Masuk ke akun v-nect Anda untuk melihat status profil aktif dan perusahaan yang terhubung.
+                  Masuk ke akun v-nect Anda untuk melihat status profil aktif, menyimpan data ke Supabase, dan mengikuti akun/perusahaan.
                 </p>
                 <button
                   type="button"
@@ -376,6 +553,114 @@ export default function VHubPage() {
             </form>
           </div>
         </div>
+
+        <section className="hub-section">
+          <div className="hub-section-head">
+            <div>
+              <span className="hub-eyebrow">PERSONAL &amp; COMPANY FOLLOW DIRECTORY</span>
+              <h2>Follow Profiles &amp; Connect to Workspaces</h2>
+            </div>
+
+            <div className="hub-filter-group">
+              <button
+                type="button"
+                className={followFilter === "all" ? "hub-chip active" : "hub-chip"}
+                onClick={() => setFollowFilter("all")}
+              >
+                All ({followableEntities.length})
+              </button>
+              <button
+                type="button"
+                className={followFilter === "company" ? "hub-chip active" : "hub-chip"}
+                onClick={() => setFollowFilter("company")}
+              >
+                Company
+              </button>
+              <button
+                type="button"
+                className={followFilter === "personal" ? "hub-chip active" : "hub-chip"}
+                onClick={() => setFollowFilter("personal")}
+              >
+                Personal
+              </button>
+            </div>
+          </div>
+
+          <div className="hub-follow-grid">
+            {filteredFollowables.map((item) => {
+              const isFollowing = followedIds.includes(item.id);
+              return (
+                <article className="hub-follow-card" key={item.id}>
+                  <div className="hub-follow-top">
+                    <span className="hub-type-pill">
+                      {item.entityType === "company" ? "COMPANY" : "PERSONAL"}
+                    </span>
+                    <small>{item.handle}</small>
+                  </div>
+                  <h3>{item.name}</h3>
+                  <p>{item.subtitle}</p>
+                  <div className="hub-follow-actions">
+                    <button
+                      type="button"
+                      className={isFollowing ? "hub-btn-following" : "hub-btn-primary"}
+                      onClick={() => toggleFollowEntity(item)}
+                    >
+                      {isFollowing ? "Following ✓" : "+ Follow"}
+                    </button>
+                    <Link href={item.destinationHref} className="hub-connect-link">
+                      {item.destinationLabel}
+                    </Link>
+                  </div>
+                </article>
+              );
+            })}
+          </div>
+        </section>
+
+        <section className="hub-section">
+          <div className="hub-section-head">
+            <div>
+              <span className="hub-eyebrow">LIVE ACTIVITY &amp; FEED UPDATES</span>
+              <h2>Recent Ecosystem Activity</h2>
+            </div>
+            <Link href="/business-feed" className="hub-connect-link">
+              Lihat Semua Post di Feed →
+            </Link>
+          </div>
+
+          <div className="hub-grid">
+            <div className="hub-card">
+              <span className="hub-eyebrow">PUBLISHED BUSINESS POSTS</span>
+              <h2>Latest Feed Activity</h2>
+              {recentPosts.length === 0 ? (
+                <p className="hub-muted">Belum ada aktivitas post terbaru.</p>
+              ) : (
+                <ul className="hub-activity-list">
+                  {recentPosts.map((post) => (
+                    <li key={post.id}>
+                      <strong>{post.title}</strong>
+                      <small>
+                        {post.companies?.company_name || "Company"} · {post.post_type}
+                      </small>
+                    </li>
+                  ))}
+                </ul>
+              )}
+            </div>
+
+            <div className="hub-card">
+              <span className="hub-eyebrow">YOUR SESSION &amp; FOLLOW LOG</span>
+              <h2>Recent Hub Actions</h2>
+              <ul className="hub-activity-list">
+                {activityLog.map((entry, idx) => (
+                  <li key={`${entry}-${idx}`}>
+                    <span>{entry}</span>
+                  </li>
+                ))}
+              </ul>
+            </div>
+          </div>
+        </section>
 
         <section className="hub-section">
           <div className="hub-section-head">
@@ -548,7 +833,7 @@ export default function VHubPage() {
           color: #d2e2f3;
           font-size: 15px;
           line-height: 1.65;
-          max-width: 560px;
+          max-width: 580px;
         }
 
         .hub-hero-actions {
@@ -564,9 +849,9 @@ export default function VHubPage() {
           border: none;
           background: linear-gradient(110deg, #347cf0, #13bcae);
           color: #ffffff;
-          padding: 10px 16px;
+          padding: 9px 15px;
           border-radius: 9px;
-          font-size: 13px;
+          font-size: 12px;
           font-weight: 700;
           text-decoration: none;
           cursor: pointer;
@@ -584,6 +869,17 @@ export default function VHubPage() {
           font-size: 13px;
           font-weight: 700;
           text-decoration: none;
+        }
+
+        .hub-btn-following {
+          border: 1px solid rgba(19, 200, 181, 0.45);
+          background: rgba(19, 200, 181, 0.16);
+          color: #7ee8dc;
+          padding: 9px 14px;
+          border-radius: 9px;
+          font-size: 12px;
+          font-weight: 700;
+          cursor: pointer;
         }
 
         .hub-banner {
@@ -607,14 +903,15 @@ export default function VHubPage() {
         }
 
         .hub-grid {
-          margin-top: 26px;
+          margin-top: 20px;
           display: grid;
           grid-template-columns: repeat(2, minmax(0, 1fr));
           gap: 18px;
         }
 
         .hub-card,
-        .hub-shortcut-card {
+        .hub-shortcut-card,
+        .hub-follow-card {
           background: #0d1e34;
           border: 1px solid rgba(255, 255, 255, 0.09);
           border-radius: 14px;
@@ -676,7 +973,8 @@ export default function VHubPage() {
           color: #9cb2cc;
         }
 
-        .hub-guest-box p {
+        .hub-guest-box p,
+        .hub-muted {
           margin: 0 0 14px;
           color: #b7c8dd;
           font-size: 14px;
@@ -713,13 +1011,117 @@ export default function VHubPage() {
         }
 
         .hub-section {
-          margin-top: 32px;
+          margin-top: 34px;
+        }
+
+        .hub-section-head {
+          display: flex;
+          justify-content: space-between;
+          align-items: flex-end;
+          gap: 12px;
+          flex-wrap: wrap;
+          margin-bottom: 14px;
         }
 
         .hub-section-head h2 {
-          margin: 4px 0 14px;
+          margin: 4px 0 0;
           font-size: 24px;
           font-weight: 800;
+        }
+
+        .hub-filter-group {
+          display: flex;
+          gap: 8px;
+          flex-wrap: wrap;
+        }
+
+        .hub-chip {
+          border: 1px solid rgba(255, 255, 255, 0.14);
+          background: #0d1e34;
+          color: #c8d7ea;
+          padding: 6px 12px;
+          border-radius: 999px;
+          font-size: 12px;
+          font-weight: 700;
+          cursor: pointer;
+        }
+
+        .hub-chip.active {
+          background: rgba(19, 200, 181, 0.2);
+          border-color: #13c8b5;
+          color: #7ee8dc;
+        }
+
+        .hub-follow-grid {
+          display: grid;
+          grid-template-columns: repeat(3, minmax(0, 1fr));
+          gap: 16px;
+        }
+
+        .hub-follow-top,
+        .hub-follow-actions {
+          display: flex;
+          align-items: center;
+          justify-content: space-between;
+          gap: 10px;
+          flex-wrap: wrap;
+        }
+
+        .hub-type-pill {
+          font-size: 10px;
+          font-weight: 800;
+          padding: 3px 9px;
+          border-radius: 999px;
+          background: rgba(52, 124, 240, 0.2);
+          color: #8cc0ff;
+        }
+
+        .hub-follow-top small {
+          color: #9cb2cc;
+          font-size: 12px;
+        }
+
+        .hub-follow-card h3 {
+          margin: 8px 0 4px;
+          font-size: 17px;
+        }
+
+        .hub-follow-card p {
+          margin: 0 0 12px;
+          font-size: 12px;
+          color: #b4c5da;
+          line-height: 1.55;
+        }
+
+        .hub-connect-link {
+          color: #7ee8dc;
+          text-decoration: none;
+          font-size: 12px;
+          font-weight: 700;
+        }
+
+        .hub-activity-list {
+          list-style: none;
+          margin: 0;
+          padding: 0;
+          display: flex;
+          flex-direction: column;
+          gap: 10px;
+        }
+
+        .hub-activity-list li {
+          padding: 10px 12px;
+          border-radius: 9px;
+          background: rgba(255, 255, 255, 0.04);
+          font-size: 13px;
+          display: flex;
+          flex-direction: column;
+          gap: 2px;
+        }
+
+        .hub-activity-list small {
+          color: #9cb2cc;
+          font-size: 11px;
         }
 
         .hub-shortcuts-grid {
@@ -768,9 +1170,16 @@ export default function VHubPage() {
           border-top: 1px solid rgba(255, 255, 255, 0.06);
         }
 
+        @media (max-width: 900px) {
+          .hub-follow-grid {
+            grid-template-columns: repeat(2, minmax(0, 1fr));
+          }
+        }
+
         @media (max-width: 820px) {
           .hub-grid,
-          .hub-shortcuts-grid {
+          .hub-shortcuts-grid,
+          .hub-follow-grid {
             grid-template-columns: 1fr;
           }
         }
