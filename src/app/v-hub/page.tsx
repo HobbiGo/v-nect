@@ -32,6 +32,8 @@ export default function VHubPage() {
   const [activeCompany, setActiveCompany] = useState<HubCompany | null>(null);
   const [allCompanies, setAllCompanies] = useState<HubCompany[]>([]);
   const [authModalOpen, setAuthModalOpen] = useState(false);
+  const [dbSyncActive, setDbSyncActive] = useState(false);
+  const [savingIdentity, setSavingIdentity] = useState(false);
 
   const [identityNote, setIdentityNote] = useState<HubIdentityNote>({
     headline: "Global Business & Collaboration Hub",
@@ -60,6 +62,28 @@ export default function VHubPage() {
     }
   }, []);
 
+  async function loadUserIdentityFromDb(uid: string) {
+    const { data, error } = await supabase
+      .from("v_hub_identities")
+      .select("headline, summary, focus_areas")
+      .eq("user_id", uid)
+      .maybeSingle();
+
+    if (!error) {
+      setDbSyncActive(true);
+      if (data) {
+        setIdentityNote({
+          headline: data.headline || "Global Business & Collaboration Hub",
+          summary:
+            data.summary ||
+            "Unified identity space connecting personal credentials, company profiles, live feeds, and partner networks.",
+          focusAreas:
+            data.focus_areas || "B2B Partnerships, Video Commerce, Regional Expansion",
+        });
+      }
+    }
+  }
+
   async function syncHubData() {
     const {
       data: { user },
@@ -81,6 +105,7 @@ export default function VHubPage() {
       setCurrentUserName(null);
       setActiveProfileType("personal");
       setActiveCompany(null);
+      setDbSyncActive(false);
       return;
     }
 
@@ -118,6 +143,8 @@ export default function VHubPage() {
     } else {
       setActiveCompany(null);
     }
+
+    await loadUserIdentityFromDb(user.id);
   }
 
   useEffect(() => {
@@ -145,16 +172,43 @@ export default function VHubPage() {
     setCurrentUserEmail(null);
     setCurrentUserName(null);
     setActiveCompany(null);
+    setDbSyncActive(false);
   }
 
-  function handleSaveIdentity(e: React.FormEvent) {
+  async function handleSaveIdentity(e: React.FormEvent) {
     e.preventDefault();
+    setSavingIdentity(true);
+
     try {
       window.localStorage.setItem(HUB_NOTE_STORAGE_KEY, JSON.stringify(identityNote));
-      setSavedNotice("Ringkasan identitas v-hub berhasil disimpan.");
     } catch {
-      setSavedNotice("Tidak dapat menyimpan ke penyimpanan lokal.");
+      // Ignore storage errors
     }
+
+    if (currentUserId) {
+      const { error } = await supabase.from("v_hub_identities").upsert(
+        {
+          user_id: currentUserId,
+          headline: identityNote.headline.trim(),
+          summary: identityNote.summary.trim(),
+          focus_areas: identityNote.focusAreas.trim(),
+          updated_at: new Date().toISOString(),
+        },
+        { onConflict: "user_id" }
+      );
+
+      setSavingIdentity(false);
+      if (!error) {
+        setDbSyncActive(true);
+        setSavedNotice("Ringkasan identitas v-hub tersimpan ke Supabase.");
+      } else {
+        setSavedNotice("Tersimpan secara lokal (tabel v_hub_identities belum aktif di DB).");
+      }
+      return;
+    }
+
+    setSavingIdentity(false);
+    setSavedNotice("Ringkasan identitas v-hub tersimpan secara lokal.");
   }
 
   return (
@@ -316,8 +370,8 @@ export default function VHubPage() {
                 />
               </label>
 
-              <button type="submit" className="hub-btn-primary">
-                Simpan Ringkasan Hub
+              <button type="submit" className="hub-btn-primary" disabled={savingIdentity}>
+                {savingIdentity ? "Menyimpan..." : "Simpan Ringkasan Hub"}
               </button>
             </form>
           </div>
@@ -354,7 +408,11 @@ export default function VHubPage() {
       </section>
 
       <footer className="hub-footer">
-        v-nect v-hub · © {new Date().getFullYear()} v-nect
+        v-nect v-hub ·{" "}
+        {currentUserId
+          ? `Signed in as ${currentUserName}${dbSyncActive ? " (Supabase Sync Active)" : " (Local Sync)"}`
+          : "Public Preview"}{" "}
+        · © {new Date().getFullYear()} v-nect
       </footer>
 
       <AccountAuthModal
