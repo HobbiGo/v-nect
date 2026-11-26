@@ -34,7 +34,7 @@ type FocusTarget = {
 const MAX_IMAGES = 5;
 const LOCAL_CAPTIONS_STORAGE_KEY = "voinnect_business_post_image_captions_v1";
 const BRAND_LOGO_SRC = "/images/voinnect-logo.jpg";
-const HERO_NETWORK_IMG_SRC = "/images/picture2-website.jpg";
+const HERO_NETWORK_IMG_SRC = "/images/logonew-voinnect.png";
 
 const modules = [
   {
@@ -291,14 +291,11 @@ export default function Home() {
 
         <div className="hero-visual">
           <div className="hero-ambient-glow" />
-          <div className="hero-network-stage">
-            <img
-              src={HERO_NETWORK_IMG_SRC}
-              alt="VOINNECT Global Business Network"
-              className="hero-network-img"
-            />
-            <div className="hero-network-blend" />
-          </div>
+          <img
+            src={HERO_NETWORK_IMG_SRC}
+            alt="VOINNECT Global Business Network"
+            className="hero-network-img"
+          />
           <div className="orbit-label label-one">BUSINESS</div>
           <div className="orbit-label label-two">CONNECT</div>
           <div className="orbit-label label-three">COMMUNITY</div>
@@ -683,23 +680,23 @@ export default function Home() {
 
         .hero-visual {
           position: relative;
-          min-height: 430px;
+          min-height: 410px;
           width: 100%;
           display: grid;
           place-items: center;
           background: transparent;
-          padding: 14px 4px;
+          padding: 20px 8px;
         }
 
         .hero-ambient-glow {
           position: absolute;
-          width: 480px;
-          height: 320px;
+          width: 440px;
+          height: 290px;
           border-radius: 999px;
           background: radial-gradient(
             circle,
-            rgba(52, 124, 240, 0.3) 0%,
-            rgba(19, 200, 181, 0.16) 52%,
+            rgba(52, 124, 240, 0.28) 0%,
+            rgba(19, 200, 181, 0.16) 55%,
             rgba(7, 17, 31, 0) 80%
           );
           filter: blur(24px);
@@ -707,66 +704,16 @@ export default function Home() {
           z-index: 1;
         }
 
-        .hero-network-stage {
+        .hero-network-img {
           position: relative;
           z-index: 2;
           width: 100%;
-          max-width: 650px;
-          aspect-ratio: 16 / 10;
-          display: grid;
-          place-items: center;
-          overflow: hidden;
-          background: transparent;
-          -webkit-mask-image: radial-gradient(
-            ellipse 68% 64% at 50% 50%,
-            #000 44%,
-            rgba(0, 0, 0, 0.82) 68%,
-            rgba(0, 0, 0, 0.36) 86%,
-            transparent 100%
-          );
-          mask-image: radial-gradient(
-            ellipse 68% 64% at 50% 50%,
-            #000 44%,
-            rgba(0, 0, 0, 0.82) 68%,
-            rgba(0, 0, 0, 0.36) 86%,
-            transparent 100%
-          );
-        }
-
-        .hero-network-img {
-          width: 100%;
-          height: 100%;
-          object-fit: cover;
-          object-position: center 48%;
-          transform: scale(1.06);
-          filter: brightness(1.22) contrast(1.12) saturate(1.18);
-        }
-
-        .hero-network-blend {
-          position: absolute;
-          inset: 0;
-          pointer-events: none;
-          background:
-            radial-gradient(
-              ellipse 70% 66% at 50% 50%,
-              rgba(7, 17, 31, 0) 46%,
-              rgba(7, 17, 31, 0.38) 76%,
-              #07111f 100%
-            ),
-            linear-gradient(
-              to bottom,
-              #07111f 0%,
-              rgba(7, 17, 31, 0) 16%,
-              rgba(7, 17, 31, 0) 84%,
-              #07111f 100%
-            ),
-            linear-gradient(
-              to right,
-              #07111f 0%,
-              rgba(7, 17, 31, 0) 14%,
-              rgba(7, 17, 31, 0) 86%,
-              #07111f 100%
-            );
+          max-width: 640px;
+          max-height: 380px;
+          object-fit: contain;
+          object-position: center;
+          filter: drop-shadow(0 12px 28px rgba(19, 200, 181, 0.2))
+            brightness(1.06) contrast(1.06);
         }
 
         .orbit-label {
@@ -776,29 +723,29 @@ export default function Home() {
           font-weight: 800;
           letter-spacing: 1.4px;
           color: #7ee8dc;
-          background: rgba(13, 33, 58, 0.88);
+          background: rgba(13, 33, 58, 0.9);
           border: 1px solid rgba(126, 232, 220, 0.28);
           padding: 5px 10px;
           border-radius: 999px;
         }
 
         .label-one {
-          top: 12px;
+          top: 10px;
           left: 3%;
         }
 
         .label-two {
-          top: 12px;
+          top: 10px;
           right: 3%;
         }
 
         .label-three {
-          bottom: 12px;
+          bottom: 10px;
           left: 3%;
         }
 
         .label-four {
-          bottom: 12px;
+          bottom: 10px;
           right: 3%;
         }
 
@@ -1140,11 +1087,7 @@ export default function Home() {
           }
 
           .hero-visual {
-            min-height: 290px;
-          }
-
-          .hero-network-stage {
-            max-width: 100%;
+            min-height: 270px;
           }
 
           .business-inner {
