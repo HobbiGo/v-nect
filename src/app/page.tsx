@@ -240,7 +240,7 @@ export default function Home() {
           </span>
           <div className="logo-text-wrap">
             <div className="logo-main">
-              VOIN<span>NECT</span>
+              v<span>-nect</span>
             </div>
             <small>GLOBAL BUSINESS ECOSYSTEM</small>
           </div>
@@ -537,7 +537,7 @@ export default function Home() {
 
       <footer className="footer">
         <div className="logo-main">
-          VOIN<span>NECT</span>
+          v<span>-nect</span>
         </div>
         <p>Connect Beyond Boundaries.</p>
         <small>© 2026 v-nect. All rights reserved.</small>
