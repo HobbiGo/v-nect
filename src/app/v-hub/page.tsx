@@ -120,7 +120,7 @@ const WORKSPACE_CARDS: WorkspaceCardItem[] = [
     badge: "06 · COMMERCE",
     title: "Market & Suppliers",
     description:
-      "Browse products, services, and verified suppliers, inspect media, comment, and request info.",
+      "Browse products, services, and verified suppliers, inspect photos, comment, and request info.",
     ctaLabel: "Open Market",
     href: "/v-market",
     accent: "linear-gradient(135deg, #18365e, #2563eb)",
@@ -130,7 +130,7 @@ const WORKSPACE_CARDS: WorkspaceCardItem[] = [
     badge: "04 · BUSINESS FEED",
     title: "Publish Updates & Launches",
     description:
-      "Share product launches, promo videos, and company updates directly to the business feed.",
+      "Share product launches, promo updates, and company news directly to the business feed.",
     ctaLabel: "Create Post",
     href: "/business-feed",
     accent: "linear-gradient(135deg, #114357, #13bcae)",
@@ -414,7 +414,7 @@ export default function VHubPage() {
         pushActivity(`Memperbarui headline v-hub: "${identityNote.headline.trim()}"`);
       } else {
         setSavedNotice(
-          "Tersimpan secara lokal — pastikan tabel v_hub_identities sudah aktif di Supabase."
+          `Tersimpan lokal (${error.message}). Cek tabel/policy v_hub_identities di Supabase.`
         );
         pushActivity("Menyimpan ringkasan v-hub secara lokal.");
       }
@@ -495,11 +495,14 @@ export default function VHubPage() {
         `Unfollow ${entity.entityType === "company" ? "company" : "profil"} ${entity.name}.`
       );
       if (currentUserId) {
-        await supabase
+        const { error } = await supabase
           .from("v_follows")
           .delete()
           .eq("user_id", currentUserId)
           .eq("target_key", entity.id);
+        if (error) {
+          setSavedNotice(`Unfollow lokal (${error.message}).`);
+        }
       }
       return;
     }
@@ -509,7 +512,7 @@ export default function VHubPage() {
       `Follow ${entity.entityType === "company" ? "company" : "profil"} ${entity.name}.`
     );
     if (currentUserId) {
-      await supabase.from("v_follows").upsert(
+      const { error } = await supabase.from("v_follows").upsert(
         {
           user_id: currentUserId,
           target_key: entity.id,
@@ -518,6 +521,9 @@ export default function VHubPage() {
         },
         { onConflict: "user_id,target_key" }
       );
+      if (error) {
+        setSavedNotice(`Follow lokal (${error.message}).`);
+      }
     }
   }
 
