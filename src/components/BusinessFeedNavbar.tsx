@@ -34,7 +34,35 @@ export function BusinessFeedNavbar({
   }
 
   useEffect(() => {
-    refreshSessionAccount();
+    let active = true;
+
+    async function initAccount() {
+      if (!active) return;
+      await refreshSessionAccount();
+    }
+
+    initAccount();
+
+    const {
+      data: { subscription },
+    } = supabase.auth.onAuthStateChange((_event, session) => {
+      if (!active) return;
+      const user = session?.user;
+      if (!user) {
+        setAccountLabel(null);
+      } else {
+        const displayName =
+          (user.user_metadata?.full_name as string | undefined)?.trim() ||
+          user.email?.split("@")[0] ||
+          "Account";
+        setAccountLabel(displayName);
+      }
+    });
+
+    return () => {
+      active = false;
+      subscription.unsubscribe();
+    };
     // eslint-disable-next-line react-hooks/exhaustive-deps
   }, []);
 
@@ -72,6 +100,14 @@ export function BusinessFeedNavbar({
               }
             >
               Business Feed
+            </Link>
+            <Link
+              href="/v-meet"
+              className={
+                activePath === "/v-meet" ? "bf-nav-item active" : "bf-nav-item"
+              }
+            >
+              v-meet
             </Link>
             <Link href="/personal" className="bf-nav-item">
               Personal
@@ -206,6 +242,7 @@ export function BusinessFeedNavbar({
             display: inline-flex;
             align-items: center;
             gap: 8px;
+            flex-wrap: wrap;
           }
 
           .bf-account-pill {
@@ -235,6 +272,19 @@ export function BusinessFeedNavbar({
             background: rgba(255, 255, 255, 0.06);
             border: 1px solid rgba(255, 255, 255, 0.22);
             color: #e6effa;
+          }
+
+          @media (max-width: 540px) {
+            .bf-topbar {
+              padding: 10px 14px;
+            }
+
+            .bf-nav-item,
+            .bf-auth-btn,
+            .bf-home-btn {
+              padding: 7px 11px;
+              font-size: 12px;
+            }
           }
         `}</style>
       </header>
