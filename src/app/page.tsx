@@ -33,6 +33,7 @@ type FocusTarget = {
 
 const MAX_IMAGES = 5;
 const LOCAL_CAPTIONS_STORAGE_KEY = "voinnect_business_post_image_captions_v1";
+const BRAND_LOGO_SRC = "/images/voinnect-logo.jpg";
 
 const modules = [
   {
@@ -229,10 +230,17 @@ export default function Home() {
     <main className="home-page">
       <header className="navbar">
         <a className="logo" href="#">
-          <div className="logo-main">
-            VOIN<span>NECT</span>
+          <img
+            src={BRAND_LOGO_SRC}
+            alt="VOINNECT logo"
+            className="logo-mark"
+          />
+          <div className="logo-text-wrap">
+            <div className="logo-main">
+              VOIN<span>NECT</span>
+            </div>
+            <small>GLOBAL BUSINESS ECOSYSTEM</small>
           </div>
-          <small>GLOBAL BUSINESS ECOSYSTEM</small>
         </a>
 
         <nav>
@@ -279,11 +287,12 @@ export default function Home() {
         </div>
 
         <div className="hero-visual">
-          <div className="orbit-ring" />
-          <div className="core">
-            <span>V</span>
-          </div>
-
+          <div className="hero-glow" />
+          <img
+            src={BRAND_LOGO_SRC}
+            alt="VOINNECT Global Ecosystem"
+            className="hero-logo-img"
+          />
           <div className="orbit-label label-one">BUSINESS</div>
           <div className="orbit-label label-two">CONNECT</div>
           <div className="orbit-label label-three">COMMUNITY</div>
@@ -462,7 +471,12 @@ export default function Home() {
       </section>
 
       <footer className="footer">
-        <div className="logo footer-logo">
+        <div className="footer-brand">
+          <img
+            src={BRAND_LOGO_SRC}
+            alt="VOINNECT logo"
+            className="footer-logo-mark"
+          />
           <div className="logo-main">
             VOIN<span>NECT</span>
           </div>
@@ -495,20 +509,31 @@ export default function Home() {
           color: #ffffff;
           text-decoration: none;
           display: inline-flex;
-          flex-direction: column;
+          align-items: center;
+          gap: 10px;
           flex-shrink: 0;
         }
 
+        .logo-mark {
+          width: 38px;
+          height: 38px;
+          border-radius: 9px;
+          object-fit: cover;
+          border: 1px solid rgba(126, 232, 220, 0.3);
+          box-shadow: 0 0 14px rgba(52, 124, 240, 0.25);
+        }
+
+        .logo-text-wrap {
+          display: inline-flex;
+          flex-direction: column;
+        }
+
         .logo-main {
-          font-size: 22px;
+          font-size: 21px;
           font-weight: 900;
           letter-spacing: 1px;
           white-space: nowrap;
           line-height: 1.1;
-        }
-
-        .footer-logo {
-          align-items: center;
         }
 
         .logo span,
@@ -557,9 +582,9 @@ export default function Home() {
         .hero {
           max-width: 1200px;
           margin: 0 auto;
-          padding: 64px 24px 52px;
+          padding: 60px 24px 52px;
           display: grid;
-          grid-template-columns: minmax(0, 1.35fr) minmax(0, 0.85fr);
+          grid-template-columns: minmax(0, 1.25fr) minmax(0, 0.95fr);
           gap: 36px;
           align-items: center;
         }
@@ -637,39 +662,57 @@ export default function Home() {
 
         .hero-visual {
           position: relative;
-          min-height: 240px;
+          min-height: 300px;
           display: grid;
           place-items: center;
+          border-radius: 22px;
+          padding: 28px 20px;
+          overflow: hidden;
+          background: radial-gradient(
+            circle at center,
+            rgba(52, 124, 240, 0.22) 0%,
+            rgba(19, 200, 181, 0.1) 42%,
+            rgba(7, 17, 31, 0) 75%
+          );
+        }
+
+        .hero-glow {
+          position: absolute;
+          width: 240px;
+          height: 240px;
+          border-radius: 999px;
           background: radial-gradient(
             circle,
-            rgba(19, 200, 181, 0.12) 0%,
-            rgba(7, 17, 31, 0) 70%
+            rgba(19, 200, 181, 0.24),
+            rgba(52, 124, 240, 0.14),
+            transparent 72%
           );
-          border-radius: 20px;
-          padding: 20px;
+          filter: blur(10px);
+          pointer-events: none;
         }
 
-        .orbit-ring {
-          position: absolute;
-          width: 170px;
-          height: 170px;
-          border-radius: 999px;
-          border: 1px dashed rgba(126, 232, 220, 0.3);
-        }
-
-        .core {
+        .hero-logo-img {
           position: relative;
           z-index: 2;
-          width: 82px;
-          height: 82px;
-          border-radius: 999px;
-          background: linear-gradient(135deg, #347cf0, #13bcae);
-          display: grid;
-          place-items: center;
-          font-size: 32px;
-          font-weight: 900;
-          color: #ffffff;
-          box-shadow: 0 10px 28px rgba(19, 200, 181, 0.25);
+          width: 190px;
+          max-width: 68%;
+          max-height: 230px;
+          object-fit: cover;
+          border-radius: 20px;
+          mix-blend-mode: screen;
+          filter: contrast(1.06) saturate(1.12);
+          -webkit-mask-image: radial-gradient(
+            ellipse at center,
+            #000 62%,
+            rgba(0, 0, 0, 0.65) 82%,
+            transparent 100%
+          );
+          mask-image: radial-gradient(
+            ellipse at center,
+            #000 62%,
+            rgba(0, 0, 0, 0.65) 82%,
+            transparent 100%
+          );
         }
 
         .orbit-label {
@@ -679,30 +722,31 @@ export default function Home() {
           font-weight: 800;
           letter-spacing: 1.4px;
           color: #7ee8dc;
-          background: #0d213a;
+          background: rgba(13, 33, 58, 0.88);
           border: 1px solid rgba(126, 232, 220, 0.28);
           padding: 5px 10px;
           border-radius: 999px;
+          backdrop-filter: blur(4px);
         }
 
         .label-one {
-          top: 18px;
-          left: 12%;
+          top: 14px;
+          left: 8%;
         }
 
         .label-two {
-          top: 18px;
-          right: 12%;
+          top: 14px;
+          right: 8%;
         }
 
         .label-three {
-          bottom: 18px;
-          left: 12%;
+          bottom: 14px;
+          left: 8%;
         }
 
         .label-four {
-          bottom: 18px;
-          right: 12%;
+          bottom: 14px;
+          right: 8%;
         }
 
         .platform-section,
@@ -1004,6 +1048,22 @@ export default function Home() {
           border-top: 1px solid rgba(255, 255, 255, 0.06);
         }
 
+        .footer-brand {
+          display: inline-flex;
+          align-items: center;
+          justify-content: center;
+          gap: 10px;
+          color: #ffffff;
+        }
+
+        .footer-logo-mark {
+          width: 30px;
+          height: 30px;
+          border-radius: 8px;
+          object-fit: cover;
+          border: 1px solid rgba(126, 232, 220, 0.25);
+        }
+
         .footer p {
           margin: 8px 0 4px;
           font-size: 13px;
@@ -1040,6 +1100,10 @@ export default function Home() {
 
           .hero h1 {
             font-size: 32px;
+          }
+
+          .hero-logo-img {
+            width: 165px;
           }
 
           .business-inner {
