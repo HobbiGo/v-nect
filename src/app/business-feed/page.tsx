@@ -52,6 +52,7 @@ type PublishedVideoClip = {
   endSec: number;
   playUrl: string;
   storageUploaded: boolean;
+  caption: string;
 };
 
 type LocalCaptionMap = Record<string, Record<string, string>>;
@@ -116,6 +117,33 @@ function extractVideoUrlFromPost(post: Post): string | null {
   }
 
   return null;
+}
+
+function extractVideoCaptionFromPost(post: Post): string {
+  const text = post.content || "";
+  const match = text.match(/\[VideoCaption:\s*([^\]]+)\]/i);
+  return match && match[1] ? match[1].trim() : "";
+}
+
+function cleanPostContentForDisplay(post: Post): string {
+  const raw = post.content || "";
+  return raw
+    .replace(/\[VideoCaption:\s*[^\]]*\]/gi, "")
+    .replace(/^\s*Link Video:\s*https?:\/\/\S+\s*$/gim, "")
+    .replace(/\n{3,}/g, "\n\n")
+    .trim();
+}
+
+function formatCleanPostTitle(title: string): string {
+  const trimmed = (title || "").trim();
+  const withoutPrefix = trimmed.replace(/^Video:\s*/i, "");
+  const withoutExt = withoutPrefix.replace(
+    /\.(mp4|webm|mov|m4v|avi|mkv)$/i,
+    ""
+  );
+  const spaced = withoutExt.replace(/[_-]+/g, " ").replace(/\s+/g, " ").trim();
+  if (!spaced) return trimmed;
+  return spaced.charAt(0).toUpperCase() + spaced.slice(1);
 }
 
 function getPostImages(post: Post): string[] {
@@ -323,14 +351,25 @@ export default function BusinessFeedPage() {
         endSec: item.endSec,
         playUrl,
         storageUploaded,
+        caption: "",
       });
     }
 
     setPublishedVideoClips((prev) => [...uploadedClips, ...prev]);
     setSuccess(
       cloudSuccessCount > 0
-        ? `${items.length} klip video (batas max ${maxDurationSec}s) diproses (${cloudSuccessCount} tersimpan ke Storage).`
-        : `${items.length} klip video (batas max ${maxDurationSec}s) diproses ke daftar unggahan.`
+        ? `${items.length} klip video (batas max ${maxDurationSec}s) diproses (${cloudSuccessCount} tersimpan ke Storage). Tambahkan teks klip lalu klik Post ke Halaman Utama.`
+        : `${items.length} klip video (batas max ${maxDurationSec}s) diproses ke daftar unggahan. Tambahkan teks klip sebelum memposting.`
+    );
+  }
+
+  function updateClipCaption(clipId: string, nextCaption: string) {
+    setPublishedVideoClips((prev) =>
+      prev.map((item) =>
+        item.id === clipId
+          ? { ...item, caption: nextCaption.slice(0, 240) }
+          : item
+      )
     );
   }
 
@@ -350,17 +389,24 @@ export default function BusinessFeedPage() {
 
     try {
       const durationSec = Math.max(1, clip.endSec - clip.startSec);
+      const cleanCaption = clip.caption.trim().replace(/\]/g, "");
+      const captionMarker = cleanCaption ? `\n[VideoCaption: ${cleanCaption}]` : "";
       const videoLinkLine = clip.storageUploaded
         ? `\nLink Video: ${clip.playUrl}`
         : "";
-      const postContent = `Video highlight (${clip.startSec}s – ${clip.endSec}s / ${durationSec} detik) dari ${company.company_name}.${videoLinkLine}`;
+      const descriptionLine = cleanCaption
+        ? `${cleanCaption}\nHighlight (${clip.startSec}s – ${clip.endSec}s / ${durationSec} detik) dari ${company.company_name}.`
+        : `Video highlight (${clip.startSec}s – ${clip.endSec}s / ${durationSec} detik) dari ${company.company_name}.`;
+
+      const postContent = `${descriptionLine}${captionMarker}${videoLinkLine}`;
+      const cleanTitle = formatCleanPostTitle(clip.fileName);
 
       const { error: insertError } = await supabase
         .from("business_posts")
         .insert({
           company_id: company.id,
           author_id: userId,
-          title: `Video: ${clip.fileName}`,
+          title: cleanTitle,
           content: postContent,
           post_type: normalizePostTypeForDb("presentation"),
           image_url: null,
@@ -373,7 +419,7 @@ export default function BusinessFeedPage() {
       }
 
       setSuccess(
-        `Video "${clip.fileName}" berhasil diposting ke halaman utama!`
+        `Video "${cleanTitle}" beserta teksnya berhasil diposting ke halaman utama!`
       );
       await loadFeed();
     } catch (err) {
@@ -1165,11 +1211,21 @@ export default function BusinessFeedPage() {
                         </small>
                       </div>
                       <div className="video-clip-meta">
-                        <strong>{clip.fileName}</strong>
+                        <strong>{formatCleanPostTitle(clip.fileName)}</strong>
                         <small>
                           Durasi klip: {clip.startSec}s – {clip.endSec}s (
                           {clip.endSec - clip.startSec} detik)
                         </small>
+                        <input
+                          type="text"
+                          className="video-clip-caption-input"
+                          value={clip.caption}
+                          onChange={(e) =>
+                            updateClipCaption(clip.id, e.target.value)
+                          }
+                          placeholder="Tulis teks / caption video..."
+                          maxLength={240}
+                        />
                         <button
                           type="button"
                           className="publish-clip-home-btn"
@@ -1478,6 +1534,9 @@ export default function BusinessFeedPage() {
                 const postImages = getPostImages(post);
                 const postImageCaptions = getPostImageCaptions(post, postImages);
                 const videoUrl = extractVideoUrlFromPost(post);
+                const videoCaption = extractVideoCaptionFromPost(post);
+                const displayContent = cleanPostContentForDisplay(post);
+                const displayTitle = formatCleanPostTitle(post.title);
                 const isFocusedPost = focusTarget?.postId === post.id;
 
                 return (
@@ -1520,8 +1579,8 @@ export default function BusinessFeedPage() {
                     </div>
 
                     <div className="post-body">
-                      <h3>{post.title}</h3>
-                      <p>{post.content}</p>
+                      <h3>{displayTitle}</h3>
+                      {displayContent && <p>{displayContent}</p>}
 
                       {videoUrl && (
                         <div className="feed-video-box">
@@ -1532,6 +1591,11 @@ export default function BusinessFeedPage() {
                             preload="metadata"
                             className="feed-video-player"
                           />
+                          {videoCaption && (
+                            <div className="feed-video-caption-bar">
+                              <span>{videoCaption}</span>
+                            </div>
+                          )}
                         </div>
                       )}
 
@@ -1553,7 +1617,7 @@ export default function BusinessFeedPage() {
                                 <img
                                   className="post-image"
                                   src={imgUrl}
-                                  alt={`${post.title} (${idx + 1})`}
+                                  alt={`${displayTitle} (${idx + 1})`}
                                   loading="lazy"
                                   decoding="async"
                                   onError={(e) => {
@@ -1912,7 +1976,7 @@ export default function BusinessFeedPage() {
 
         .video-clips-grid {
           display: grid;
-          grid-template-columns: repeat(auto-fill, minmax(220px, 1fr));
+          grid-template-columns: repeat(auto-fill, minmax(230px, 1fr));
           gap: 12px;
         }
 
@@ -1976,8 +2040,30 @@ export default function BusinessFeedPage() {
           color: #7ee8dc;
         }
 
+        .video-clip-caption-input {
+          width: 100%;
+          box-sizing: border-box;
+          margin-top: 9px;
+          padding: 8px 10px;
+          border-radius: 7px;
+          border: 1px solid rgba(255, 255, 255, 0.22);
+          background: rgba(255, 255, 255, 0.08);
+          color: #ffffff;
+          font-size: 12px;
+          outline: none;
+        }
+
+        .video-clip-caption-input::placeholder {
+          color: #9cb0c9;
+        }
+
+        .video-clip-caption-input:focus {
+          border-color: #13c8b5;
+          background: rgba(255, 255, 255, 0.14);
+        }
+
         .publish-clip-home-btn {
-          margin-top: 10px;
+          margin-top: 9px;
           width: 100%;
           padding: 8px 10px;
           border: none;
@@ -2007,6 +2093,16 @@ export default function BusinessFeedPage() {
           width: 100%;
           max-height: 420px;
           background: #050d18;
+        }
+
+        .feed-video-caption-bar {
+          padding: 9px 13px;
+          background: #10243d;
+          color: #e6eef8;
+          font-size: 13px;
+          line-height: 1.45;
+          border-top: 1px solid #1d3656;
+          overflow-wrap: anywhere;
         }
 
         .extra-tool-box {
