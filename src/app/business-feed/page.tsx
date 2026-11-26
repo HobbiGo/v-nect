@@ -101,6 +101,23 @@ function normalizePostTypeForSelect(type: string): string {
   return type;
 }
 
+function extractVideoUrlFromPost(post: Post): string | null {
+  const text = post.content || "";
+  const linkVideoMatch = text.match(/Link Video:\s*(https?:\/\/\S+)/i);
+  if (linkVideoMatch && linkVideoMatch[1]) {
+    return linkVideoMatch[1].trim();
+  }
+
+  const mediaMatch = text.match(
+    /(https?:\/\/\S+(?:\.mp4|\.webm|\.mov|\.m4v)(?:\?\S*)?)/i
+  );
+  if (mediaMatch && mediaMatch[1]) {
+    return mediaMatch[1].trim();
+  }
+
+  return null;
+}
+
 function getPostImages(post: Post): string[] {
   const list: string[] = [];
 
@@ -1460,6 +1477,7 @@ export default function BusinessFeedPage() {
 
                 const postImages = getPostImages(post);
                 const postImageCaptions = getPostImageCaptions(post, postImages);
+                const videoUrl = extractVideoUrlFromPost(post);
                 const isFocusedPost = focusTarget?.postId === post.id;
 
                 return (
@@ -1504,6 +1522,18 @@ export default function BusinessFeedPage() {
                     <div className="post-body">
                       <h3>{post.title}</h3>
                       <p>{post.content}</p>
+
+                      {videoUrl && (
+                        <div className="feed-video-box">
+                          <video
+                            src={videoUrl}
+                            controls
+                            playsInline
+                            preload="metadata"
+                            className="feed-video-player"
+                          />
+                        </div>
+                      )}
 
                       {postImages.length > 0 && (
                         <div
@@ -1962,6 +1992,21 @@ export default function BusinessFeedPage() {
         .publish-clip-home-btn:disabled {
           opacity: 0.65;
           cursor: not-allowed;
+        }
+
+        .feed-video-box {
+          margin-top: 14px;
+          border-radius: 11px;
+          overflow: hidden;
+          background: #07111f;
+          border: 1px solid #dfe6ef;
+        }
+
+        .feed-video-player {
+          display: block;
+          width: 100%;
+          max-height: 420px;
+          background: #050d18;
         }
 
         .extra-tool-box {
