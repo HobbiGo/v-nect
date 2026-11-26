@@ -305,13 +305,11 @@ export default function Home() {
               </linearGradient>
             </defs>
 
-            {/* Garis dasar tipis */}
             <line x1="68" y1="42" x2="255" y2="165" className="connector-base" />
             <line x1="532" y1="42" x2="345" y2="165" className="connector-base" />
             <line x1="78" y1="358" x2="258" y2="236" className="connector-base" />
             <line x1="532" y1="358" x2="342" y2="236" className="connector-base" />
 
-            {/* Garis sinyal bergerak */}
             <line
               x1="68"
               y1="42"
@@ -345,7 +343,6 @@ export default function Home() {
               className="connector-pulse pulse-four"
             />
 
-            {/* Titik simpul di dekat bola jaringan */}
             <circle cx="255" cy="165" r="4" className="connector-node" />
             <circle cx="345" cy="165" r="4" className="connector-node" />
             <circle cx="258" cy="236" r="4" className="connector-node" />
@@ -548,11 +545,11 @@ export default function Home() {
           min-height: 100vh;
           background: #07111f;
           color: #eef4fb;
-          font-family: Arial, sans-serif;
+          font-family: var(--font-sans), Arial, sans-serif;
         }
 
         .navbar {
-          min-height: 76px;
+          min-height: 78px;
           padding: 12px 7%;
           background: #07111f;
           border-bottom: 1px solid rgba(255, 255, 255, 0.08);
@@ -609,9 +606,9 @@ export default function Home() {
         }
 
         .logo-main {
-          font-size: 21px;
-          font-weight: 900;
-          letter-spacing: 1px;
+          font-size: 22px;
+          font-weight: 800;
+          letter-spacing: 0.8px;
           white-space: nowrap;
           line-height: 1.1;
         }
@@ -622,10 +619,10 @@ export default function Home() {
         }
 
         .logo small {
-          font-size: 9px;
+          font-size: 11px;
           font-weight: 700;
-          letter-spacing: 1.8px;
-          color: #8fa3bd;
+          letter-spacing: 1.4px;
+          color: #9cb0c9;
           margin-top: 3px;
           white-space: nowrap;
         }
@@ -638,9 +635,9 @@ export default function Home() {
         }
 
         .navbar nav a {
-          color: #c5d2e4;
+          color: #d2deed;
           text-decoration: none;
-          font-size: 13px;
+          font-size: 14px;
           font-weight: 600;
         }
 
@@ -652,9 +649,9 @@ export default function Home() {
           background: linear-gradient(110deg, #347cf0, #13bcae);
           color: #ffffff;
           text-decoration: none;
-          padding: 10px 16px;
+          padding: 10px 17px;
           border-radius: 9px;
-          font-size: 12px;
+          font-size: 13px;
           font-weight: 700;
           white-space: nowrap;
         }
@@ -671,20 +668,21 @@ export default function Home() {
 
         .eyebrow {
           color: #13c8b5;
-          font-size: 11px;
+          font-size: 12px;
           font-weight: 800;
-          letter-spacing: 2px;
+          letter-spacing: 1.6px;
         }
 
         .hero h1 {
-          font-size: 46px;
-          line-height: 1.15;
+          font-size: 48px;
+          font-weight: 800;
+          line-height: 1.14;
           margin: 14px 0;
         }
 
         .hero p {
-          color: #b7c8dd;
-          font-size: 15px;
+          color: #c2d1e4;
+          font-size: 16px;
           line-height: 1.75;
           max-width: 560px;
           margin: 0;
@@ -707,7 +705,7 @@ export default function Home() {
           text-decoration: none;
           padding: 11px 18px;
           border-radius: 9px;
-          font-size: 12px;
+          font-size: 13px;
           font-weight: 700;
           border: none;
           cursor: pointer;
@@ -723,7 +721,7 @@ export default function Home() {
           text-decoration: none;
           padding: 11px 18px;
           border-radius: 9px;
-          font-size: 12px;
+          font-size: 13px;
           font-weight: 700;
         }
 
@@ -734,9 +732,9 @@ export default function Home() {
 
         .hero-caption {
           margin-top: 20px;
-          font-size: 10px;
-          letter-spacing: 1.6px;
-          color: #7f95b0;
+          font-size: 12px;
+          letter-spacing: 1.3px;
+          color: #93a7c2;
           font-weight: 700;
         }
 
@@ -844,14 +842,14 @@ export default function Home() {
         .orbit-label {
           position: absolute;
           z-index: 3;
-          font-size: 10px;
+          font-size: 11px;
           font-weight: 800;
-          letter-spacing: 1.4px;
+          letter-spacing: 1.2px;
           color: #7ee8dc;
           background: rgba(13, 33, 58, 0.94);
           border: 1px solid rgba(126, 232, 220, 0.35);
           box-shadow: 0 0 14px rgba(19, 200, 181, 0.16);
-          padding: 5px 10px;
+          padding: 5px 11px;
           border-radius: 999px;
         }
 
@@ -886,21 +884,22 @@ export default function Home() {
         .business-section span,
         .home-posts-header span {
           color: #13c8b5;
-          font-size: 11px;
+          font-size: 12px;
           font-weight: 800;
-          letter-spacing: 2px;
+          letter-spacing: 1.6px;
         }
 
         .section-heading h2,
         .home-posts-header h2 {
-          font-size: 30px;
+          font-size: 32px;
+          font-weight: 800;
           margin: 8px 0;
         }
 
         .section-heading p,
         .home-posts-header p {
-          color: #a9bcd3;
-          font-size: 14px;
+          color: #b4c5da;
+          font-size: 15px;
           line-height: 1.65;
           margin: 0;
         }
@@ -916,35 +915,36 @@ export default function Home() {
           background: #0e1e34;
           border: 1px solid rgba(255, 255, 255, 0.08);
           border-radius: 14px;
-          padding: 20px;
+          padding: 22px;
           display: flex;
           flex-direction: column;
-          gap: 6px;
+          gap: 7px;
         }
 
         .module-number {
-          font-size: 11px;
+          font-size: 12px;
           font-weight: 800;
           color: #13c8b5;
         }
 
         .module-card h3 {
           margin: 2px 0 0;
-          font-size: 17px;
+          font-size: 19px;
+          font-weight: 700;
           color: #ffffff;
         }
 
         .module-card p {
           margin: 0;
-          color: #9fb2c9;
-          font-size: 13px;
-          line-height: 1.6;
+          color: #b2c3d8;
+          font-size: 14px;
+          line-height: 1.65;
         }
 
         .module-arrow {
           margin-top: auto;
           padding-top: 8px;
-          font-size: 13px;
+          font-size: 14px;
           color: #7ee8dc;
           font-weight: 700;
         }
@@ -961,14 +961,15 @@ export default function Home() {
         }
 
         .business-section h2 {
-          font-size: 34px;
-          line-height: 1.25;
+          font-size: 36px;
+          font-weight: 800;
+          line-height: 1.24;
           margin: 12px 0;
         }
 
         .business-section p {
-          color: #c5d6ea;
-          font-size: 14px;
+          color: #cfe0f2;
+          font-size: 15px;
           margin: 0;
         }
 
@@ -999,10 +1000,10 @@ export default function Home() {
 
         .view-all-link {
           color: #2874db;
-          font-size: 13px;
+          font-size: 14px;
           font-weight: 700;
           text-decoration: none;
-          padding: 9px 14px;
+          padding: 10px 15px;
           background: #e6efff;
           border-radius: 8px;
           white-space: nowrap;
@@ -1040,8 +1041,8 @@ export default function Home() {
 
         .home-company-info img,
         .home-company-avatar {
-          width: 40px;
-          height: 40px;
+          width: 42px;
+          height: 42px;
           border-radius: 10px;
           object-fit: cover;
           flex-shrink: 0;
@@ -1057,22 +1058,23 @@ export default function Home() {
 
         .home-company-info strong {
           display: block;
-          font-size: 13px;
+          font-size: 14px;
+          font-weight: 700;
           color: #1d3048;
         }
 
         .home-company-info small {
           display: block;
-          font-size: 11px;
-          color: #8b9bb0;
+          font-size: 12px;
+          color: #7c8ea4;
         }
 
         .home-post-badge {
           background: #edf5ff;
           color: #397bd2;
-          padding: 6px 11px;
+          padding: 6px 12px;
           border-radius: 999px;
-          font-size: 11px;
+          font-size: 12px;
           font-weight: 700;
         }
 
@@ -1082,15 +1084,16 @@ export default function Home() {
 
         .home-post-body h3 {
           margin: 0 0 8px;
-          font-size: 18px;
+          font-size: 19px;
+          font-weight: 700;
           color: #1d3048;
         }
 
         .home-post-body p {
           margin: 0;
-          color: #5b6d84;
-          font-size: 13px;
-          line-height: 1.7;
+          color: #4d5f77;
+          font-size: 14px;
+          line-height: 1.72;
           white-space: pre-wrap;
         }
 
@@ -1129,14 +1132,14 @@ export default function Home() {
           align-items: center;
           justify-content: space-between;
           gap: 8px;
-          padding: 8px 12px;
+          padding: 9px 12px;
           background: #10243d;
           color: #e6eef8;
           border-top: 1px solid #1d3656;
         }
 
         .home-image-caption {
-          font-size: 12px;
+          font-size: 13px;
           line-height: 1.4;
           overflow-wrap: anywhere;
         }
@@ -1146,8 +1149,8 @@ export default function Home() {
           background: rgba(255, 255, 255, 0.08);
           color: #ffffff;
           border-radius: 6px;
-          padding: 3px 8px;
-          font-size: 12px;
+          padding: 4px 9px;
+          font-size: 13px;
           cursor: pointer;
           flex-shrink: 0;
         }
@@ -1170,18 +1173,18 @@ export default function Home() {
           text-align: center;
           padding: 32px 20px;
           background: #050d18;
-          color: #8494aa;
+          color: #93a5bc;
           border-top: 1px solid rgba(255, 255, 255, 0.06);
         }
 
         .footer p {
           margin: 8px 0 4px;
-          font-size: 13px;
-          color: #c5d2e4;
+          font-size: 14px;
+          color: #d2deed;
         }
 
         .footer small {
-          font-size: 11px;
+          font-size: 12px;
         }
 
         @media (max-width: 800px) {
@@ -1205,11 +1208,11 @@ export default function Home() {
           }
 
           .navbar nav a {
-            font-size: 12px;
+            font-size: 13px;
           }
 
           .hero h1 {
-            font-size: 32px;
+            font-size: 34px;
           }
 
           .hero-visual {
@@ -1221,7 +1224,7 @@ export default function Home() {
           }
 
           .business-section h2 {
-            font-size: 26px;
+            font-size: 28px;
           }
 
           .module-grid,
