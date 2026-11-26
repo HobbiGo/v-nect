@@ -17,6 +17,7 @@ type PostThreadCommentsProps = {
   postId: string;
   currentUserId?: string | null;
   currentUserName?: string | null;
+  imageLabels?: string[];
 };
 
 function formatCommentTime(isoString: string) {
@@ -30,9 +31,11 @@ export function PostThreadComments({
   postId,
   currentUserId,
   currentUserName,
+  imageLabels = [],
 }: PostThreadCommentsProps) {
   const [comments, setComments] = useState<BusinessPostComment[]>([]);
   const [loading, setLoading] = useState(true);
+  const [selectedImageIdx, setSelectedImageIdx] = useState<string>("");
   const [draft, setDraft] = useState("");
   const [submitting, setSubmitting] = useState(false);
   const [errorMsg, setErrorMsg] = useState<string | null>(null);
@@ -121,7 +124,22 @@ export function PostThreadComments({
     setSubmitting(true);
     setErrorMsg(null);
 
-    const resolvedName = currentUserName?.trim() || "Member";
+    let resolvedName = currentUserName?.trim() || "";
+    if (!resolvedName) {
+      const {
+        data: { user },
+      } = await supabase.auth.getUser();
+      resolvedName =
+        (user?.user_metadata?.full_name as string | undefined)?.trim() ||
+        user?.email?.split("@")[0] ||
+        "Member";
+    }
+
+    const prefix =
+      selectedImageIdx !== ""
+        ? `[${imageLabels[Number(selectedImageIdx)] || `Image ${Number(selectedImageIdx) + 1}`}] `
+        : "";
+    const finalContent = `${prefix}${trimmed}`.slice(0, 2000);
 
     const { data, error } = await supabase
       .from("business_post_comments")
@@ -129,7 +147,7 @@ export function PostThreadComments({
         post_id: postId,
         author_id: currentUserId,
         author_name: resolvedName,
-        content: trimmed,
+        content: finalContent,
       })
       .select("id, post_id, author_id, author_name, content, created_at")
       .single();
@@ -168,53 +186,44 @@ export function PostThreadComments({
   }
 
   return (
-    <div className="mt-4 border-t border-slate-200 pt-3">
-      <div className="mb-2 flex items-center justify-between text-xs font-medium text-slate-500">
+    <div className="thread-box">
+      <div className="thread-meta">
         <span>Discussion Thread ({comments.length})</span>
         <span>Live updates</span>
       </div>
 
-      <div className="max-h-60 space-y-2.5 overflow-y-auto rounded-lg bg-slate-50 p-3">
+      <div className="thread-list">
         {loading ? (
-          <p className="text-xs text-slate-400">Loading thread...</p>
+          <p className="thread-empty">Loading thread...</p>
         ) : comments.length === 0 ? (
-          <p className="text-xs text-slate-400">
+          <p className="thread-empty">
             No comments yet. Start the conversation below.
           </p>
         ) : (
           comments.map((item) => {
             const isOwner = Boolean(currentUserId && item.author_id === currentUserId);
             return (
-              <div
-                key={item.id}
-                className="flex items-start gap-2.5 rounded-md bg-white px-3 py-2 shadow-2xs ring-1 ring-slate-200/70"
-              >
-                <div className="flex h-7 w-7 shrink-0 items-center justify-center rounded-full bg-slate-800 text-xs font-semibold text-white">
+              <div className="thread-item" key={item.id}>
+                <div className="thread-avatar">
                   {item.author_name.charAt(0).toUpperCase()}
                 </div>
-                <div className="min-w-0 flex-1">
-                  <div className="flex items-center justify-between gap-2">
-                    <span className="truncate text-xs font-semibold text-slate-800">
-                      {item.author_name}
-                    </span>
-                    <div className="flex items-center gap-2">
-                      <span className="text-[11px] text-slate-400">
-                        {formatCommentTime(item.created_at)}
-                      </span>
+                <div className="thread-content">
+                  <div className="thread-item-top">
+                    <strong>{item.author_name}</strong>
+                    <div className="thread-item-right">
+                      <span>{formatCommentTime(item.created_at)}</span>
                       {isOwner && (
                         <button
                           type="button"
+                          className="thread-delete"
                           onClick={() => handleDeleteComment(item.id)}
-                          className="text-[11px] text-rose-500 hover:underline"
                         >
                           Delete
                         </button>
                       )}
                     </div>
                   </div>
-                  <p className="mt-0.5 whitespace-pre-line break-words text-sm text-slate-700">
-                    {item.content}
-                  </p>
+                  <p>{item.content}</p>
                 </div>
               </div>
             );
@@ -223,11 +232,28 @@ export function PostThreadComments({
         <div ref={listEndRef} />
       </div>
 
-      {errorMsg && (
-        <p className="mt-1.5 text-xs text-rose-600">{errorMsg}</p>
+      {errorMsg && <p className="thread-error">{errorMsg}</p>}
+
+      {imageLabels.length > 0 && (
+        <div className="thread-image-tag">
+          <label htmlFor={`img-tag-${postId}`}>Tag image (optional):</label>
+          <select
+            id={`img-tag-${postId}`}
+            value={selectedImageIdx}
+            onChange={(e) => setSelectedImageIdx(e.target.value)}
+            disabled={!currentUserId || submitting}
+          >
+            <option value="">General post discussion</option>
+            {imageLabels.map((lbl, idx) => (
+              <option key={idx} value={String(idx)}>
+                {lbl || `Image ${idx + 1}`}
+              </option>
+            ))}
+          </select>
+        </div>
       )}
 
-      <form onSubmit={handleSendComment} className="mt-2.5 flex items-end gap-2">
+      <form onSubmit={handleSendComment} className="thread-form">
         <textarea
           rows={1}
           value={draft}
@@ -244,16 +270,195 @@ export function PostThreadComments({
               : "Sign in to write a comment..."
           }
           disabled={!currentUserId || submitting}
-          className="min-h-[40px] max-h-28 flex-1 resize-y rounded-lg border border-slate-300 bg-white px-3 py-2 text-sm text-slate-800 placeholder:text-slate-400 focus:border-slate-500 focus:outline-none disabled:bg-slate-100"
         />
         <button
           type="submit"
           disabled={!currentUserId || submitting || !draft.trim()}
-          className="h-[40px] shrink-0 rounded-lg bg-slate-900 px-4 text-sm font-medium text-white hover:bg-slate-800 disabled:cursor-not-allowed disabled:opacity-50"
         >
           {submitting ? "Sending..." : "Send"}
         </button>
       </form>
+
+      <style jsx>{`
+        .thread-box {
+          margin-top: 18px;
+          padding-top: 14px;
+          border-top: 1px solid #edf0f5;
+        }
+
+        .thread-meta {
+          display: flex;
+          justify-content: space-between;
+          align-items: center;
+          font-size: 11px;
+          font-weight: 700;
+          color: #6f8198;
+          margin-bottom: 10px;
+        }
+
+        .thread-list {
+          max-height: 240px;
+          overflow-y: auto;
+          background: #f8fafd;
+          border: 1px solid #e6ecf5;
+          border-radius: 10px;
+          padding: 12px;
+          display: flex;
+          flex-direction: column;
+          gap: 10px;
+        }
+
+        .thread-empty {
+          margin: 0;
+          font-size: 12px;
+          color: #8b9bb0;
+        }
+
+        .thread-item {
+          display: flex;
+          align-items: flex-start;
+          gap: 10px;
+          background: #ffffff;
+          border: 1px solid #e7edf5;
+          border-radius: 8px;
+          padding: 10px 12px;
+        }
+
+        .thread-avatar {
+          width: 28px;
+          height: 28px;
+          border-radius: 999px;
+          background: #102b4d;
+          color: #ffffff;
+          font-size: 11px;
+          font-weight: 800;
+          display: grid;
+          place-items: center;
+          flex-shrink: 0;
+        }
+
+        .thread-content {
+          min-width: 0;
+          flex: 1;
+        }
+
+        .thread-item-top {
+          display: flex;
+          justify-content: space-between;
+          align-items: center;
+          gap: 8px;
+        }
+
+        .thread-item-top strong {
+          font-size: 12px;
+          color: #1d3048;
+          overflow: hidden;
+          text-overflow: ellipsis;
+          white-space: nowrap;
+        }
+
+        .thread-item-right {
+          display: flex;
+          align-items: center;
+          gap: 8px;
+          flex-shrink: 0;
+        }
+
+        .thread-item-right span {
+          font-size: 10px;
+          color: #96a4b5;
+        }
+
+        .thread-delete {
+          border: none;
+          background: transparent;
+          color: #d95353;
+          font-size: 10px;
+          font-weight: 700;
+          cursor: pointer;
+          padding: 0;
+        }
+
+        .thread-content p {
+          margin: 4px 0 0;
+          font-size: 13px;
+          line-height: 1.55;
+          color: #2d4159;
+          white-space: pre-line;
+          overflow-wrap: anywhere;
+        }
+
+        .thread-error {
+          margin: 8px 0 0;
+          font-size: 11px;
+          color: #bd3d3d;
+        }
+
+        .thread-image-tag {
+          margin-top: 10px;
+          display: flex;
+          align-items: center;
+          gap: 8px;
+          flex-wrap: wrap;
+          font-size: 11px;
+          color: #53657b;
+        }
+
+        .thread-image-tag select {
+          border: 1px solid #dfe6ef;
+          border-radius: 7px;
+          padding: 6px 10px;
+          background: #fbfcfe;
+          color: #24364d;
+          font-size: 11px;
+          outline: none;
+        }
+
+        .thread-form {
+          margin-top: 8px;
+          display: flex;
+          align-items: flex-end;
+          gap: 8px;
+        }
+
+        .thread-form textarea {
+          flex: 1;
+          min-height: 40px;
+          max-height: 110px;
+          border: 1px solid #dfe6ef;
+          border-radius: 8px;
+          padding: 10px 12px;
+          background: #fbfcfe;
+          color: #24364d;
+          font: inherit;
+          font-size: 12px;
+          resize: vertical;
+          outline: none;
+          box-sizing: border-box;
+        }
+
+        .thread-form textarea:focus {
+          border-color: #347cf0;
+        }
+
+        .thread-form button {
+          height: 40px;
+          padding: 0 16px;
+          border: none;
+          border-radius: 8px;
+          background: linear-gradient(110deg, #347cf0, #13bcae);
+          color: #ffffff;
+          font-size: 12px;
+          font-weight: 700;
+          cursor: pointer;
+          flex-shrink: 0;
+        }
+
+        .thread-form button:disabled {
+          opacity: 0.55;
+          cursor: not-allowed;
+        }
+      `}</style>
     </div>
   );
 }
