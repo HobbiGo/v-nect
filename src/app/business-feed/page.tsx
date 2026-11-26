@@ -1326,29 +1326,34 @@ export default function BusinessFeedPage() {
         }
 
         .back-home-bar {
-          margin-bottom: 16px;
+          margin-bottom: 18px;
+          padding: 10px 14px;
+          border-radius: 12px;
+          background: #ffffff;
+          border: 1px solid #d6e0ec;
+          box-shadow: 0 4px 14px rgba(15, 34, 58, 0.05);
           display: flex;
           align-items: center;
-          justify-content: space-between;
+          justify-content: flex-start;
         }
 
         .back-home-button {
           display: inline-flex;
           align-items: center;
-          gap: 6px;
-          padding: 9px 15px;
+          gap: 8px;
+          padding: 10px 16px;
           border-radius: 9px;
           background: #07111f;
-          border: 1px solid rgba(19, 200, 181, 0.35);
+          border: 1.5px solid #13c8b5;
           color: #ffffff;
-          font-size: 12px;
+          font-size: 13px;
           font-weight: 700;
           text-decoration: none;
-          box-shadow: 0 4px 12px rgba(7, 17, 31, 0.08);
+          box-shadow: 0 4px 12px rgba(7, 17, 31, 0.16);
         }
 
         .back-home-button:hover {
-          border-color: #13c8b5;
+          background: #0d2038;
           color: #7ee8dc;
         }
 
@@ -1963,9 +1968,13 @@ export default function BusinessFeedPage() {
             padding: 18px 14px 45px;
           }
 
+          .back-home-bar {
+            padding: 8px 10px;
+          }
+
           .back-home-button {
-            padding: 8px 12px;
-            font-size: 11px;
+            padding: 9px 14px;
+            font-size: 12px;
           }
 
           .hero {
