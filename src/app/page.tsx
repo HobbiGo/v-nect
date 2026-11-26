@@ -229,7 +229,9 @@ export default function Home() {
     <main className="home-page">
       <header className="navbar">
         <a className="logo" href="#">
-          VOIN<span>NECT</span>
+          <div className="logo-main">
+            VOIN<span>NECT</span>
+          </div>
           <small>GLOBAL BUSINESS ECOSYSTEM</small>
         </a>
 
@@ -277,14 +279,9 @@ export default function Home() {
         </div>
 
         <div className="hero-visual">
-          <div className="orbit orbit-one" />
-          <div className="orbit orbit-two" />
-          <div className="orbit orbit-three" />
-
+          <div className="orbit-ring" />
           <div className="core">
-            <div className="core-inner">
-              <span>V</span>
-            </div>
+            <span>V</span>
           </div>
 
           <div className="orbit-label label-one">BUSINESS</div>
@@ -317,17 +314,19 @@ export default function Home() {
       </section>
 
       <section className="business-section" id="business">
-        <span>BUILT FOR A CONNECTED WORLD</span>
-        <h2>
-          Your Business.
-          <br />
-          Your Network.
-          <br />
-          Your Opportunities.
-        </h2>
-        <p>
-          VOINNECT — Building a More Connected Business World.
-        </p>
+        <div className="business-inner">
+          <span>BUILT FOR A CONNECTED WORLD</span>
+          <h2>
+            Your Business.
+            <br />
+            Your Network.
+            <br />
+            Your Opportunities.
+          </h2>
+          <p>
+            VOINNECT — Building a More Connected Business World.
+          </p>
+        </div>
       </section>
 
       <section className="home-posts-section" id="community-posts">
@@ -463,8 +462,10 @@ export default function Home() {
       </section>
 
       <footer className="footer">
-        <div className="logo">
-          VOIN<span>NECT</span>
+        <div className="logo footer-logo">
+          <div className="logo-main">
+            VOIN<span>NECT</span>
+          </div>
         </div>
         <p>Connect Beyond Boundaries.</p>
         <small>© 2026 VOINNECT. All rights reserved.</small>
@@ -479,8 +480,8 @@ export default function Home() {
         }
 
         .navbar {
-          min-height: 74px;
-          padding: 0 7%;
+          min-height: 76px;
+          padding: 12px 7%;
           background: #07111f;
           border-bottom: 1px solid rgba(255, 255, 255, 0.08);
           display: flex;
@@ -492,12 +493,22 @@ export default function Home() {
 
         .logo {
           color: #ffffff;
-          font-size: 22px;
-          font-weight: 900;
           text-decoration: none;
-          letter-spacing: 1px;
           display: inline-flex;
           flex-direction: column;
+          flex-shrink: 0;
+        }
+
+        .logo-main {
+          font-size: 22px;
+          font-weight: 900;
+          letter-spacing: 1px;
+          white-space: nowrap;
+          line-height: 1.1;
+        }
+
+        .footer-logo {
+          align-items: center;
         }
 
         .logo span,
@@ -510,13 +521,14 @@ export default function Home() {
           font-weight: 700;
           letter-spacing: 1.8px;
           color: #8fa3bd;
-          margin-top: 2px;
+          margin-top: 3px;
+          white-space: nowrap;
         }
 
         .navbar nav {
           display: flex;
           align-items: center;
-          gap: 22px;
+          gap: 24px;
           flex-wrap: wrap;
         }
 
@@ -524,25 +536,31 @@ export default function Home() {
           color: #c5d2e4;
           text-decoration: none;
           font-size: 13px;
+          font-weight: 600;
+        }
+
+        .navbar nav a:hover {
+          color: #13c8b5;
         }
 
         .nav-button {
           background: linear-gradient(110deg, #347cf0, #13bcae);
           color: #ffffff;
           text-decoration: none;
-          padding: 9px 15px;
-          border-radius: 8px;
+          padding: 10px 16px;
+          border-radius: 9px;
           font-size: 12px;
           font-weight: 700;
+          white-space: nowrap;
         }
 
         .hero {
           max-width: 1200px;
           margin: 0 auto;
-          padding: 56px 24px;
+          padding: 64px 24px 52px;
           display: grid;
-          grid-template-columns: minmax(0, 1.3fr) minmax(0, 0.7fr);
-          gap: 32px;
+          grid-template-columns: minmax(0, 1.35fr) minmax(0, 0.85fr);
+          gap: 36px;
           align-items: center;
         }
 
@@ -562,19 +580,23 @@ export default function Home() {
         .hero p {
           color: #b7c8dd;
           font-size: 15px;
-          line-height: 1.7;
+          line-height: 1.75;
           max-width: 560px;
+          margin: 0;
         }
 
         .hero-actions {
           display: flex;
+          align-items: center;
           gap: 12px;
-          margin-top: 22px;
+          margin-top: 24px;
           flex-wrap: wrap;
         }
 
         .primary-button {
-          display: inline-block;
+          display: inline-flex;
+          align-items: center;
+          justify-content: center;
           background: linear-gradient(110deg, #347cf0, #13bcae);
           color: #ffffff;
           text-decoration: none;
@@ -582,12 +604,17 @@ export default function Home() {
           border-radius: 9px;
           font-size: 12px;
           font-weight: 700;
+          border: none;
+          cursor: pointer;
         }
 
         .secondary-button {
-          display: inline-block;
-          border: 1px solid rgba(255, 255, 255, 0.2);
-          color: #e2ecf8;
+          display: inline-flex;
+          align-items: center;
+          justify-content: center;
+          background: rgba(255, 255, 255, 0.05);
+          border: 1px solid rgba(255, 255, 255, 0.24);
+          color: #e6effa;
           text-decoration: none;
           padding: 11px 18px;
           border-radius: 9px;
@@ -595,10 +622,15 @@ export default function Home() {
           font-weight: 700;
         }
 
+        .secondary-button:hover {
+          background: rgba(255, 255, 255, 0.12);
+          border-color: #13c8b5;
+        }
+
         .hero-caption {
-          margin-top: 18px;
+          margin-top: 20px;
           font-size: 10px;
-          letter-spacing: 1.5px;
+          letter-spacing: 1.6px;
           color: #7f95b0;
           font-weight: 700;
         }
@@ -608,11 +640,28 @@ export default function Home() {
           min-height: 240px;
           display: grid;
           place-items: center;
+          background: radial-gradient(
+            circle,
+            rgba(19, 200, 181, 0.12) 0%,
+            rgba(7, 17, 31, 0) 70%
+          );
+          border-radius: 20px;
+          padding: 20px;
+        }
+
+        .orbit-ring {
+          position: absolute;
+          width: 170px;
+          height: 170px;
+          border-radius: 999px;
+          border: 1px dashed rgba(126, 232, 220, 0.3);
         }
 
         .core {
-          width: 84px;
-          height: 84px;
+          position: relative;
+          z-index: 2;
+          width: 82px;
+          height: 82px;
           border-radius: 999px;
           background: linear-gradient(135deg, #347cf0, #13bcae);
           display: grid;
@@ -620,38 +669,40 @@ export default function Home() {
           font-size: 32px;
           font-weight: 900;
           color: #ffffff;
+          box-shadow: 0 10px 28px rgba(19, 200, 181, 0.25);
         }
 
         .orbit-label {
           position: absolute;
+          z-index: 3;
           font-size: 10px;
           font-weight: 800;
-          letter-spacing: 1.5px;
+          letter-spacing: 1.4px;
           color: #7ee8dc;
-          background: rgba(16, 36, 61, 0.9);
-          border: 1px solid rgba(126, 232, 220, 0.25);
-          padding: 4px 10px;
+          background: #0d213a;
+          border: 1px solid rgba(126, 232, 220, 0.28);
+          padding: 5px 10px;
           border-radius: 999px;
         }
 
         .label-one {
-          top: 16px;
-          left: 16%;
+          top: 18px;
+          left: 12%;
         }
 
         .label-two {
-          top: 16px;
-          right: 16%;
+          top: 18px;
+          right: 12%;
         }
 
         .label-three {
-          bottom: 16px;
-          left: 16%;
+          bottom: 18px;
+          left: 12%;
         }
 
         .label-four {
-          bottom: 16px;
-          right: 16%;
+          bottom: 18px;
+          right: 12%;
         }
 
         .platform-section,
@@ -680,7 +731,8 @@ export default function Home() {
         .home-posts-header p {
           color: #a9bcd3;
           font-size: 14px;
-          line-height: 1.6;
+          line-height: 1.65;
+          margin: 0;
         }
 
         .module-grid {
@@ -695,6 +747,9 @@ export default function Home() {
           border: 1px solid rgba(255, 255, 255, 0.08);
           border-radius: 14px;
           padding: 20px;
+          display: flex;
+          flex-direction: column;
+          gap: 6px;
         }
 
         .module-number {
@@ -704,8 +759,9 @@ export default function Home() {
         }
 
         .module-card h3 {
-          margin: 8px 0 6px;
+          margin: 2px 0 0;
           font-size: 17px;
+          color: #ffffff;
         }
 
         .module-card p {
@@ -715,21 +771,41 @@ export default function Home() {
           line-height: 1.6;
         }
 
+        .module-arrow {
+          margin-top: auto;
+          padding-top: 8px;
+          font-size: 13px;
+          color: #7ee8dc;
+          font-weight: 700;
+        }
+
+        .business-section {
+          padding-bottom: 56px;
+        }
+
+        .business-inner {
+          background: linear-gradient(125deg, #102b4d, #124663);
+          border: 1px solid rgba(126, 232, 220, 0.16);
+          border-radius: 18px;
+          padding: 36px 32px;
+        }
+
         .business-section h2 {
           font-size: 34px;
           line-height: 1.25;
-          margin: 10px 0;
+          margin: 12px 0;
         }
 
         .business-section p {
-          color: #a9bcd3;
+          color: #c5d6ea;
           font-size: 14px;
+          margin: 0;
         }
 
         .home-posts-section {
           background: #f3f6fb;
           color: #15243a;
-          padding: 52px 24px 70px;
+          padding: 56px 24px 72px;
         }
 
         .home-posts-inner {
@@ -748,7 +824,7 @@ export default function Home() {
 
         .home-posts-header p {
           color: #5b6d84;
-          margin: 6px 0 0;
+          margin-top: 6px;
         }
 
         .view-all-link {
@@ -756,9 +832,10 @@ export default function Home() {
           font-size: 13px;
           font-weight: 700;
           text-decoration: none;
-          padding: 8px 12px;
+          padding: 9px 14px;
           background: #e6efff;
           border-radius: 8px;
+          white-space: nowrap;
         }
 
         .home-posts-list {
@@ -780,6 +857,7 @@ export default function Home() {
           justify-content: space-between;
           align-items: center;
           gap: 12px;
+          flex-wrap: wrap;
           padding-bottom: 14px;
           border-bottom: 1px solid #edf0f5;
         }
@@ -796,6 +874,7 @@ export default function Home() {
           height: 40px;
           border-radius: 10px;
           object-fit: cover;
+          flex-shrink: 0;
         }
 
         .home-company-avatar {
@@ -821,7 +900,7 @@ export default function Home() {
         .home-post-badge {
           background: #edf5ff;
           color: #397bd2;
-          padding: 6px 10px;
+          padding: 6px 11px;
           border-radius: 999px;
           font-size: 11px;
           font-weight: 700;
@@ -862,15 +941,17 @@ export default function Home() {
         .home-image-card {
           border-radius: 10px;
           overflow: hidden;
-          background: #edf1f6;
+          background: #0d1d31;
           border: 1px solid #e4eaf2;
         }
 
         .home-image-card img {
           display: block;
           width: 100%;
-          height: 240px;
-          object-fit: cover;
+          max-height: 360px;
+          object-fit: contain;
+          object-position: center;
+          background: #0d1d31;
         }
 
         .home-image-bar {
@@ -881,6 +962,7 @@ export default function Home() {
           padding: 8px 12px;
           background: #10243d;
           color: #e6eef8;
+          border-top: 1px solid #1d3656;
         }
 
         .home-image-caption {
@@ -898,6 +980,11 @@ export default function Home() {
           font-size: 12px;
           cursor: pointer;
           flex-shrink: 0;
+        }
+
+        .home-image-comment-btn:hover {
+          background: rgba(19, 188, 174, 0.35);
+          border-color: #13bcae;
         }
 
         .home-posts-empty {
@@ -930,6 +1017,7 @@ export default function Home() {
         @media (max-width: 800px) {
           .hero {
             grid-template-columns: 1fr;
+            padding-top: 40px;
           }
 
           .module-grid {
@@ -938,8 +1026,28 @@ export default function Home() {
         }
 
         @media (max-width: 540px) {
+          .navbar {
+            padding: 12px 16px;
+          }
+
+          .navbar nav {
+            gap: 14px;
+          }
+
+          .navbar nav a {
+            font-size: 12px;
+          }
+
           .hero h1 {
             font-size: 32px;
+          }
+
+          .business-inner {
+            padding: 24px 20px;
+          }
+
+          .business-section h2 {
+            font-size: 26px;
           }
 
           .module-grid,
