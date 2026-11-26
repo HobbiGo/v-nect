@@ -44,7 +44,7 @@ const INITIAL_LISTINGS: MarketplaceListing[] = [
       "Short-form product highlight clips and commercial launch assets ready for multi-channel campaign deployment.",
     verified: true,
     connectHref: "/business-feed",
-    connectLabel: "Lihat di Feed →",
+    connectLabel: "Lihat di Feed ->",
   },
   {
     id: "mkt-2",
@@ -57,7 +57,7 @@ const INITIAL_LISTINGS: MarketplaceListing[] = [
       "Verified regional manufacturing and trade sourcing with transparent quality checks and logistics coordination.",
     verified: true,
     connectHref: "/v-circle",
-    connectLabel: "Konek di Circle →",
+    connectLabel: "Konek di Circle ->",
   },
   {
     id: "mkt-3",
@@ -70,7 +70,7 @@ const INITIAL_LISTINGS: MarketplaceListing[] = [
       "Strategic partnership structuring, distributor introductions, and regional market entry roadmaps.",
     verified: true,
     connectHref: "/v-circle",
-    connectLabel: "Konek di Circle →",
+    connectLabel: "Konek di Circle ->",
   },
   {
     id: "mkt-4",
@@ -83,7 +83,7 @@ const INITIAL_LISTINGS: MarketplaceListing[] = [
       "Responsive web interfaces, brand component libraries, and high-clarity product experiences.",
     verified: false,
     connectHref: "/v-hub",
-    connectLabel: "Buka v-hub →",
+    connectLabel: "Buka v-hub ->",
   },
 ];
 
@@ -190,7 +190,7 @@ export default function VMarketPage() {
           imageUrl: img,
           verified: true,
           connectHref: "/business-feed",
-          connectLabel: "Masuk ke Feed →",
+          connectLabel: "Lihat di Feed ->",
         };
       });
       setLiveLaunchListings(mapped);
@@ -332,7 +332,7 @@ export default function VMarketPage() {
 
           <div className="market-hero-actions">
             <Link href="/business-feed" className="market-btn-primary">
-              Publish Product Launch →
+              Publish Product Launch -&gt;
             </Link>
           </div>
         </div>
@@ -391,10 +391,12 @@ export default function VMarketPage() {
                   {item.name} {item.verified && <span className="market-ver">✓</span>}
                 </h3>
                 <div className="market-supplier">by {item.supplier}</div>
-                <p>{item.description}</p>
+                <p className="market-desc">{item.description}</p>
+
+                <div className="market-card-divider" />
 
                 <div className="market-card-foot">
-                  <strong>{item.priceLabel}</strong>
+                  <strong className="market-price">{item.priceLabel}</strong>
                   <div className="market-action-row">
                     <Link href={item.connectHref} className="market-connect-link">
                       {item.connectLabel}
@@ -565,23 +567,25 @@ export default function VMarketPage() {
           border: none;
           background: linear-gradient(110deg, #347cf0, #13bcae);
           color: #ffffff;
-          padding: 9px 15px;
+          padding: 8px 14px;
           border-radius: 9px;
           font-size: 12px;
           font-weight: 700;
           text-decoration: none;
           cursor: pointer;
+          white-space: nowrap;
         }
 
         .market-btn-done {
           border: 1px solid rgba(19, 200, 181, 0.45);
           background: rgba(19, 200, 181, 0.16);
           color: #7ee8dc;
-          padding: 9px 14px;
+          padding: 8px 14px;
           border-radius: 9px;
           font-size: 12px;
           font-weight: 700;
           cursor: pointer;
+          white-space: nowrap;
         }
 
         .market-banner {
@@ -650,17 +654,17 @@ export default function VMarketPage() {
           margin-top: 20px;
           display: grid;
           grid-template-columns: repeat(2, minmax(0, 1fr));
-          gap: 16px;
+          gap: 18px;
         }
 
         .market-card {
           background: #0d1e34;
           border: 1px solid rgba(255, 255, 255, 0.09);
           border-radius: 14px;
-          padding: 20px;
+          padding: 22px;
           display: flex;
           flex-direction: column;
-          gap: 8px;
+          min-width: 0;
         }
 
         .market-card-img {
@@ -669,30 +673,15 @@ export default function VMarketPage() {
           object-fit: cover;
           border-radius: 10px;
           background: #081424;
-          margin-bottom: 4px;
+          margin-bottom: 12px;
         }
 
-        .market-card-top,
-        .market-card-foot {
+        .market-card-top {
           display: flex;
           justify-content: space-between;
           align-items: center;
           gap: 10px;
           flex-wrap: wrap;
-        }
-
-        .market-action-row {
-          display: flex;
-          align-items: center;
-          gap: 10px;
-          flex-wrap: wrap;
-        }
-
-        .market-connect-link {
-          color: #7ee8dc;
-          text-decoration: none;
-          font-size: 12px;
-          font-weight: 700;
         }
 
         .market-cat-badge {
@@ -710,10 +699,11 @@ export default function VMarketPage() {
         }
 
         .market-card h3 {
-          margin: 2px 0 0;
+          margin: 10px 0 0;
           font-size: 18px;
           font-weight: 700;
           color: #ffffff;
+          line-height: 1.35;
         }
 
         .market-ver {
@@ -722,26 +712,56 @@ export default function VMarketPage() {
         }
 
         .market-supplier {
+          margin-top: 4px;
           font-size: 12px;
           font-weight: 700;
           color: #7ee8dc;
         }
 
-        .market-card p {
-          margin: 0;
+        .market-desc {
+          margin: 10px 0 16px;
           font-size: 13px;
           color: #b7c8dd;
           line-height: 1.65;
+          overflow-wrap: anywhere;
+        }
+
+        .market-card-divider {
+          margin-top: auto;
+          border-top: 1px solid rgba(255, 255, 255, 0.08);
+          padding-top: 14px;
         }
 
         .market-card-foot {
-          margin-top: auto;
-          padding-top: 8px;
+          display: flex;
+          flex-direction: column;
+          align-items: stretch;
+          gap: 10px;
         }
 
-        .market-card-foot strong {
+        .market-price {
           font-size: 14px;
           color: #ffffff;
+        }
+
+        .market-action-row {
+          display: flex;
+          align-items: center;
+          justify-content: space-between;
+          gap: 12px;
+          flex-wrap: wrap;
+        }
+
+        .market-connect-link {
+          color: #7ee8dc;
+          text-decoration: none;
+          font-size: 12px;
+          font-weight: 700;
+          white-space: nowrap;
+        }
+
+        .market-connect-link:hover {
+          text-decoration: underline;
         }
 
         .market-footer {
