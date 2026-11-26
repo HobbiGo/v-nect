@@ -780,6 +780,12 @@ export default function BusinessFeedPage() {
       <BusinessFeedNavbar activePath="/business-feed" />
 
       <section className="feed-container">
+        <div className="back-home-bar">
+          <Link href="/" className="back-home-button">
+            ← Back to Home
+          </Link>
+        </div>
+
         <div className="hero">
           <div>
             <div className="eyebrow">
@@ -1316,7 +1322,34 @@ export default function BusinessFeedPage() {
         .feed-container {
           max-width: 1200px;
           margin: auto;
-          padding: 35px 24px 70px;
+          padding: 24px 24px 70px;
+        }
+
+        .back-home-bar {
+          margin-bottom: 16px;
+          display: flex;
+          align-items: center;
+          justify-content: space-between;
+        }
+
+        .back-home-button {
+          display: inline-flex;
+          align-items: center;
+          gap: 6px;
+          padding: 9px 15px;
+          border-radius: 9px;
+          background: #07111f;
+          border: 1px solid rgba(19, 200, 181, 0.35);
+          color: #ffffff;
+          font-size: 12px;
+          font-weight: 700;
+          text-decoration: none;
+          box-shadow: 0 4px 12px rgba(7, 17, 31, 0.08);
+        }
+
+        .back-home-button:hover {
+          border-color: #13c8b5;
+          color: #7ee8dc;
         }
 
         .hero {
@@ -1927,7 +1960,12 @@ export default function BusinessFeedPage() {
 
         @media (max-width: 540px) {
           .feed-container {
-            padding: 20px 14px 45px;
+            padding: 18px 14px 45px;
+          }
+
+          .back-home-button {
+            padding: 8px 12px;
+            font-size: 11px;
           }
 
           .hero {
