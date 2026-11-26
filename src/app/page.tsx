@@ -39,32 +39,32 @@ const HERO_NETWORK_IMG_SRC = "/images/logonew-v-nect.png";
 const modules = [
   {
     number: "01",
-    name: "VOIN Chat",
+    name: "v-chat",
     description: "Connect and communicate with people and businesses.",
   },
   {
     number: "02",
-    name: "VOIN Connect",
+    name: "v-meet",
     description: "Voice, video meetings and global collaboration.",
   },
   {
     number: "03",
-    name: "VOIN Business",
+    name: "v-hub",
     description: "Build your professional and company identity.",
   },
   {
     number: "04",
-    name: "Business Feed",
+    name: "v-business feed",
     description: "Discover business updates, news and opportunities.",
   },
   {
     number: "05",
-    name: "VOIN Community",
+    name: "v-circle",
     description: "Meet professionals and grow your network.",
   },
   {
     number: "06",
-    name: "VOIN Marketplace",
+    name: "v-market",
     description: "Discover products, services and suppliers.",
   },
 ];
