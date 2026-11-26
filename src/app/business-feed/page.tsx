@@ -1326,35 +1326,32 @@ export default function BusinessFeedPage() {
         }
 
         .back-home-bar {
-          margin-bottom: 18px;
-          padding: 10px 14px;
-          border-radius: 12px;
-          background: #ffffff;
-          border: 1px solid #d6e0ec;
-          box-shadow: 0 4px 14px rgba(15, 34, 58, 0.05);
-          display: flex;
+          margin-bottom: 16px;
+          display: inline-flex;
           align-items: center;
-          justify-content: flex-start;
+          padding: 4px;
+          border-radius: 11px;
+          background: #e6f8f4;
+          border: 1px solid #9be4d7;
+          box-shadow: 0 3px 10px rgba(15, 163, 130, 0.12);
         }
 
         .back-home-button {
           display: inline-flex;
           align-items: center;
-          gap: 8px;
-          padding: 10px 16px;
-          border-radius: 9px;
-          background: #07111f;
-          border: 1.5px solid #13c8b5;
+          gap: 6px;
+          padding: 8px 14px;
+          border-radius: 8px;
+          background: linear-gradient(110deg, #13c8b5, #0fa382);
           color: #ffffff;
-          font-size: 13px;
+          font-size: 12px;
           font-weight: 700;
           text-decoration: none;
-          box-shadow: 0 4px 12px rgba(7, 17, 31, 0.16);
+          white-space: nowrap;
         }
 
         .back-home-button:hover {
-          background: #0d2038;
-          color: #7ee8dc;
+          filter: brightness(0.95);
         }
 
         .hero {
@@ -1969,12 +1966,12 @@ export default function BusinessFeedPage() {
           }
 
           .back-home-bar {
-            padding: 8px 10px;
+            padding: 3px;
           }
 
           .back-home-button {
-            padding: 9px 14px;
-            font-size: 12px;
+            padding: 7px 12px;
+            font-size: 11px;
           }
 
           .hero {
