@@ -14,6 +14,7 @@ type Post = {
   post_type: string;
   image_url: string | null;
   image_urls?: string[] | null;
+  image_captions?: string[] | null;
   status: string;
   created_at: string;
   companies: {
@@ -33,9 +34,12 @@ type PreviewItem = {
   url: string;
 };
 
+type LocalCaptionMap = Record<string, Record<string, string>>;
+
 const BUCKET_NAME = "business-posts";
 const MAX_IMAGES = 5;
 const MAX_IMAGE_SIZE = 5 * 1024 * 1024;
+const LOCAL_CAPTIONS_STORAGE_KEY = "voinnect_business_post_image_captions_v1";
 
 const categories = [
   { value: "all", label: "All Posts" },
@@ -89,6 +93,65 @@ function getPostImages(post: Post): string[] {
   return list.slice(0, MAX_IMAGES);
 }
 
+function readLocalCaptionMap(): LocalCaptionMap {
+  if (typeof window === "undefined") return {};
+  try {
+    const raw = window.localStorage.getItem(LOCAL_CAPTIONS_STORAGE_KEY);
+    if (!raw) return {};
+    const parsed = JSON.parse(raw);
+    return parsed && typeof parsed === "object" ? parsed : {};
+  } catch {
+    return {};
+  }
+}
+
+function savePostCaptionsToLocal(postId: string, urls: string[], captions: string[]) {
+  if (typeof window === "undefined" || !postId) return;
+  try {
+    const all = readLocalCaptionMap();
+    const postEntry: Record<string, string> = {};
+    urls.forEach((url, idx) => {
+      const text = (captions[idx] || "").trim();
+      if (url && text) {
+        postEntry[url] = text;
+      }
+    });
+    if (Object.keys(postEntry).length > 0) {
+      all[postId] = postEntry;
+    } else {
+      delete all[postId];
+    }
+    window.localStorage.setItem(LOCAL_CAPTIONS_STORAGE_KEY, JSON.stringify(all));
+  } catch {
+    // Ignore storage quota errors
+  }
+}
+
+function removePostCaptionsFromLocal(postId: string) {
+  if (typeof window === "undefined" || !postId) return;
+  try {
+    const all = readLocalCaptionMap();
+    if (all[postId]) {
+      delete all[postId];
+      window.localStorage.setItem(LOCAL_CAPTIONS_STORAGE_KEY, JSON.stringify(all));
+    }
+  } catch {
+    // Ignore storage errors
+  }
+}
+
+function getPostImageCaptions(post: Post, images: string[]): string[] {
+  const localMap = readLocalCaptionMap()[post.id] || {};
+  return images.map((url, idx) => {
+    const dbCaption =
+      Array.isArray(post.image_captions) && typeof post.image_captions[idx] === "string"
+        ? post.image_captions[idx].trim()
+        : "";
+    if (dbCaption) return dbCaption;
+    return (localMap[url] || "").trim();
+  });
+}
+
 export default function BusinessFeedPage() {
   const supabase = createClient();
   const feedbackRef = useRef<HTMLDivElement | null>(null);
@@ -111,7 +174,9 @@ export default function BusinessFeedPage() {
   const [postType, setPostType] = useState("announcement");
 
   const [existingImages, setExistingImages] = useState<string[]>([]);
+  const [existingImageCaptions, setExistingImageCaptions] = useState<string[]>([]);
   const [imageFiles, setImageFiles] = useState<File[]>([]);
+  const [newImageCaptions, setNewImageCaptions] = useState<string[]>([]);
   const [previewItems, setPreviewItems] = useState<PreviewItem[]>([]);
 
   useEffect(() => {
@@ -258,7 +323,9 @@ export default function BusinessFeedPage() {
     setContent("");
     setPostType("announcement");
     setExistingImages([]);
+    setExistingImageCaptions([]);
     setImageFiles([]);
+    setNewImageCaptions([]);
     setEditingPostId(null);
     setShowComposer(false);
   }
@@ -268,7 +335,9 @@ export default function BusinessFeedPage() {
     setContent("");
     setPostType("announcement");
     setExistingImages([]);
+    setExistingImageCaptions([]);
     setImageFiles([]);
+    setNewImageCaptions([]);
     setEditingPostId(null);
     setShowComposer(true);
     setError("");
@@ -276,11 +345,14 @@ export default function BusinessFeedPage() {
   }
 
   function startEditPost(post: Post) {
+    const imgs = getPostImages(post);
     setTitle(post.title);
     setContent(post.content);
     setPostType(normalizePostTypeForSelect(post.post_type));
-    setExistingImages(getPostImages(post));
+    setExistingImages(imgs);
+    setExistingImageCaptions(getPostImageCaptions(post, imgs));
     setImageFiles([]);
+    setNewImageCaptions([]);
     setEditingPostId(post.id);
     setShowComposer(true);
     setError("");
@@ -345,9 +417,26 @@ export default function BusinessFeedPage() {
     }
 
     setImageFiles((prev) => [...prev, ...validNewFiles]);
+    setNewImageCaptions((prev) => [
+      ...prev,
+      ...validNewFiles.map(() => ""),
+    ]);
+
     if (warning) {
       setError(warning);
     }
+  }
+
+  function updateExistingImageCaption(index: number, value: string) {
+    setExistingImageCaptions((prev) =>
+      prev.map((item, idx) => (idx === index ? value : item))
+    );
+  }
+
+  function updateNewImageCaption(index: number, value: string) {
+    setNewImageCaptions((prev) =>
+      prev.map((item, idx) => (idx === index ? value : item))
+    );
   }
 
   function removeExistingImage(indexToRemove: number) {
@@ -355,11 +444,17 @@ export default function BusinessFeedPage() {
     setExistingImages((prev) =>
       prev.filter((_, idx) => idx !== indexToRemove)
     );
+    setExistingImageCaptions((prev) =>
+      prev.filter((_, idx) => idx !== indexToRemove)
+    );
   }
 
   function removeSelectedImage(indexToRemove: number) {
     setError("");
     setImageFiles((prev) =>
+      prev.filter((_, idx) => idx !== indexToRemove)
+    );
+    setNewImageCaptions((prev) =>
       prev.filter((_, idx) => idx !== indexToRemove)
     );
   }
@@ -401,6 +496,14 @@ export default function BusinessFeedPage() {
     }
 
     const isEditing = Boolean(editingPostId);
+    const targetPostId = editingPostId;
+    const keptImagesSnapshot = [...existingImages];
+    const keptCaptionsSnapshot = existingImages.map((_, idx) =>
+      (existingImageCaptions[idx] || "").trim().slice(0, 300)
+    );
+    const newCaptionsSnapshot = imageFiles.map((_, idx) =>
+      (newImageCaptions[idx] || "").trim().slice(0, 300)
+    );
 
     setSubmitting(true);
     setError("");
@@ -424,7 +527,11 @@ export default function BusinessFeedPage() {
         formData.append("post_id", editingPostId);
         formData.append(
           "keep_image_urls",
-          JSON.stringify(existingImages)
+          JSON.stringify(keptImagesSnapshot)
+        );
+        formData.append(
+          "existing_image_captions",
+          JSON.stringify(keptCaptionsSnapshot)
         );
       }
 
@@ -434,6 +541,10 @@ export default function BusinessFeedPage() {
       formData.append(
         "post_type",
         normalizePostTypeForDb(postType)
+      );
+      formData.append(
+        "new_image_captions",
+        JSON.stringify(newCaptionsSnapshot)
       );
 
       for (const file of imageFiles) {
@@ -486,6 +597,25 @@ export default function BusinessFeedPage() {
             ? "The post could not be updated."
             : "The post could not be published.")
         );
+      }
+
+      const savedPostId =
+        targetPostId ||
+        (typeof data?.post?.id === "string" ? data.post.id : "");
+      const savedUrls: string[] = Array.isArray(data?.post?.image_urls)
+        ? data.post.image_urls.filter((u: unknown): u is string => typeof u === "string")
+        : keptImagesSnapshot;
+
+      if (savedPostId && savedUrls.length > 0) {
+        const mergedCaptions = savedUrls.map((url, idx) => {
+          const keptIdx = keptImagesSnapshot.indexOf(url);
+          if (keptIdx !== -1) {
+            return keptCaptionsSnapshot[keptIdx] || "";
+          }
+          const newIdx = idx - keptImagesSnapshot.length;
+          return newCaptionsSnapshot[newIdx] || "";
+        });
+        savePostCaptionsToLocal(savedPostId, savedUrls, mergedCaptions);
       }
 
       setSuccess(
@@ -592,6 +722,7 @@ export default function BusinessFeedPage() {
     }
 
     await removeStoredImages(imagesToDelete);
+    removePostCaptionsFromLocal(post.id);
 
     if (editingPostId === post.id) {
       resetComposer();
@@ -848,6 +979,16 @@ export default function BusinessFeedPage() {
                               src={imgUrl}
                               alt={`Current image ${index + 1}`}
                             />
+                            <input
+                              type="text"
+                              className="image-caption-input"
+                              value={existingImageCaptions[index] || ""}
+                              onChange={(e) =>
+                                updateExistingImageCaption(index, e.target.value)
+                              }
+                              placeholder={`Text for image ${index + 1}...`}
+                              maxLength={300}
+                            />
                             <button
                               type="button"
                               className="remove-image-button"
@@ -889,6 +1030,16 @@ export default function BusinessFeedPage() {
                             <img
                               src={item.url}
                               alt={`New image ${index + 1}`}
+                            />
+                            <input
+                              type="text"
+                              className="image-caption-input"
+                              value={newImageCaptions[index] || ""}
+                              onChange={(e) =>
+                                updateNewImageCaption(index, e.target.value)
+                              }
+                              placeholder={`Text for image ${index + 1}...`}
+                              maxLength={300}
                             />
                             <button
                               type="button"
@@ -976,6 +1127,7 @@ export default function BusinessFeedPage() {
                   company?.id === post.company_id;
 
                 const postImages = getPostImages(post);
+                const postImageCaptions = getPostImageCaptions(post, postImages);
 
                 return (
                   <article
@@ -1028,51 +1180,60 @@ export default function BusinessFeedPage() {
                               : "post-images-grid multi"
                           }
                         >
-                          {postImages.map((imgUrl, idx) => (
-                            <div
-                              className="post-image-container"
-                              key={`${post.id}-img-${idx}`}
-                            >
-                              <img
-                                className="post-image"
-                                src={imgUrl}
-                                alt={`${post.title} (${idx + 1})`}
-                                loading="lazy"
-                                decoding="async"
-                                onError={(e) => {
-                                  console.error(
-                                    "Business Feed image failed:",
-                                    imgUrl
-                                  );
+                          {postImages.map((imgUrl, idx) => {
+                            const captionText = postImageCaptions[idx] || "";
+                            return (
+                              <div
+                                className="post-image-container"
+                                key={`${post.id}-img-${idx}`}
+                              >
+                                <img
+                                  className="post-image"
+                                  src={imgUrl}
+                                  alt={`${post.title} (${idx + 1})`}
+                                  loading="lazy"
+                                  decoding="async"
+                                  onError={(e) => {
+                                    console.error(
+                                      "Business Feed image failed:",
+                                      imgUrl
+                                    );
 
-                                  e.currentTarget.style.display =
-                                    "none";
+                                    e.currentTarget.style.display =
+                                      "none";
 
-                                  const fallback =
-                                    e.currentTarget
-                                      .nextElementSibling as
-                                      | HTMLElement
-                                      | null;
+                                    const fallback =
+                                      e.currentTarget
+                                        .nextElementSibling as
+                                        | HTMLElement
+                                        | null;
 
-                                  if (fallback) {
-                                    fallback.style.display =
-                                      "block";
-                                  }
-                                }}
-                              />
+                                    if (fallback) {
+                                      fallback.style.display =
+                                        "block";
+                                    }
+                                  }}
+                                />
 
-                              <div className="image-error">
-                                Image could not be displayed.{" "}
-                                <a
-                                  href={imgUrl}
-                                  target="_blank"
-                                  rel="noreferrer"
-                                >
-                                  Open image
-                                </a>
+                                <div className="image-error">
+                                  Image could not be displayed.{" "}
+                                  <a
+                                    href={imgUrl}
+                                    target="_blank"
+                                    rel="noreferrer"
+                                  >
+                                    Open image
+                                  </a>
+                                </div>
+
+                                {captionText && (
+                                  <div className="post-image-caption">
+                                    {captionText}
+                                  </div>
+                                )}
                               </div>
-                            </div>
-                          ))}
+                            );
+                          })}
                         </div>
                       )}
                     </div>
@@ -1454,7 +1615,7 @@ export default function BusinessFeedPage() {
 
         .preview-grid {
           display: grid;
-          grid-template-columns: repeat(auto-fill, minmax(135px, 1fr));
+          grid-template-columns: repeat(auto-fill, minmax(145px, 1fr));
           gap: 10px;
         }
 
@@ -1472,6 +1633,13 @@ export default function BusinessFeedPage() {
           object-fit: cover;
           border-radius: 6px;
           background: #edf1f6;
+        }
+
+        .image-caption-input {
+          margin-top: 8px;
+          padding: 7px 9px !important;
+          font-size: 11px !important;
+          border-radius: 6px !important;
         }
 
         .remove-image-button {
@@ -1585,6 +1753,16 @@ export default function BusinessFeedPage() {
           height: 240px;
           max-height: 240px;
           object-fit: cover;
+        }
+
+        .post-image-caption {
+          padding: 9px 12px;
+          background: #f8fafd;
+          border-top: 1px solid #e4eaf2;
+          color: #263a53;
+          font-size: 12px;
+          line-height: 1.5;
+          overflow-wrap: anywhere;
         }
 
         .image-error {
