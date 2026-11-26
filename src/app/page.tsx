@@ -851,16 +851,15 @@ export default function Home() {
         }
 
         .navbar {
-          min-height: 76px;
-          padding: 12px 6%;
-          background: rgba(6, 11, 34, 0.78);
+          min-height: 72px;
+          padding: 10px 6%;
+          background: rgba(6, 11, 34, 0.84);
           backdrop-filter: blur(12px);
           border-bottom: 1px solid rgba(138, 165, 255, 0.14);
           display: flex;
           align-items: center;
           justify-content: space-between;
           gap: 16px;
-          flex-wrap: wrap;
           position: sticky;
           top: 0;
           z-index: 30;
@@ -876,14 +875,12 @@ export default function Home() {
         }
 
         .logo-mark-wrap {
-          width: 38px;
-          height: 38px;
-          border-radius: 10px;
-          background: linear-gradient(135deg, #4f7cff, #7b5cff);
+          width: 30px;
+          height: 30px;
           display: grid;
           place-items: center;
           overflow: hidden;
-          padding: 4px;
+          flex-shrink: 0;
         }
 
         .logo-mark {
@@ -898,21 +895,21 @@ export default function Home() {
         }
 
         .logo-main {
-          font-size: 21px;
+          font-size: 19px;
           font-weight: 800;
-          letter-spacing: 0.4px;
+          letter-spacing: 0.3px;
           white-space: nowrap;
-          line-height: 1.1;
+          line-height: 1.05;
         }
 
         .logo-main span {
-          color: #8ab4ff;
+          color: #7da6ff;
         }
 
         .logo small {
-          font-size: 10px;
+          font-size: 9px;
           font-weight: 700;
-          letter-spacing: 1.3px;
+          letter-spacing: 1.2px;
           color: #9cb0d9;
           margin-top: 2px;
           white-space: nowrap;
@@ -922,14 +919,14 @@ export default function Home() {
           display: flex;
           align-items: center;
           gap: 20px;
-          flex-wrap: wrap;
         }
 
         .navbar nav a {
           color: #d9e4ff;
           text-decoration: none;
-          font-size: 14px;
+          font-size: 13.5px;
           font-weight: 600;
+          white-space: nowrap;
           transition: color 0.2s ease;
         }
 
@@ -941,7 +938,7 @@ export default function Home() {
           display: flex;
           align-items: center;
           gap: 10px;
-          flex-wrap: wrap;
+          flex-shrink: 0;
         }
 
         .nav-account-badge {
@@ -961,7 +958,7 @@ export default function Home() {
           color: #eef3ff;
           padding: 8px 14px;
           border-radius: 10px;
-          font-size: 13px;
+          font-size: 12.5px;
           font-weight: 700;
           cursor: pointer;
           white-space: nowrap;
@@ -975,9 +972,9 @@ export default function Home() {
         .navbar nav a.nav-button {
           background: linear-gradient(110deg, #4b6bff, #7854ff);
           color: #fff;
-          padding: 9px 16px;
+          padding: 8px 15px;
           border-radius: 10px;
-          font-size: 13px;
+          font-size: 12.5px;
           font-weight: 700;
           white-space: nowrap;
         }
@@ -985,7 +982,7 @@ export default function Home() {
         .hero {
           max-width: 1220px;
           margin: 0 auto;
-          padding: 54px 24px 44px;
+          padding: 46px 24px 36px;
           display: grid;
           grid-template-columns: minmax(0, 1fr) minmax(0, 1.25fr);
           gap: 28px;
@@ -995,30 +992,30 @@ export default function Home() {
         .eyebrow {
           display: inline-flex;
           align-items: center;
-          gap: 8px;
-          color: #9ec0ff;
-          background: rgba(63, 97, 232, 0.18);
+          gap: 7px;
+          color: #a4c3ff;
+          background: rgba(52, 79, 196, 0.24);
           border: 1px solid rgba(136, 166, 255, 0.28);
-          padding: 6px 12px;
+          padding: 4px 10px;
           border-radius: 999px;
-          font-size: 11px;
+          font-size: 10px;
           font-weight: 800;
-          letter-spacing: 1.4px;
+          letter-spacing: 1.2px;
         }
 
         .eyebrow-dot {
-          width: 7px;
-          height: 7px;
+          width: 6px;
+          height: 6px;
           border-radius: 50%;
           background: #5eead4;
         }
 
         .hero h1 {
-          font-size: clamp(38px, 4.6vw, 56px);
+          font-size: clamp(38px, 4.4vw, 54px);
           font-weight: 800;
-          line-height: 1.1;
+          line-height: 1.08;
           letter-spacing: -0.8px;
-          margin: 16px 0 14px;
+          margin: 14px 0 12px;
           color: #ffffff;
         }
 
@@ -1028,9 +1025,9 @@ export default function Home() {
 
         .hero p {
           color: #c2d1f0;
-          font-size: 16px;
-          line-height: 1.72;
-          max-width: 540px;
+          font-size: 15.5px;
+          line-height: 1.68;
+          max-width: 530px;
           margin: 0;
         }
 
@@ -1038,7 +1035,7 @@ export default function Home() {
           display: flex;
           align-items: center;
           gap: 12px;
-          margin-top: 24px;
+          margin-top: 22px;
           flex-wrap: wrap;
         }
 
@@ -1047,7 +1044,7 @@ export default function Home() {
           display: inline-flex;
           align-items: center;
           justify-content: center;
-          padding: 11px 18px;
+          padding: 10px 18px;
           border-radius: 10px;
           font-size: 13px;
           font-weight: 700;
@@ -1082,8 +1079,8 @@ export default function Home() {
           align-items: center;
           gap: 26px;
           flex-wrap: wrap;
-          margin-top: 28px;
-          padding-top: 20px;
+          margin-top: 24px;
+          padding-top: 18px;
           border-top: 1px solid rgba(145, 173, 255, 0.16);
         }
 
@@ -1094,29 +1091,29 @@ export default function Home() {
         }
 
         .hero-stat-item strong {
-          font-size: 20px;
+          font-size: 19px;
           font-weight: 800;
           color: #ffffff;
         }
 
         .hero-stat-item span {
-          font-size: 12px;
+          font-size: 11.5px;
           color: #9cb2dc;
         }
 
         .hero-visual {
           position: relative;
-          min-height: 390px;
+          min-height: 370px;
           width: 100%;
           display: grid;
           place-items: center;
-          padding: 20px 8px;
+          padding: 16px 8px;
         }
 
         .hero-ambient-glow {
           position: absolute;
-          width: 430px;
-          height: 290px;
+          width: 420px;
+          height: 280px;
           border-radius: 999px;
           background: radial-gradient(
             circle,
@@ -1194,8 +1191,8 @@ export default function Home() {
           position: relative;
           z-index: 2;
           width: 100%;
-          max-width: 600px;
-          max-height: 360px;
+          max-width: 580px;
+          max-height: 340px;
           object-fit: contain;
           filter: drop-shadow(0 14px 32px rgba(59, 99, 246, 0.28));
         }
@@ -1203,7 +1200,7 @@ export default function Home() {
         .orbit-label {
           position: absolute;
           z-index: 3;
-          font-size: 11px;
+          font-size: 10.5px;
           font-weight: 800;
           letter-spacing: 1.2px;
           color: #b7ceff;
@@ -1233,7 +1230,7 @@ export default function Home() {
         .platform-section {
           max-width: 1220px;
           margin: 0 auto;
-          padding: 18px 24px 48px;
+          padding: 14px 24px 44px;
         }
 
         .section-top-bar {
@@ -1242,7 +1239,7 @@ export default function Home() {
           justify-content: space-between;
           gap: 14px;
           flex-wrap: wrap;
-          margin-bottom: 16px;
+          margin-bottom: 14px;
         }
 
         .section-bar-tag {
@@ -1250,14 +1247,14 @@ export default function Home() {
           align-items: center;
           gap: 8px;
           color: #eef3ff;
-          font-size: 15px;
+          font-size: 14.5px;
           font-weight: 700;
         }
 
         .section-bar-tag::before {
           content: "";
-          width: 4px;
-          height: 16px;
+          width: 3px;
+          height: 15px;
           border-radius: 999px;
           background: linear-gradient(180deg, #5f85ff, #13c8b5);
         }
@@ -1304,9 +1301,9 @@ export default function Home() {
         }
 
         .module-icon-badge {
-          width: 38px;
-          height: 38px;
-          border-radius: 12px;
+          width: 36px;
+          height: 36px;
+          border-radius: 11px;
           background: linear-gradient(135deg, #5677ff, #7c58ff);
           color: #fff;
           font-size: 12px;
@@ -1349,8 +1346,8 @@ export default function Home() {
             #dfe7f8 100%
           );
           color: #131c36;
-          padding: 46px 24px 44px;
-          border-radius: 28px 28px 0 0;
+          padding: 44px 24px 42px;
+          border-radius: 26px 26px 0 0;
           box-shadow: 0 -16px 40px rgba(4, 9, 28, 0.35);
         }
 
@@ -1365,7 +1362,7 @@ export default function Home() {
           align-items: flex-start;
           gap: 20px;
           flex-wrap: wrap;
-          margin-bottom: 24px;
+          margin-bottom: 22px;
         }
 
         .home-posts-heading-copy {
@@ -1374,19 +1371,19 @@ export default function Home() {
 
         .home-posts-kicker {
           color: #4b5ce6;
-          font-size: 11px;
+          font-size: 10.5px;
           font-weight: 800;
-          letter-spacing: 1.6px;
+          letter-spacing: 1.5px;
           display: inline-block;
         }
 
         .home-posts-header h2 {
           color: #0e1733;
-          font-size: clamp(28px, 3.6vw, 40px);
+          font-size: clamp(28px, 3.4vw, 38px);
           font-weight: 800;
-          letter-spacing: -0.8px;
+          letter-spacing: -0.7px;
           line-height: 1.15;
-          margin: 8px 0 8px;
+          margin: 6px 0 6px;
         }
 
         .home-posts-header h2 span {
@@ -1395,7 +1392,7 @@ export default function Home() {
 
         .home-posts-header p {
           color: #526080;
-          font-size: 14px;
+          font-size: 13.5px;
           line-height: 1.65;
           margin: 0;
         }
@@ -1405,10 +1402,10 @@ export default function Home() {
           align-items: center;
           gap: 8px;
           color: #1a264a;
-          font-size: 13px;
+          font-size: 12.5px;
           font-weight: 700;
           text-decoration: none;
-          padding: 10px 16px;
+          padding: 9px 15px;
           background: #ffffff;
           border: 1px solid #cfd8ee;
           border-radius: 10px;
@@ -1456,7 +1453,7 @@ export default function Home() {
           inset: 0;
           background: linear-gradient(
             180deg,
-            rgba(8, 16, 44, 0.28) 0%,
+            rgba(8, 16, 44, 0.25) 0%,
             rgba(8, 16, 44, 0.72) 55%,
             rgba(7, 13, 36, 0.94) 100%
           );
@@ -1541,7 +1538,7 @@ export default function Home() {
           gap: 10px;
           flex-wrap: wrap;
           padding-bottom: 12px;
-          border-bottom: 1px solid #ea eff9;
+          border-bottom: 1px solid #eaeff9;
         }
 
         .home-company-info {
@@ -1949,6 +1946,7 @@ export default function Home() {
 
         @media (max-width: 900px) {
           .navbar {
+            flex-wrap: wrap;
             justify-content: center;
           }
 
@@ -1964,6 +1962,7 @@ export default function Home() {
           }
 
           .navbar nav {
+            flex-wrap: wrap;
             justify-content: center;
             gap: 12px;
           }
@@ -1973,6 +1972,7 @@ export default function Home() {
           }
 
           .nav-right-actions {
+            flex-wrap: wrap;
             justify-content: center;
           }
 
