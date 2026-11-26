@@ -54,7 +54,7 @@ const modules = [
     number: "03",
     name: "v-hub",
     description: "Build your professional and company identity.",
-    href: null,
+    href: "/v-hub",
   },
   {
     number: "04",
@@ -72,7 +72,7 @@ const modules = [
     number: "06",
     name: "v-market",
     description: "Discover products, services and suppliers.",
-    href: null,
+    href: "/v-market",
   },
 ];
 
