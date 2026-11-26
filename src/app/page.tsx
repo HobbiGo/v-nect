@@ -34,6 +34,7 @@ type FocusTarget = {
 const MAX_IMAGES = 5;
 const LOCAL_CAPTIONS_STORAGE_KEY = "voinnect_business_post_image_captions_v1";
 const BRAND_LOGO_SRC = "/images/voinnect-logo.jpg";
+const HERO_NETWORK_IMG_SRC = "/images/picture2-website.jpg";
 
 const modules = [
   {
@@ -290,12 +291,13 @@ export default function Home() {
 
         <div className="hero-visual">
           <div className="hero-ambient-glow" />
-          <div className="hero-logo-stage">
+          <div className="hero-network-stage">
             <img
-              src={BRAND_LOGO_SRC}
-              alt="VOINNECT Global Ecosystem"
-              className="hero-logo-img"
+              src={HERO_NETWORK_IMG_SRC}
+              alt="VOINNECT Global Business Network"
+              className="hero-network-img"
             />
+            <div className="hero-network-blend" />
           </div>
           <div className="orbit-label label-one">BUSINESS</div>
           <div className="orbit-label label-two">CONNECT</div>
@@ -599,12 +601,12 @@ export default function Home() {
         }
 
         .hero {
-          max-width: 1200px;
+          max-width: 1240px;
           margin: 0 auto;
-          padding: 60px 24px 52px;
+          padding: 56px 24px 52px;
           display: grid;
-          grid-template-columns: minmax(0, 1.15fr) minmax(0, 1.05fr);
-          gap: 32px;
+          grid-template-columns: minmax(0, 0.95fr) minmax(0, 1.35fr);
+          gap: 24px;
           align-items: center;
         }
 
@@ -681,62 +683,76 @@ export default function Home() {
 
         .hero-visual {
           position: relative;
-          min-height: 350px;
+          min-height: 410px;
+          width: 100%;
           display: grid;
           place-items: center;
           background: transparent;
-          padding: 24px 12px;
+          padding: 16px 4px;
         }
 
         .hero-ambient-glow {
           position: absolute;
-          width: 310px;
-          height: 310px;
+          width: 440px;
+          height: 320px;
           border-radius: 999px;
           background: radial-gradient(
             circle,
-            rgba(52, 124, 240, 0.3) 0%,
-            rgba(19, 200, 181, 0.16) 46%,
-            rgba(7, 17, 31, 0) 76%
+            rgba(52, 124, 240, 0.28) 0%,
+            rgba(19, 200, 181, 0.14) 52%,
+            rgba(7, 17, 31, 0) 80%
           );
-          filter: blur(18px);
+          filter: blur(22px);
           pointer-events: none;
           z-index: 1;
         }
 
-        .hero-logo-stage {
+        .hero-network-stage {
           position: relative;
           z-index: 2;
-          width: 285px;
-          height: 300px;
+          width: 100%;
+          max-width: 600px;
+          aspect-ratio: 16 / 10;
           display: grid;
           place-items: center;
           overflow: hidden;
           background: transparent;
           -webkit-mask-image: radial-gradient(
-            ellipse 68% 66% at 50% 45%,
-            #000 38%,
-            rgba(0, 0, 0, 0.62) 64%,
-            rgba(0, 0, 0, 0.18) 82%,
-            transparent 98%
+            ellipse 86% 84% at 50% 50%,
+            #000 50%,
+            rgba(0, 0, 0, 0.72) 74%,
+            rgba(0, 0, 0, 0.28) 90%,
+            transparent 100%
           );
           mask-image: radial-gradient(
-            ellipse 68% 66% at 50% 45%,
-            #000 38%,
-            rgba(0, 0, 0, 0.62) 64%,
-            rgba(0, 0, 0, 0.18) 82%,
-            transparent 98%
+            ellipse 86% 84% at 50% 50%,
+            #000 50%,
+            rgba(0, 0, 0, 0.72) 74%,
+            rgba(0, 0, 0, 0.28) 90%,
+            transparent 100%
           );
         }
 
-        .hero-logo-img {
+        .hero-network-img {
           width: 100%;
           height: 100%;
           object-fit: cover;
-          object-position: center 34%;
-          transform: scale(1.16);
-          mix-blend-mode: screen;
-          filter: brightness(1.06) contrast(1.08) saturate(1.15);
+          object-position: center 48%;
+          transform: scale(1.1);
+          mix-blend-mode: lighten;
+          filter: brightness(1.06) contrast(1.06) saturate(1.12);
+        }
+
+        .hero-network-blend {
+          position: absolute;
+          inset: 0;
+          pointer-events: none;
+          background: radial-gradient(
+            ellipse 82% 78% at 50% 50%,
+            rgba(7, 17, 31, 0) 54%,
+            rgba(7, 17, 31, 0.36) 82%,
+            #07111f 100%
+          );
         }
 
         .orbit-label {
@@ -746,7 +762,7 @@ export default function Home() {
           font-weight: 800;
           letter-spacing: 1.4px;
           color: #7ee8dc;
-          background: rgba(13, 33, 58, 0.9);
+          background: rgba(13, 33, 58, 0.88);
           border: 1px solid rgba(126, 232, 220, 0.28);
           padding: 5px 10px;
           border-radius: 999px;
@@ -754,22 +770,22 @@ export default function Home() {
 
         .label-one {
           top: 12px;
-          left: 6%;
+          left: 3%;
         }
 
         .label-two {
           top: 12px;
-          right: 6%;
+          right: 3%;
         }
 
         .label-three {
           bottom: 12px;
-          left: 6%;
+          left: 3%;
         }
 
         .label-four {
           bottom: 12px;
-          right: 6%;
+          right: 3%;
         }
 
         .platform-section,
@@ -1110,12 +1126,11 @@ export default function Home() {
           }
 
           .hero-visual {
-            min-height: 310px;
+            min-height: 290px;
           }
 
-          .hero-logo-stage {
-            width: 245px;
-            height: 260px;
+          .hero-network-stage {
+            max-width: 100%;
           }
 
           .business-inner {
