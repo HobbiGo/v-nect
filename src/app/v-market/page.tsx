@@ -28,6 +28,8 @@ type LaunchPostRow = {
   } | null;
 };
 
+const MARKET_INQUIRIES_STORAGE_KEY = "v-nect_v_market_inquiries_v1";
+
 const INITIAL_LISTINGS: MarketplaceListing[] = [
   {
     id: "mkt-1",
@@ -80,8 +82,10 @@ const CATEGORIES = ["All", "Products", "Services", "Suppliers"] as const;
 export default function VMarketPage() {
   const supabase = createClient();
 
+  const [currentUserId, setCurrentUserId] = useState<string | null>(null);
   const [currentUserName, setCurrentUserName] = useState<string | null>(null);
   const [authModalOpen, setAuthModalOpen] = useState(false);
+  const [dbSyncActive, setDbSyncActive] = useState(false);
 
   const [liveLaunchListings, setLiveLaunchListings] = useState<MarketplaceListing[]>([]);
   const [searchQuery, setSearchQuery] = useState("");
@@ -89,19 +93,51 @@ export default function VMarketPage() {
   const [requestedIds, setRequestedIds] = useState<string[]>([]);
   const [inquiryBanner, setInquiryBanner] = useState("");
 
+  useEffect(() => {
+    try {
+      const raw = window.localStorage.getItem(MARKET_INQUIRIES_STORAGE_KEY);
+      if (raw) {
+        const parsed = JSON.parse(raw);
+        if (Array.isArray(parsed)) {
+          setRequestedIds(parsed.filter((item): item is string => typeof item === "string"));
+        }
+      }
+    } catch {
+      // Ignore storage errors
+    }
+  }, []);
+
+  async function loadUserInquiriesFromDb(uid: string) {
+    const { data, error } = await supabase
+      .from("v_market_inquiries")
+      .select("listing_key")
+      .eq("user_id", uid);
+
+    if (!error && Array.isArray(data)) {
+      setDbSyncActive(true);
+      if (data.length > 0) {
+        setRequestedIds(data.map((row) => row.listing_key));
+      }
+    }
+  }
+
   async function syncMarketData() {
     const {
       data: { user },
     } = await supabase.auth.getUser();
 
     if (user) {
+      setCurrentUserId(user.id);
       const fallbackName =
         (user.user_metadata?.full_name as string | undefined)?.trim() ||
         user.email?.split("@")[0] ||
         "Member";
       setCurrentUserName(fallbackName);
+      await loadUserInquiriesFromDb(user.id);
     } else {
+      setCurrentUserId(null);
       setCurrentUserName(null);
+      setDbSyncActive(false);
     }
 
     const { data: postsData } = await supabase
@@ -170,7 +206,9 @@ export default function VMarketPage() {
 
   async function handleSignOut() {
     await supabase.auth.signOut();
+    setCurrentUserId(null);
     setCurrentUserName(null);
+    setDbSyncActive(false);
   }
 
   const allListings = useMemo(
@@ -194,10 +232,38 @@ export default function VMarketPage() {
     });
   }, [allListings, searchQuery, selectedCategory]);
 
-  function handleRequestQuote(item: MarketplaceListing) {
-    if (!requestedIds.includes(item.id)) {
-      setRequestedIds((prev) => [...prev, item.id]);
+  async function handleRequestQuote(item: MarketplaceListing) {
+    const nextIds = requestedIds.includes(item.id)
+      ? requestedIds
+      : [...requestedIds, item.id];
+    setRequestedIds(nextIds);
+
+    try {
+      window.localStorage.setItem(MARKET_INQUIRIES_STORAGE_KEY, JSON.stringify(nextIds));
+    } catch {
+      // Ignore storage errors
     }
+
+    if (currentUserId) {
+      const { error } = await supabase.from("v_market_inquiries").upsert(
+        {
+          user_id: currentUserId,
+          listing_key: item.id,
+          listing_name: item.name,
+          supplier_name: item.supplier,
+        },
+        { onConflict: "user_id,listing_key" }
+      );
+
+      if (!error) {
+        setDbSyncActive(true);
+        setInquiryBanner(
+          `Permintaan info untuk "${item.name}" (${item.supplier}) tersimpan ke Supabase.`
+        );
+        return;
+      }
+    }
+
     setInquiryBanner(
       `Permintaan penawaran / info untuk "${item.name}" (${item.supplier}) telah dicatat.`
     );
@@ -332,7 +398,11 @@ export default function VMarketPage() {
       </section>
 
       <footer className="market-footer">
-        v-nect v-market · © {new Date().getFullYear()} v-nect
+        v-nect v-market ·{" "}
+        {currentUserId
+          ? `Signed in as ${currentUserName}${dbSyncActive ? " (Supabase Sync Active)" : " (Local Sync)"}`
+          : "Public Marketplace Preview"}{" "}
+        · © {new Date().getFullYear()} v-nect
       </footer>
 
       <AccountAuthModal
