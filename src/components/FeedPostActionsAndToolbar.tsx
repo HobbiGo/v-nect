@@ -1,45 +1,144 @@
 "use client";
 
-import { useState } from "react";
+import { useEffect, useState } from "react";
+import { createClient } from "@/lib/supabase";
 
 export type ComposerToolKey = "image" | "video" | "poll" | "event" | "more";
 
 type PostEngagementBarProps = {
+  postId: string;
+  currentUserId?: string | null;
   initialLikes?: number;
   commentsCount?: number;
   initialReposts?: number;
   onCommentClick?: () => void;
+  onRequireAuth?: () => void;
   onLikeToggle?: (liked: boolean, nextCount: number) => void;
   onRepostToggle?: (reposted: boolean, nextCount: number) => void;
 };
 
 export function PostEngagementBar({
+  postId,
+  currentUserId,
   initialLikes = 0,
   commentsCount = 0,
   initialReposts = 0,
   onCommentClick,
+  onRequireAuth,
   onLikeToggle,
   onRepostToggle,
 }: PostEngagementBarProps) {
+  const supabase = createClient();
+
   const [liked, setLiked] = useState(false);
   const [reposted, setReposted] = useState(false);
   const [likes, setLikes] = useState(initialLikes);
   const [reposts, setReposts] = useState(initialReposts);
+  const [syncing, setSyncing] = useState(false);
 
-  function handleLike() {
-    const nextLiked = !liked;
-    const nextLikes = nextLiked ? likes + 1 : Math.max(0, likes - 1);
-    setLiked(nextLiked);
-    setLikes(nextLikes);
-    onLikeToggle?.(nextLiked, nextLikes);
-  }
+  useEffect(() => {
+    let active = true;
 
-  function handleRepost() {
-    const nextReposted = !reposted;
-    const nextReposts = nextReposted ? reposts + 1 : Math.max(0, reposts - 1);
-    setReposted(nextReposted);
-    setReposts(nextReposts);
-    onRepostToggle?.(nextReposted, nextReposts);
+    async function loadInteractionCounts() {
+      const { data, error } = await supabase
+        .from("post_interactions")
+        .select("user_id, interaction_type")
+        .eq("post_id", postId)
+        .in("interaction_type", ["like", "repost"]);
+
+      if (!active || error || !data) return;
+
+      let likeTotal = initialLikes;
+      let repostTotal = initialReposts;
+      let userLiked = false;
+      let userReposted = false;
+
+      const dbLikes = data.filter((r) => r.interaction_type === "like").length;
+      const dbReposts = data.filter((r) => r.interaction_type === "repost").length;
+
+      if (dbLikes > 0 || dbReposts > 0) {
+        likeTotal = dbLikes;
+        repostTotal = dbReposts;
+      }
+
+      if (currentUserId) {
+        userLiked = data.some(
+          (r) => r.interaction_type === "like" && r.user_id === currentUserId
+        );
+        userReposted = data.some(
+          (r) => r.interaction_type === "repost" && r.user_id === currentUserId
+        );
+      }
+
+      setLikes(likeTotal);
+      setReposts(repostTotal);
+      setLiked(userLiked);
+      setReposted(userReposted);
+    }
+
+    loadInteractionCounts();
+
+    return () => {
+      active = false;
+    };
+  }, [supabase, postId, currentUserId, initialLikes, initialReposts]);
+
+  async function toggleInteraction(type: "like" | "repost") {
+    if (syncing) return;
+
+    const isLike = type === "like";
+    const currentlyActive = isLike ? liked : reposted;
+    const nextActive = !currentlyActive;
+
+    const nextLikes = isLike
+      ? nextActive
+        ? likes + 1
+        : Math.max(0, likes - 1)
+      : likes;
+
+    const nextReposts = !isLike
+      ? nextActive
+        ? reposts + 1
+        : Math.max(0, reposts - 1)
+      : reposts;
+
+    if (isLike) {
+      setLiked(nextActive);
+      setLikes(nextLikes);
+      onLikeToggle?.(nextActive, nextLikes);
+    } else {
+      setReposted(nextActive);
+      setReposts(nextReposts);
+      onRepostToggle?.(nextActive, nextReposts);
+    }
+
+    if (!currentUserId) {
+      onRequireAuth?.();
+      return;
+    }
+
+    setSyncing(true);
+    try {
+      if (nextActive) {
+        await supabase.from("post_interactions").upsert(
+          {
+            post_id: postId,
+            user_id: currentUserId,
+            interaction_type: type,
+          },
+          { onConflict: "post_id,user_id,interaction_type" }
+        );
+      } else {
+        await supabase
+          .from("post_interactions")
+          .delete()
+          .eq("post_id", postId)
+          .eq("user_id", currentUserId)
+          .eq("interaction_type", type);
+      }
+    } finally {
+      setSyncing(false);
+    }
   }
 
   return (
@@ -47,7 +146,7 @@ export function PostEngagementBar({
       <button
         type="button"
         className={liked ? "vn-engage-btn liked" : "vn-engage-btn"}
-        onClick={handleLike}
+        onClick={() => toggleInteraction("like")}
       >
         <span>{liked ? "♥" : "♡"}</span>
         <span>{likes}</span>
@@ -65,7 +164,7 @@ export function PostEngagementBar({
       <button
         type="button"
         className={reposted ? "vn-engage-btn reposted" : "vn-engage-btn"}
-        onClick={handleRepost}
+        onClick={() => toggleInteraction("repost")}
       >
         <span>🔁</span>
         <span>{reposts}</span>
