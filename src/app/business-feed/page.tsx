@@ -4,6 +4,7 @@ import { useEffect, useRef, useState, type FormEvent } from "react";
 import Link from "next/link";
 import { createClient } from "@/lib/supabase";
 import { PostThreadComments } from "@/components/PostThreadComments";
+import { BusinessFeedNavbar } from "@/components/BusinessFeedNavbar";
 
 type Post = {
   id: string;
@@ -776,16 +777,7 @@ export default function BusinessFeedPage() {
 
   return (
     <main className="feed-page">
-      <header className="topbar">
-        <Link href="/" className="brand">
-          VOIN<span>NECT</span>
-        </Link>
-
-        <nav className="top-links">
-          <Link href="/dashboard">Personal</Link>
-          <Link href="/company">Company Dashboard</Link>
-        </nav>
-      </header>
+      <BusinessFeedNavbar activePath="/business-feed" />
 
       <section className="feed-container">
         <div className="hero">
@@ -1319,41 +1311,6 @@ export default function BusinessFeedPage() {
           background: #f3f6fb;
           color: #15243a;
           font-family: Arial, sans-serif;
-        }
-
-        .topbar {
-          min-height: 70px;
-          padding: 0 7%;
-          background: #07111f;
-          display: flex;
-          align-items: center;
-          justify-content: space-between;
-          gap: 12px;
-        }
-
-        .brand {
-          color: white;
-          font-size: 23px;
-          font-weight: 900;
-          text-decoration: none;
-          letter-spacing: 1px;
-          white-space: nowrap;
-        }
-
-        .brand span,
-        .hero h1 span {
-          color: #13c8b5;
-        }
-
-        .top-links {
-          display: flex;
-          gap: 24px;
-        }
-
-        .top-links a {
-          color: #c5d2e4;
-          font-size: 13px;
-          text-decoration: none;
         }
 
         .feed-container {
@@ -1969,23 +1926,6 @@ export default function BusinessFeedPage() {
         }
 
         @media (max-width: 540px) {
-          .topbar {
-            padding: 0 18px;
-            min-height: 62px;
-          }
-
-          .brand {
-            font-size: 19px;
-          }
-
-          .top-links {
-            gap: 12px;
-          }
-
-          .top-links a {
-            font-size: 10px;
-          }
-
           .feed-container {
             padding: 20px 14px 45px;
           }
