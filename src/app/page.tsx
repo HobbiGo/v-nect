@@ -601,12 +601,12 @@ export default function Home() {
         }
 
         .hero {
-          max-width: 1240px;
+          max-width: 1260px;
           margin: 0 auto;
-          padding: 56px 24px 52px;
+          padding: 58px 24px 52px;
           display: grid;
-          grid-template-columns: minmax(0, 0.95fr) minmax(0, 1.35fr);
-          gap: 24px;
+          grid-template-columns: minmax(0, 0.92fr) minmax(0, 1.38fr);
+          gap: 20px;
           align-items: center;
         }
 
@@ -683,26 +683,26 @@ export default function Home() {
 
         .hero-visual {
           position: relative;
-          min-height: 410px;
+          min-height: 430px;
           width: 100%;
           display: grid;
           place-items: center;
           background: transparent;
-          padding: 16px 4px;
+          padding: 14px 4px;
         }
 
         .hero-ambient-glow {
           position: absolute;
-          width: 440px;
+          width: 480px;
           height: 320px;
           border-radius: 999px;
           background: radial-gradient(
             circle,
-            rgba(52, 124, 240, 0.28) 0%,
-            rgba(19, 200, 181, 0.14) 52%,
+            rgba(52, 124, 240, 0.3) 0%,
+            rgba(19, 200, 181, 0.16) 52%,
             rgba(7, 17, 31, 0) 80%
           );
-          filter: blur(22px);
+          filter: blur(24px);
           pointer-events: none;
           z-index: 1;
         }
@@ -711,24 +711,24 @@ export default function Home() {
           position: relative;
           z-index: 2;
           width: 100%;
-          max-width: 600px;
+          max-width: 650px;
           aspect-ratio: 16 / 10;
           display: grid;
           place-items: center;
           overflow: hidden;
           background: transparent;
           -webkit-mask-image: radial-gradient(
-            ellipse 86% 84% at 50% 50%,
-            #000 50%,
-            rgba(0, 0, 0, 0.72) 74%,
-            rgba(0, 0, 0, 0.28) 90%,
+            ellipse 68% 64% at 50% 50%,
+            #000 44%,
+            rgba(0, 0, 0, 0.82) 68%,
+            rgba(0, 0, 0, 0.36) 86%,
             transparent 100%
           );
           mask-image: radial-gradient(
-            ellipse 86% 84% at 50% 50%,
-            #000 50%,
-            rgba(0, 0, 0, 0.72) 74%,
-            rgba(0, 0, 0, 0.28) 90%,
+            ellipse 68% 64% at 50% 50%,
+            #000 44%,
+            rgba(0, 0, 0, 0.82) 68%,
+            rgba(0, 0, 0, 0.36) 86%,
             transparent 100%
           );
         }
@@ -738,21 +738,35 @@ export default function Home() {
           height: 100%;
           object-fit: cover;
           object-position: center 48%;
-          transform: scale(1.1);
-          mix-blend-mode: lighten;
-          filter: brightness(1.06) contrast(1.06) saturate(1.12);
+          transform: scale(1.06);
+          filter: brightness(1.22) contrast(1.12) saturate(1.18);
         }
 
         .hero-network-blend {
           position: absolute;
           inset: 0;
           pointer-events: none;
-          background: radial-gradient(
-            ellipse 82% 78% at 50% 50%,
-            rgba(7, 17, 31, 0) 54%,
-            rgba(7, 17, 31, 0.36) 82%,
-            #07111f 100%
-          );
+          background:
+            radial-gradient(
+              ellipse 70% 66% at 50% 50%,
+              rgba(7, 17, 31, 0) 46%,
+              rgba(7, 17, 31, 0.38) 76%,
+              #07111f 100%
+            ),
+            linear-gradient(
+              to bottom,
+              #07111f 0%,
+              rgba(7, 17, 31, 0) 16%,
+              rgba(7, 17, 31, 0) 84%,
+              #07111f 100%
+            ),
+            linear-gradient(
+              to right,
+              #07111f 0%,
+              rgba(7, 17, 31, 0) 14%,
+              rgba(7, 17, 31, 0) 86%,
+              #07111f 100%
+            );
         }
 
         .orbit-label {
