@@ -1,4 +1,3 @@
-
 "use client";
 
 import { useEffect, useState } from "react";
@@ -6,6 +5,10 @@ import Link from "next/link";
 import { createClient } from "@/lib/supabase";
 import { PostThreadComments } from "@/components/PostThreadComments";
 import { AccountAuthModal } from "@/components/AccountAuthModal";
+import {
+  EcosystemSection,
+  type EcosystemModuleItem,
+} from "@/components/EcosystemSection";
 
 type HomePost = {
   id: string;
@@ -33,14 +36,6 @@ type FocusTarget = {
   trigger: number;
 };
 
-type ModuleIconName =
-  | "chat"
-  | "video"
-  | "hub"
-  | "feed"
-  | "circle"
-  | "market";
-
 const MAX_IMAGES = 5;
 const LOCAL_CAPTIONS_STORAGE_KEY =
   "v-nect_business_post_image_captions_v1";
@@ -48,127 +43,50 @@ const LOCAL_CAPTIONS_STORAGE_KEY =
 const BRAND_LOGO_SRC = "/images/V-NECT-logo.png";
 const HERO_NETWORK_IMG_SRC = "/images/logonew-v-nect.png";
 
-const modules: {
-  name: string;
-  description: string;
-  href: string;
-  icon: ModuleIconName;
-  label: string;
-}[] = [
+const modules: EcosystemModuleItem[] = [
   {
+    number: "01",
+    icon: "💬",
     name: "v-chat",
     description: "Connect and communicate.",
     href: "/business-feed",
-    icon: "chat",
-    label: "Instant Communication",
   },
   {
+    number: "02",
+    icon: "🎥",
     name: "v-meet",
     description: "Voice & video meetings.",
     href: "/v-meet",
-    icon: "video",
-    label: "Voice & Video",
   },
   {
+    number: "03",
+    icon: "✣",
     name: "v-hub",
     description: "Build your professional identity.",
     href: "/v-hub",
-    icon: "hub",
-    label: "Professional Network",
   },
   {
+    number: "04",
+    icon: "▤",
     name: "v-business feed",
     description: "Business updates & opportunities.",
     href: "/business-feed",
-    icon: "feed",
-    label: "Business Updates",
   },
   {
+    number: "05",
+    icon: "👥",
     name: "v-circle",
     description: "Grow your network.",
     href: "/v-circle",
-    icon: "circle",
-    label: "People & Community",
   },
   {
+    number: "06",
+    icon: "🛒",
     name: "v-market",
     description: "Products & suppliers.",
     href: "/v-market",
-    icon: "market",
-    label: "Business Marketplace",
   },
 ];
-
-function ModuleIcon({ name }: { name: ModuleIconName }) {
-  const props = {
-    width: 29,
-    height: 29,
-    viewBox: "0 0 24 24",
-    fill: "none",
-    stroke: "currentColor",
-    strokeWidth: 1.7,
-    strokeLinecap: "round" as const,
-    strokeLinejoin: "round" as const,
-    "aria-hidden": true as const,
-  };
-
-  switch (name) {
-    case "chat":
-      return (
-        <svg {...props}>
-          <path d="M21 11.5a8.4 8.4 0 0 1-.9 3.8 8.5 8.5 0 0 1-7.6 4.7 8.4 8.4 0 0 1-3.8-.9L3 21l1.9-5.7a8.4 8.4 0 0 1-.9-3.8 8.5 8.5 0 0 1 4.7-7.6 8.4 8.4 0 0 1 3.8-.9h.5a8.5 8.5 0 0 1 8 8v.5Z" />
-          <path d="M8 12h.01M12 12h.01M16 12h.01" />
-        </svg>
-      );
-
-    case "video":
-      return (
-        <svg {...props}>
-          <rect x="3" y="5" width="13" height="14" rx="3" />
-          <path d="m16 10 5-3v10l-5-3" />
-        </svg>
-      );
-
-    case "hub":
-      return (
-        <svg {...props}>
-          <circle cx="12" cy="5" r="3" />
-          <circle cx="5" cy="18" r="3" />
-          <circle cx="19" cy="18" r="3" />
-          <path d="m10.5 7.5-4 7.8M13.5 7.5l4 7.8M8 18h8" />
-        </svg>
-      );
-
-    case "feed":
-      return (
-        <svg {...props}>
-          <rect x="4" y="3" width="16" height="18" rx="2" />
-          <path d="M8 7h8M8 11h8M8 15h5M16 15h.01" />
-        </svg>
-      );
-
-    case "circle":
-      return (
-        <svg {...props}>
-          <circle cx="9" cy="8" r="3" />
-          <path d="M3 20v-1a6 6 0 0 1 12 0v1" />
-          <path d="M16 5.5a3 3 0 0 1 0 5.8M18 14a5 5 0 0 1 3 4.5V20" />
-        </svg>
-      );
-
-    case "market":
-      return (
-        <svg {...props}>
-          <path d="M3 9h18l-2 12H5L3 9Z" />
-          <path d="M3 9 6 3h12l3 6" />
-          <path d="M9 9a3 3 0 0 0 6 0" />
-        </svg>
-      );
-
-    default:
-      return null;
-  }
-}
 
 const categoryLabels: Record<string, string> = {
   announcement: "Official Update",
@@ -573,60 +491,7 @@ export default function Home() {
         </div>
       </section>
 
-      <section className="platform-section" id="platform">
-        <div className="section-top-bar">
-          <div className="section-heading">
-            <span className="section-bar-tag">v-nect Ecosystem</span>
-            <h2 className="ecosystem-heading">
-              One Platform. Endless Connections.
-            </h2>
-            <p className="ecosystem-subtitle">
-              Explore the tools that bring your business world together.
-            </p>
-          </div>
-
-          <Link href="/business-feed" className="section-top-link">
-            Discover all features →
-          </Link>
-        </div>
-
-        <div className="module-grid">
-          {modules.map((module) => (
-            <Link
-              href={module.href}
-              className={`module-card module-card-link module-card-${module.icon}`}
-              key={module.name}
-              aria-label={`Open ${module.name}`}
-            >
-              <div className="module-card-top">
-                <span className="module-icon-badge">
-                  <ModuleIcon name={module.icon} />
-                </span>
-
-                <span className="module-icon-decoration" aria-hidden="true">
-                  <ModuleIcon name={module.icon} />
-                </span>
-
-                <span className="module-card-tag">
-                  <span className="module-tag-dot" />
-                  V-NECT
-                </span>
-              </div>
-
-              <div className="module-card-content">
-                <span className="module-label">{module.label}</span>
-                <h3>{module.name}</h3>
-                <p>{module.description}</p>
-              </div>
-
-              <div className="module-card-footer">
-                <span>Explore feature</span>
-                <span className="module-arrow">↗</span>
-              </div>
-            </Link>
-          ))}
-        </div>
-      </section>
+      <EcosystemSection modules={modules} exploreHref="/business-feed" />
 
       <section className="home-posts-section" id="community-posts">
         <div className="home-posts-inner">
@@ -1288,331 +1153,6 @@ export default function Home() {
         .label-three { bottom: 10px; left: 3%; }
         .label-four { bottom: 10px; right: 3%; }
 
-        /* ECOSYSTEM SECTION */
-
-        .platform-section {
-          max-width: 1220px;
-          margin: 0 auto;
-          padding: 24px 24px 64px;
-        }
-
-        .section-top-bar {
-          display: flex;
-          align-items: flex-end;
-          justify-content: space-between;
-          gap: 18px;
-          flex-wrap: wrap;
-          margin-bottom: 27px;
-        }
-
-        .section-bar-tag {
-          display: inline-flex;
-          align-items: center;
-          gap: 8px;
-          color: #eef3ff;
-          font-size: 14px;
-          font-weight: 750;
-        }
-
-        .section-bar-tag::before {
-          content: "";
-          width: 3px;
-          height: 17px;
-          border-radius: 999px;
-          background: linear-gradient(180deg,#5f85ff,#13c8b5);
-        }
-
-        .ecosystem-heading {
-          color: #fff;
-          font-size: clamp(23px,2.8vw,32px);
-          font-weight: 850;
-          letter-spacing: -.7px;
-          margin: 12px 0 6px;
-        }
-
-        .ecosystem-subtitle {
-          color: #a9bce2;
-          font-size: 13px;
-          margin: 0;
-        }
-
-        .section-top-link {
-          color: #9cb8ff;
-          font-size: 12px;
-          font-weight: 700;
-          text-decoration: none;
-          padding-bottom: 4px;
-        }
-
-        .section-top-link:hover {
-          color: #fff;
-        }
-
-        /* PREMIUM FEATURE CARDS */
-
-        .module-grid {
-          display: grid;
-          grid-template-columns: repeat(3,minmax(0,1fr));
-          gap: 19px;
-          width: 100%;
-        }
-
-        .module-card {
-          --module-accent: #63d8ff;
-          --module-glow: rgba(99,216,255,.18);
-
-          position: relative;
-          isolation: isolate;
-          min-width: 0;
-          min-height: 242px;
-          overflow: hidden;
-          display: flex;
-          flex-direction: column;
-          padding: 23px;
-          color: #fff;
-          text-decoration: none;
-
-          background:
-            radial-gradient(circle at 90% 5%,var(--module-glow),transparent 43%),
-            linear-gradient(145deg,#17294b 0%,#101d37 55%,#0b1428 100%);
-
-          border: 1px solid rgba(148,184,255,.16);
-          border-radius: 23px;
-
-          box-shadow:
-            0 10px 30px rgba(0,0,0,.14),
-            inset 0 1px 0 rgba(255,255,255,.035);
-
-          transition:
-            transform .3s ease,
-            border-color .3s ease,
-            box-shadow .3s ease;
-        }
-
-        .module-card::before {
-          content: "";
-          position: absolute;
-          z-index: -1;
-          width: 190px;
-          height: 190px;
-          top: -95px;
-          right: -75px;
-          border-radius: 50%;
-          background: var(--module-accent);
-          opacity: .13;
-          filter: blur(40px);
-          transition: opacity .3s ease;
-        }
-
-        .module-card::after {
-          content: "";
-          position: absolute;
-          z-index: -1;
-          width: 140px;
-          height: 140px;
-          bottom: -80px;
-          right: -55px;
-          border-radius: 50%;
-          background: var(--module-accent);
-          opacity: .07;
-          filter: blur(35px);
-          pointer-events: none;
-        }
-
-        .module-card:hover {
-          transform: translateY(-7px);
-          border-color: var(--module-accent);
-          box-shadow:
-            0 18px 42px var(--module-glow),
-            0 5px 18px rgba(0,0,0,.2);
-        }
-
-        .module-card:hover::before {
-          opacity: .24;
-        }
-
-        .module-card-chat {
-          --module-accent: #43dcff;
-          --module-glow: rgba(67,220,255,.2);
-        }
-
-        .module-card-video {
-          --module-accent: #b69aff;
-          --module-glow: rgba(182,154,255,.2);
-        }
-
-        .module-card-hub {
-          --module-accent: #54e5c0;
-          --module-glow: rgba(84,229,192,.2);
-        }
-
-        .module-card-feed {
-          --module-accent: #77aaff;
-          --module-glow: rgba(119,170,255,.2);
-        }
-
-        .module-card-circle {
-          --module-accent: #ff9bc9;
-          --module-glow: rgba(255,155,201,.2);
-        }
-
-        .module-card-market {
-          --module-accent: #ffc878;
-          --module-glow: rgba(255,200,120,.2);
-        }
-
-        .module-card-top {
-          position: relative;
-          display: flex;
-          align-items: center;
-          justify-content: space-between;
-          min-height: 65px;
-          margin-bottom: 22px;
-        }
-
-        .module-icon-badge {
-          position: relative;
-          z-index: 2;
-          width: 59px;
-          height: 59px;
-          flex-shrink: 0;
-          display: grid;
-          place-items: center;
-          color: var(--module-accent);
-
-          background: linear-gradient(
-            145deg,
-            rgba(255,255,255,.18),
-            rgba(255,255,255,.035)
-          );
-
-          border: 1px solid rgba(255,255,255,.2);
-          border-radius: 19px;
-
-          box-shadow:
-            0 8px 24px var(--module-glow),
-            inset 0 1px 0 rgba(255,255,255,.15);
-
-          transition: transform .3s ease, box-shadow .3s ease;
-        }
-
-        .module-icon-badge svg {
-          width: 29px;
-          height: 29px;
-          stroke-width: 1.8;
-          filter: drop-shadow(0 0 6px var(--module-glow));
-        }
-
-        .module-card:hover .module-icon-badge {
-          transform: translateY(-3px) rotate(-5deg) scale(1.08);
-          box-shadow:
-            0 12px 28px var(--module-glow),
-            inset 0 1px 0 rgba(255,255,255,.2);
-        }
-
-        .module-icon-decoration {
-          position: absolute;
-          right: 5px;
-          top: -12px;
-          color: var(--module-accent);
-          opacity: .11;
-          pointer-events: none;
-        }
-
-        .module-icon-decoration svg {
-          width: 82px;
-          height: 82px;
-          stroke-width: 1.15;
-        }
-
-        .module-card-tag {
-          position: relative;
-          z-index: 2;
-          display: flex;
-          align-items: center;
-          gap: 7px;
-          padding: 7px 10px;
-          color: #aebed9;
-          background: rgba(255,255,255,.045);
-          border: 1px solid rgba(255,255,255,.09);
-          border-radius: 30px;
-          font-size: 8px;
-          font-weight: 800;
-          letter-spacing: 1px;
-        }
-
-        .module-tag-dot {
-          width: 6px;
-          height: 6px;
-          flex-shrink: 0;
-          background: var(--module-accent);
-          border-radius: 50%;
-          box-shadow: 0 0 9px var(--module-accent);
-        }
-
-        .module-card-content {
-          position: relative;
-          z-index: 2;
-        }
-
-        .module-label {
-          display: block;
-          margin-bottom: 8px;
-          color: var(--module-accent);
-          font-size: 9px;
-          font-weight: 800;
-          letter-spacing: 1.35px;
-          text-transform: uppercase;
-        }
-
-        .module-card h3 {
-          margin: 0 0 9px;
-          color: #fff;
-          font-size: 19px;
-          font-weight: 800;
-          line-height: 1.3;
-          overflow-wrap: anywhere;
-        }
-
-        .module-card p {
-          margin: 0;
-          color: #b4c3dc;
-          font-size: 12px;
-          line-height: 1.7;
-        }
-
-        .module-card-footer {
-          position: relative;
-          z-index: 2;
-          display: flex;
-          align-items: center;
-          justify-content: space-between;
-          width: 100%;
-          margin-top: auto;
-          padding-top: 22px;
-          color: var(--module-accent);
-          font-size: 11px;
-          font-weight: 750;
-        }
-
-        .module-arrow {
-          width: 32px;
-          height: 32px;
-          display: grid;
-          place-items: center;
-          color: var(--module-accent);
-          background: var(--module-glow);
-          border: 1px solid rgba(255,255,255,.1);
-          border-radius: 50%;
-          font-size: 17px;
-          transition: transform .3s ease, background .3s ease;
-        }
-
-        .module-card:hover .module-arrow {
-          transform: translate(3px,-3px);
-          background: var(--module-glow);
-        }
-
         /* LATEST POSTS */
 
         .home-posts-section {
@@ -2245,69 +1785,6 @@ export default function Home() {
           }
         }
 
-        @media (max-width: 600px) {
-          .module-grid {
-            grid-template-columns: repeat(2,minmax(0,1fr));
-            gap: 12px;
-          }
-
-          .module-card {
-            min-height: 225px;
-            padding: 16px;
-            border-radius: 18px;
-          }
-
-          .module-card-top {
-            min-height: 52px;
-            margin-bottom: 17px;
-          }
-
-          .module-icon-badge {
-            width: 49px;
-            height: 49px;
-            border-radius: 15px;
-          }
-
-          .module-icon-badge svg {
-            width: 25px;
-            height: 25px;
-          }
-
-          .module-icon-decoration svg {
-            width: 60px;
-            height: 60px;
-          }
-
-          .module-card-tag {
-            padding: 6px 7px;
-            font-size: 7px;
-            letter-spacing: .5px;
-          }
-
-          .module-label {
-            font-size: 8px;
-            letter-spacing: .8px;
-          }
-
-          .module-card h3 {
-            font-size: 15px;
-          }
-
-          .module-card p {
-            font-size: 11px;
-          }
-
-          .module-card-footer {
-            padding-top: 17px;
-            font-size: 10px;
-          }
-
-          .module-arrow {
-            width: 28px;
-            height: 28px;
-          }
-        }
-
         @media (max-width: 540px) {
           .navbar {
             padding: 12px 16px;
@@ -2354,18 +1831,6 @@ export default function Home() {
             padding: 5px 8px;
           }
 
-          .platform-section {
-            padding: 20px 15px 42px;
-          }
-
-          .section-top-bar {
-            align-items: flex-start;
-          }
-
-          .ecosystem-heading {
-            font-size: 24px;
-          }
-
           .home-posts-section {
             padding: 36px 14px;
             border-radius: 20px 20px 0 0;
@@ -2401,14 +1866,6 @@ export default function Home() {
         }
 
         @media (max-width: 380px) {
-          .module-grid {
-            grid-template-columns: 1fr;
-          }
-
-          .module-card {
-            min-height: 205px;
-          }
-
           .hero-stats-strip {
             gap: 18px;
           }
