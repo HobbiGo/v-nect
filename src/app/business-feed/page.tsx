@@ -1243,6 +1243,9 @@ export default function BusinessFeedPage() {
                       postId={post.id}
                       currentUserId={userId || null}
                       currentUserName={company?.company_name || null}
+                      imageLabels={postImages.map(
+                        (_, idx) => postImageCaptions[idx] || `Image ${idx + 1}`
+                      )}
                     />
 
                     <div className="post-footer">
