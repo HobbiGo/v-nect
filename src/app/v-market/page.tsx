@@ -15,6 +15,8 @@ type MarketplaceListing = {
   description: string;
   imageUrl?: string | null;
   verified: boolean;
+  connectHref: string;
+  connectLabel: string;
 };
 
 type LaunchPostRow = {
@@ -41,6 +43,8 @@ const INITIAL_LISTINGS: MarketplaceListing[] = [
     description:
       "Short-form product highlight clips and commercial launch assets ready for multi-channel campaign deployment.",
     verified: true,
+    connectHref: "/business-feed",
+    connectLabel: "Lihat di Feed →",
   },
   {
     id: "mkt-2",
@@ -52,6 +56,8 @@ const INITIAL_LISTINGS: MarketplaceListing[] = [
     description:
       "Verified regional manufacturing and trade sourcing with transparent quality checks and logistics coordination.",
     verified: true,
+    connectHref: "/v-circle",
+    connectLabel: "Konek di Circle →",
   },
   {
     id: "mkt-3",
@@ -63,6 +69,8 @@ const INITIAL_LISTINGS: MarketplaceListing[] = [
     description:
       "Strategic partnership structuring, distributor introductions, and regional market entry roadmaps.",
     verified: true,
+    connectHref: "/v-circle",
+    connectLabel: "Konek di Circle →",
   },
   {
     id: "mkt-4",
@@ -74,6 +82,8 @@ const INITIAL_LISTINGS: MarketplaceListing[] = [
     description:
       "Responsive web interfaces, brand component libraries, and high-clarity product experiences.",
     verified: false,
+    connectHref: "/v-hub",
+    connectLabel: "Buka v-hub →",
   },
 ];
 
@@ -179,6 +189,8 @@ export default function VMarketPage() {
             cleanDesc || "Featured product launch published on v-nect Business Feed.",
           imageUrl: img,
           verified: true,
+          connectHref: "/business-feed",
+          connectLabel: "Masuk ke Feed →",
         };
       });
       setLiveLaunchListings(mapped);
@@ -383,13 +395,18 @@ export default function VMarketPage() {
 
                 <div className="market-card-foot">
                   <strong>{item.priceLabel}</strong>
-                  <button
-                    type="button"
-                    className={requested ? "market-btn-done" : "market-btn-primary"}
-                    onClick={() => handleRequestQuote(item)}
-                  >
-                    {requested ? "Requested ✓" : "Request Info"}
-                  </button>
+                  <div className="market-action-row">
+                    <Link href={item.connectHref} className="market-connect-link">
+                      {item.connectLabel}
+                    </Link>
+                    <button
+                      type="button"
+                      className={requested ? "market-btn-done" : "market-btn-primary"}
+                      onClick={() => handleRequestQuote(item)}
+                    >
+                      {requested ? "Requested ✓" : "Request Info"}
+                    </button>
+                  </div>
                 </div>
               </article>
             );
@@ -662,6 +679,20 @@ export default function VMarketPage() {
           align-items: center;
           gap: 10px;
           flex-wrap: wrap;
+        }
+
+        .market-action-row {
+          display: flex;
+          align-items: center;
+          gap: 10px;
+          flex-wrap: wrap;
+        }
+
+        .market-connect-link {
+          color: #7ee8dc;
+          text-decoration: none;
+          font-size: 12px;
+          font-weight: 700;
         }
 
         .market-cat-badge {
