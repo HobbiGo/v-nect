@@ -3,597 +3,262 @@
 import { useEffect, useState } from "react";
 import Link from "next/link";
 import { createClient } from "@/lib/supabase";
-import { PostThreadComments } from "@/components/PostThreadComments";
 import { AccountAuthModal } from "@/components/AccountAuthModal";
 
-type HomePost = {
+type ActiveUser = {
   id: string;
-  company_id: string;
-  author_id: string;
-  title: string;
-  content: string;
-  post_type: string;
-  image_url: string | null;
-  image_urls?: string[] | null;
-  image_captions?: string[] | null;
-  status: string;
-  created_at: string;
-  companies: {
-    company_name: string;
-    logo_url: string | null;
-  } | null;
+  label: string;
 };
 
-type LocalCaptionMap = Record<string, Record<string, string>>;
-
-type FocusTarget = {
-  postId: string;
-  imageIndex: number;
-  trigger: number;
-};
-
-const MAX_IMAGES = 5;
-const LOCAL_CAPTIONS_STORAGE_KEY = "v-nect_business_post_image_captions_v1";
-const BRAND_LOGO_SRC = "/images/V-NECT-logo.png";
-const HERO_NETWORK_IMG_SRC = "/images/logonew-v-nect.png";
-
-const modules = [
-  {
-    number: "01",
-    name: "v-chat",
-    description: "Connect and communicate with people and businesses.",
-  },
-  {
-    number: "02",
-    name: "v-meet",
-    description: "Voice, video meetings and global collaboration.",
-  },
-  {
-    number: "03",
-    name: "v-hub",
-    description: "Build your professional and company identity.",
-  },
-  {
-    number: "04",
-    name: "v-business feed",
-    description: "Discover business updates, news and opportunities.",
-  },
-  {
-    number: "05",
-    name: "v-circle",
-    description: "Meet professionals and grow your network.",
-  },
-  {
-    number: "06",
-    name: "v-market",
-    description: "Discover products, services and suppliers.",
-  },
-];
-
-const categoryLabels: Record<string, string> = {
-  announcement: "Announcement",
-  company_news: "Company News",
-  news: "Company News",
-  product_launch: "Product Launch",
-  presentation: "Presentation",
-};
-
-function getPostImages(post: HomePost): string[] {
-  const list: string[] = [];
-
-  if (Array.isArray(post.image_urls)) {
-    for (const item of post.image_urls) {
-      if (typeof item === "string" && item.trim()) {
-        list.push(item.trim());
-      }
-    }
-  }
-
-  if (list.length === 0 && post.image_url && post.image_url.trim()) {
-    list.push(post.image_url.trim());
-  }
-
-  return list.slice(0, MAX_IMAGES);
-}
-
-function readLocalCaptionMap(): LocalCaptionMap {
-  if (typeof window === "undefined") return {};
-  try {
-    const raw = window.localStorage.getItem(LOCAL_CAPTIONS_STORAGE_KEY);
-    if (!raw) return {};
-    const parsed = JSON.parse(raw);
-    return parsed && typeof parsed === "object" ? parsed : {};
-  } catch {
-    return {};
-  }
-}
-
-function getPostImageCaptions(post: HomePost, images: string[]): string[] {
-  const localMap = readLocalCaptionMap()[post.id] || {};
-  return images.map((url, idx) => {
-    const dbCaption =
-      Array.isArray(post.image_captions) &&
-      typeof post.image_captions[idx] === "string"
-        ? post.image_captions[idx].trim()
-        : "";
-    if (dbCaption) return dbCaption;
-    return (localMap[url] || "").trim();
-  });
-}
-
-function formatDate(date: string) {
-  return new Date(date).toLocaleDateString("en-US", {
-    day: "numeric",
-    month: "short",
-    year: "numeric",
-  });
-}
-
-export default function Home() {
+export default function HomePage() {
   const supabase = createClient();
 
-  const [posts, setPosts] = useState<HomePost[]>([]);
-  const [loadingPosts, setLoadingPosts] = useState(true);
-  const [currentUserId, setCurrentUserId] = useState<string | null>(null);
-  const [currentUserName, setCurrentUserName] = useState<string | null>(null);
-  const [focusTarget, setFocusTarget] = useState<FocusTarget | null>(null);
+  const [activeUser, setActiveUser] = useState<ActiveUser | null>(null);
   const [authModalOpen, setAuthModalOpen] = useState(false);
+  const [authMode, setAuthMode] = useState<"login" | "register">("login");
+  const [signingOut, setSigningOut] = useState(false);
 
-  async function syncActiveUser() {
+  async function syncSession() {
     const {
       data: { user },
     } = await supabase.auth.getUser();
 
-    if (user) {
-      setCurrentUserId(user.id);
-      const fallbackName =
-        (user.user_metadata?.full_name as string | undefined)?.trim() ||
-        user.email?.split("@")[0] ||
-        "Member";
-      setCurrentUserName(fallbackName);
-
-      const { data: settings } = await supabase
-        .from("account_settings")
-        .select("active_profile_type, active_company_id")
-        .eq("user_id", user.id)
-        .maybeSingle();
-
-      if (settings?.active_profile_type === "company" && settings.active_company_id) {
-        const { data: companyData } = await supabase
-          .from("companies")
-          .select("company_name")
-          .eq("id", settings.active_company_id)
-          .maybeSingle();
-
-        if (companyData?.company_name) {
-          setCurrentUserName(companyData.company_name);
-        }
-      }
-    } else {
-      setCurrentUserId(null);
-      setCurrentUserName(null);
+    if (!user) {
+      setActiveUser(null);
+      return;
     }
+
+    const displayName =
+      (user.user_metadata?.full_name as string | undefined)?.trim() ||
+      user.email?.split("@")[0] ||
+      "Member";
+
+    setActiveUser({
+      id: user.id,
+      label: displayName,
+    });
   }
 
   useEffect(() => {
-    let active = true;
+    syncSession();
 
-    async function loadHomeData() {
-      setLoadingPosts(true);
-      await syncActiveUser();
-
-      const { data, error } = await supabase
-        .from("business_posts")
-        .select(`
-          id,
-          company_id,
-          author_id,
-          title,
-          content,
-          post_type,
-          image_url,
-          image_urls,
-          status,
-          created_at,
-          companies (
-            company_name,
-            logo_url
-          )
-        `)
-        .eq("status", "published")
-        .order("created_at", { ascending: false })
-        .limit(6);
-
-      if (!active) return;
-
-      if (error) {
-        console.error("Home feed load error:", error);
-        setPosts([]);
+    const {
+      data: { subscription },
+    } = supabase.auth.onAuthStateChange((_event, session) => {
+      const user = session?.user;
+      if (!user) {
+        setActiveUser(null);
       } else {
-        setPosts((data || []) as unknown as HomePost[]);
+        const displayName =
+          (user.user_metadata?.full_name as string | undefined)?.trim() ||
+          user.email?.split("@")[0] ||
+          "Member";
+        setActiveUser({
+          id: user.id,
+          label: displayName,
+        });
       }
-
-      setLoadingPosts(false);
-    }
-
-    loadHomeData();
+    });
 
     return () => {
-      active = false;
+      subscription.unsubscribe();
     };
     // eslint-disable-next-line react-hooks/exhaustive-deps
-  }, [supabase]);
+  }, []);
 
-  async function handleSignOut() {
-    await supabase.auth.signOut();
-    setCurrentUserId(null);
-    setCurrentUserName(null);
+  function openAuth(mode: "login" | "register") {
+    setAuthMode(mode);
+    setAuthModalOpen(true);
   }
 
-  function handleFocusImageComment(postId: string, imageIndex: number) {
-    setFocusTarget((prev) => ({
-      postId,
-      imageIndex,
-      trigger: (prev?.trigger || 0) + 1,
-    }));
+  async function handleSignOut() {
+    if (signingOut) return;
+    setSigningOut(true);
+    try {
+      await supabase.auth.signOut();
+      setActiveUser(null);
+    } finally {
+      setSigningOut(false);
+    }
   }
 
   return (
-    <main className="home-page">
-      <header className="navbar">
-        <a className="logo" href="#">
-          <span className="logo-mark-wrap">
-            <img
-              src={BRAND_LOGO_SRC}
-              alt="v-nect logo"
-              className="logo-mark"
-            />
-          </span>
-          <div className="logo-text-wrap">
-            <div className="logo-main">
-              v<span>-nect</span>
+    <main className="vn-home">
+      <header className="vn-nav">
+        <div className="vn-nav-inner">
+          <Link href="/" className="vn-brand">
+            <span className="vn-brand-mark">◈</span>
+            <div>
+              <strong>v-nect</strong>
+              <small>GLOBAL BUSINESS ECOSYSTEM</small>
             </div>
-            <small>GLOBAL BUSINESS ECOSYSTEM</small>
-          </div>
-        </a>
-
-        <nav>
-          <a href="#platform">Platform</a>
-          <a href="#business">Business</a>
-          <a href="#community-posts">Community</a>
-          <a href="#about">About</a>
-        </nav>
-
-        <div className="nav-right-actions">
-          {currentUserName ? (
-            <>
-              <span className="nav-account-badge">● {currentUserName}</span>
-              <button
-                type="button"
-                className="nav-ghost-btn"
-                onClick={handleSignOut}
-              >
-                Keluar
-              </button>
-            </>
-          ) : (
-            <button
-              type="button"
-              className="nav-ghost-btn"
-              onClick={() => setAuthModalOpen(true)}
-            >
-              Masuk / Register
-            </button>
-          )}
-
-          <Link className="nav-button" href="/business-feed">
-            Business Feed ↗
           </Link>
+
+          <nav className="vn-nav-links" aria-label="Primary Navigation">
+            <Link href="/business-feed" className="vn-nav-link accent">
+              Business Feed ↗
+            </Link>
+            <Link href="/v-meet" className="vn-nav-link">
+              v-meet
+            </Link>
+            <Link href="/company" className="vn-nav-link">
+              Company
+            </Link>
+            <a href="#ecosystem" className="vn-nav-link">
+              Ecosystem
+            </a>
+          </nav>
+
+          <div className="vn-auth-cluster">
+            {activeUser ? (
+              <>
+                <span className="vn-user-badge" title={activeUser.label}>
+                  ● {activeUser.label}
+                </span>
+                <button
+                  type="button"
+                  className="vn-signout-btn"
+                  disabled={signingOut}
+                  onClick={handleSignOut}
+                >
+                  {signingOut ? "..." : "Keluar"}
+                </button>
+              </>
+            ) : (
+              <>
+                <button
+                  type="button"
+                  className="vn-ghost-btn"
+                  onClick={() => openAuth("login")}
+                >
+                  Masuk
+                </button>
+                <button
+                  type="button"
+                  className="vn-primary-btn"
+                  onClick={() => openAuth("register")}
+                >
+                  Daftar
+                </button>
+              </>
+            )}
+          </div>
         </div>
       </header>
 
-      <section className="hero" id="about">
-        <div className="hero-content">
-          <div className="eyebrow">
-            GLOBAL BUSINESS COMMUNICATION PLATFORM
-          </div>
+      <section className="vn-hero">
+        <div className="vn-hero-grid">
+          <div className="vn-hero-copy">
+            <span className="vn-eyebrow">
+              GLOBAL BUSINESS COMMUNICATION PLATFORM
+            </span>
+            <h1>
+              Connect Beyond <span>Boundaries.</span>
+            </h1>
+            <p>
+              One connected ecosystem for communication, collaboration,
+              business networking, live feeds, real-time chat, and virtual
+              meetings.
+            </p>
 
-          <h1>
-            Connect Beyond
-            <span> Boundaries.</span>
-          </h1>
-
-          <p>
-            One connected ecosystem for communication,
-            collaboration, business networking and global
-            opportunities.
-          </p>
-
-          <div className="hero-actions" id="get-started">
-            <a className="primary-button" href="#platform">
-              Explore Platform ↗
-            </a>
-            <Link className="secondary-button" href="/business-feed">
-              Open Business Feed
-            </Link>
-          </div>
-
-          <div className="hero-caption">
-            ONE ACCOUNT. ONE ECOSYSTEM. GLOBAL CONNECTIONS.
-          </div>
-        </div>
-
-        <div className="hero-visual">
-          <div className="hero-ambient-glow" />
-
-          <svg
-            className="hero-connector-svg"
-            viewBox="0 0 600 400"
-            preserveAspectRatio="none"
-            aria-hidden="true"
-          >
-            <defs>
-              <linearGradient id="voinBeamGrad" x1="0%" y1="0%" x2="100%" y2="100%">
-                <stop offset="0%" stopColor="#347cf0" stopOpacity="0.85" />
-                <stop offset="100%" stopColor="#13c8b5" stopOpacity="0.95" />
-              </linearGradient>
-            </defs>
-
-            <line x1="68" y1="42" x2="255" y2="165" className="connector-base" />
-            <line x1="532" y1="42" x2="345" y2="165" className="connector-base" />
-            <line x1="78" y1="358" x2="258" y2="236" className="connector-base" />
-            <line x1="532" y1="358" x2="342" y2="236" className="connector-base" />
-
-            <line
-              x1="68"
-              y1="42"
-              x2="255"
-              y2="165"
-              stroke="url(#voinBeamGrad)"
-              className="connector-pulse pulse-one"
-            />
-            <line
-              x1="532"
-              y1="42"
-              x2="345"
-              y2="165"
-              stroke="url(#voinBeamGrad)"
-              className="connector-pulse pulse-two"
-            />
-            <line
-              x1="78"
-              y1="358"
-              x2="258"
-              y2="236"
-              stroke="url(#voinBeamGrad)"
-              className="connector-pulse pulse-three"
-            />
-            <line
-              x1="532"
-              y1="358"
-              x2="342"
-              y2="236"
-              stroke="url(#voinBeamGrad)"
-              className="connector-pulse pulse-four"
-            />
-
-            <circle cx="255" cy="165" r="4" className="connector-node" />
-            <circle cx="345" cy="165" r="4" className="connector-node" />
-            <circle cx="258" cy="236" r="4" className="connector-node" />
-            <circle cx="342" cy="236" r="4" className="connector-node" />
-          </svg>
-
-          <img
-            src={HERO_NETWORK_IMG_SRC}
-            alt="v-nect Global Business Network"
-            className="hero-network-img"
-          />
-
-          <div className="orbit-label label-one">BUSINESS</div>
-          <div className="orbit-label label-two">CONNECT</div>
-          <div className="orbit-label label-three">COMMUNITY</div>
-          <div className="orbit-label label-four">GLOBAL</div>
-        </div>
-      </section>
-
-      <section className="platform-section" id="platform">
-        <div className="section-heading">
-          <span>THE v-nect ECOSYSTEM</span>
-          <h2>Everything Connected.</h2>
-          <p>
-            A unified digital environment designed to
-            bring businesses and people closer.
-          </p>
-        </div>
-
-        <div className="module-grid">
-          {modules.map((module) => (
-            <article className="module-card" key={module.number}>
-              <span className="module-number">{module.number}</span>
-              <h3>{module.name}</h3>
-              <p>{module.description}</p>
-              <span className="module-arrow">↗</span>
-            </article>
-          ))}
-        </div>
-      </section>
-
-      <section className="business-section" id="business">
-        <div className="business-inner">
-          <span>BUILT FOR A CONNECTED WORLD</span>
-          <h2>
-            Your Business.
-            <br />
-            Your Network.
-            <br />
-            Your Opportunities.
-          </h2>
-          <p>
-            v-nect — Building a More Connected Business World.
-          </p>
-        </div>
-      </section>
-
-      <section className="home-posts-section" id="community-posts">
-        <div className="home-posts-inner">
-          <div className="home-posts-header">
-            <div>
-              <span>LIVE COMMUNITY &amp; BUSINESS UPDATES</span>
-              <h2>Latest Posts &amp; Discussion</h2>
-              <p>
-                Explore published business updates and join the live comment thread directly from the main page.
-              </p>
-            </div>
-
-            <Link href="/business-feed" className="view-all-link">
-              View Full Feed →
-            </Link>
-          </div>
-
-          {loadingPosts ? (
-            <div className="home-posts-empty">
-              <p>Loading latest posts...</p>
-            </div>
-          ) : posts.length === 0 ? (
-            <div className="home-posts-empty">
-              <p>No published posts yet.</p>
-              <Link href="/business-feed" className="primary-button">
-                Go to Business Feed ↗
+            <div className="vn-hero-actions">
+              <Link href="/business-feed" className="vn-cta-primary">
+                Open Business Feed ↗
+              </Link>
+              <Link href="/v-meet" className="vn-cta-secondary">
+                Launch v-meet
               </Link>
             </div>
-          ) : (
-            <div className="home-posts-list">
-              {posts.map((post) => {
-                const postImages = getPostImages(post);
-                const postImageCaptions = getPostImageCaptions(post, postImages);
-                const isFocusedPost = focusTarget?.postId === post.id;
 
-                return (
-                  <article className="home-post-card" key={post.id}>
-                    <div className="home-post-top">
-                      <div className="home-company-info">
-                        {post.companies?.logo_url ? (
-                          <img
-                            src={post.companies.logo_url}
-                            alt={post.companies.company_name || "Company"}
-                          />
-                        ) : (
-                          <div className="home-company-avatar">
-                            {post.companies?.company_name
-                              ?.charAt(0)
-                              .toUpperCase() || "C"}
-                          </div>
-                        )}
-                        <div>
-                          <strong>
-                            {post.companies?.company_name || "Company"}
-                          </strong>
-                          <small>{formatDate(post.created_at)}</small>
-                        </div>
-                      </div>
-
-                      <span className="home-post-badge">
-                        {categoryLabels[post.post_type] || post.post_type}
-                      </span>
-                    </div>
-
-                    <div className="home-post-body">
-                      <h3>{post.title}</h3>
-                      <p>{post.content}</p>
-
-                      {postImages.length > 0 && (
-                        <div
-                          className={
-                            postImages.length === 1
-                              ? "home-images-grid single"
-                              : "home-images-grid multi"
-                          }
-                        >
-                          {postImages.map((imgUrl, idx) => {
-                            const captionText = postImageCaptions[idx] || "";
-                            return (
-                              <div
-                                className="home-image-card"
-                                key={`${post.id}-home-img-${idx}`}
-                              >
-                                <img
-                                  src={imgUrl}
-                                  alt={`${post.title} (${idx + 1})`}
-                                  loading="lazy"
-                                />
-                                <div className="home-image-bar">
-                                  <span className="home-image-caption">
-                                    {captionText || `Image ${idx + 1}`}
-                                  </span>
-                                  <button
-                                    type="button"
-                                    className="home-image-comment-btn"
-                                    onClick={() =>
-                                      handleFocusImageComment(post.id, idx)
-                                    }
-                                    title={`Comment on ${
-                                      captionText || `Image ${idx + 1}`
-                                    }`}
-                                  >
-                                    💬
-                                  </button>
-                                </div>
-                              </div>
-                            );
-                          })}
-                        </div>
-                      )}
-                    </div>
-
-                    <PostThreadComments
-                      supabase={supabase}
-                      postId={post.id}
-                      currentUserId={currentUserId}
-                      currentUserName={currentUserName}
-                      imageLabels={postImages.map(
-                        (_, idx) => postImageCaptions[idx] || `Image ${idx + 1}`
-                      )}
-                      focusedImageIndex={
-                        isFocusedPost ? focusTarget.imageIndex : null
-                      }
-                      focusTrigger={isFocusedPost ? focusTarget.trigger : 0}
-                    />
-                  </article>
-                );
-              })}
+            <div className="vn-hero-foot">
+              ONE ACCOUNT. ONE ECOSYSTEM. GLOBAL CONNECTIONS.
             </div>
-          )}
+          </div>
+
+          <div className="vn-orbit-panel" aria-hidden="true">
+            <div className="vn-node n-top">BUSINESS</div>
+            <div className="vn-node n-right">CONNECT</div>
+            <div className="vn-node n-bottom">GLOBAL</div>
+            <div className="vn-node n-left">COMMUNITY</div>
+            <div className="vn-core">
+              <span>v-nect</span>
+              <small>Live Hub</small>
+            </div>
+          </div>
         </div>
       </section>
 
-      <footer className="footer">
-        <div className="logo-main">
-          v<span>-nect</span>
+      <section id="ecosystem" className="vn-modules-section">
+        <div className="vn-section-head">
+          <span className="vn-eyebrow">THE v-nect ECOSYSTEM</span>
+          <h2>Everything Connected</h2>
         </div>
-        <p>Connect Beyond Boundaries.</p>
-        <small>© 2026 v-nect. All rights reserved.</small>
+
+        <div className="vn-modules-grid">
+          <Link href="/business-feed" className="vn-module-card">
+            <span className="vn-mod-tag">ACTIVE</span>
+            <h3>Business Feed</h3>
+            <p>
+              Publikasi pengumuman perusahaan, peluncuran produk, diskusi
+              komentar per gambar, serta unggahan video pendek &amp; stories.
+            </p>
+            <span className="vn-mod-link">Masuk ke Feed →</span>
+          </Link>
+
+          <Link href="/v-meet" className="vn-module-card">
+            <span className="vn-mod-tag">LIVE</span>
+            <h3>v-meet Room</h3>
+            <p>
+              Ruang rapat suara, kamera, berbagi layar, kode undangan room,
+              catatan agenda, dan obrolan langsung antar peserta.
+            </p>
+            <span className="vn-mod-link">Buka v-meet →</span>
+          </Link>
+
+          <Link href="/company" className="vn-module-card">
+            <span className="vn-mod-tag">WORKSPACE</span>
+            <h3>Company Hub</h3>
+            <p>
+              Kelola profil perusahaan, identitas brand, dan akses publikasi
+              resmi dari akun yang sedang aktif.
+            </p>
+            <span className="vn-mod-link">Kelola Perusahaan →</span>
+          </Link>
+        </div>
+      </section>
+
+      <footer className="vn-footer">
+        © {new Date().getFullYear()} v-nect · Connecting Beyond Boundaries
       </footer>
 
       <AccountAuthModal
         open={authModalOpen}
-        initialMode="login"
+        initialMode={authMode}
         onClose={() => setAuthModalOpen(false)}
-        onSuccess={() => syncActiveUser()}
+        onSuccess={() => syncSession()}
       />
 
       <style jsx>{`
-        .home-page {
+        .vn-home {
           min-height: 100vh;
-          background: #07111f;
+          background: radial-gradient(circle at top right, #12395b 0%, #07111f 58%);
           color: #eef4fb;
           font-family: var(--font-sans), Arial, sans-serif;
         }
 
-        .navbar {
-          min-height: 78px;
-          padding: 12px 7%;
-          background: #07111f;
+        .vn-nav {
+          position: sticky;
+          top: 0;
+          z-index: 30;
+          background: rgba(7, 17, 31, 0.88);
+          backdrop-filter: blur(12px);
           border-bottom: 1px solid rgba(255, 255, 255, 0.08);
+        }
+
+        .vn-nav-inner {
+          max-width: 1200px;
+          margin: 0 auto;
+          padding: 14px 24px;
           display: flex;
           align-items: center;
           justify-content: space-between;
@@ -601,711 +266,337 @@ export default function Home() {
           flex-wrap: wrap;
         }
 
-        .logo {
-          color: #ffffff;
-          text-decoration: none;
+        .vn-brand {
           display: inline-flex;
           align-items: center;
           gap: 10px;
-          flex-shrink: 0;
+          text-decoration: none;
+          color: #ffffff;
         }
 
-        .logo-mark-wrap {
-          width: 40px;
-          height: 40px;
+        .vn-brand-mark {
+          width: 34px;
+          height: 34px;
+          border-radius: 10px;
           display: grid;
           place-items: center;
-          overflow: hidden;
-          background: transparent;
-          -webkit-mask-image: radial-gradient(
-            circle at 50% 42%,
-            #000 44%,
-            rgba(0, 0, 0, 0.5) 68%,
-            transparent 95%
-          );
-          mask-image: radial-gradient(
-            circle at 50% 42%,
-            #000 44%,
-            rgba(0, 0, 0, 0.5) 68%,
-            transparent 95%
-          );
-        }
-
-        .logo-mark {
-          width: 100%;
-          height: 100%;
-          object-fit: cover;
-          object-position: center 26%;
-          transform: scale(1.45);
-          mix-blend-mode: screen;
-          filter: brightness(1.12) contrast(1.1) saturate(1.18);
-        }
-
-        .logo-text-wrap {
-          display: inline-flex;
-          flex-direction: column;
-        }
-
-        .logo-main {
-          font-size: 22px;
+          background: linear-gradient(120deg, #347cf0, #13c8b5);
+          color: #ffffff;
+          font-size: 17px;
           font-weight: 800;
-          letter-spacing: 0.8px;
-          white-space: nowrap;
+        }
+
+        .vn-brand strong {
+          display: block;
+          font-size: 16px;
+          font-weight: 800;
           line-height: 1.1;
         }
 
-        .logo span,
-        .hero h1 span {
+        .vn-brand small {
+          display: block;
+          font-size: 9px;
+          letter-spacing: 1.4px;
+          color: #8fa6c2;
+          margin-top: 2px;
+        }
+
+        .vn-nav-links {
+          display: flex;
+          align-items: center;
+          gap: 8px;
+          flex-wrap: wrap;
+        }
+
+        .vn-nav-link {
+          text-decoration: none;
+          color: #c8d7ea;
+          font-size: 13px;
+          font-weight: 600;
+          padding: 8px 12px;
+          border-radius: 8px;
+        }
+
+        .vn-nav-link:hover {
+          background: rgba(255, 255, 255, 0.06);
+          color: #ffffff;
+        }
+
+        .vn-nav-link.accent {
+          background: rgba(19, 200, 181, 0.14);
+          border: 1px solid rgba(19, 200, 181, 0.35);
+          color: #8af3e6;
+          font-weight: 700;
+        }
+
+        .vn-auth-cluster {
+          display: flex;
+          align-items: center;
+          gap: 8px;
+          flex-wrap: wrap;
+        }
+
+        .vn-user-badge {
+          padding: 6px 12px;
+          border-radius: 999px;
+          background: rgba(19, 200, 181, 0.15);
+          border: 1px solid rgba(19, 200, 181, 0.35);
+          color: #7ee8dc;
+          font-size: 12px;
+          font-weight: 700;
+          max-width: 150px;
+          overflow: hidden;
+          text-overflow: ellipsis;
+          white-space: nowrap;
+        }
+
+        .vn-signout-btn,
+        .vn-ghost-btn {
+          padding: 7px 13px;
+          border-radius: 8px;
+          border: 1px solid rgba(255, 255, 255, 0.18);
+          background: rgba(255, 255, 255, 0.05);
+          color: #e6effa;
+          font-size: 12px;
+          font-weight: 700;
+          cursor: pointer;
+        }
+
+        .vn-primary-btn {
+          padding: 7px 14px;
+          border-radius: 8px;
+          border: none;
+          background: linear-gradient(110deg, #347cf0, #13bcae);
+          color: #ffffff;
+          font-size: 12px;
+          font-weight: 700;
+          cursor: pointer;
+        }
+
+        .vn-hero {
+          max-width: 1200px;
+          margin: 0 auto;
+          padding: 56px 24px 36px;
+        }
+
+        .vn-hero-grid {
+          display: grid;
+          grid-template-columns: minmax(0, 1.25fr) minmax(260px, 0.9fr);
+          gap: 32px;
+          align-items: center;
+        }
+
+        .vn-eyebrow {
+          display: block;
+          font-size: 11px;
+          font-weight: 800;
+          letter-spacing: 1.8px;
           color: #13c8b5;
         }
 
-        .logo small {
+        .vn-hero-copy h1 {
+          margin: 14px 0;
+          font-size: 48px;
+          line-height: 1.1;
+          font-weight: 800;
+          color: #ffffff;
+        }
+
+        .vn-hero-copy h1 span {
+          color: #13c8b5;
+        }
+
+        .vn-hero-copy p {
+          margin: 0;
+          max-width: 560px;
+          font-size: 15px;
+          line-height: 1.7;
+          color: #c7d8ec;
+        }
+
+        .vn-hero-actions {
+          margin-top: 24px;
+          display: flex;
+          align-items: center;
+          gap: 12px;
+          flex-wrap: wrap;
+        }
+
+        .vn-cta-primary {
+          display: inline-flex;
+          align-items: center;
+          padding: 12px 20px;
+          border-radius: 10px;
+          background: linear-gradient(110deg, #347cf0, #13bcae);
+          color: #ffffff;
+          font-size: 13px;
+          font-weight: 700;
+          text-decoration: none;
+        }
+
+        .vn-cta-secondary {
+          display: inline-flex;
+          align-items: center;
+          padding: 12px 18px;
+          border-radius: 10px;
+          background: rgba(255, 255, 255, 0.06);
+          border: 1px solid rgba(255, 255, 255, 0.16);
+          color: #eef4fb;
+          font-size: 13px;
+          font-weight: 700;
+          text-decoration: none;
+        }
+
+        .vn-hero-foot {
+          margin-top: 22px;
           font-size: 11px;
           font-weight: 700;
           letter-spacing: 1.4px;
-          color: #9cb0c9;
-          margin-top: 3px;
-          white-space: nowrap;
+          color: #7d95b3;
         }
 
-        .navbar nav {
-          display: flex;
-          align-items: center;
-          gap: 24px;
-          flex-wrap: wrap;
-        }
-
-        .navbar nav a {
-          color: #d2deed;
-          text-decoration: none;
-          font-size: 14px;
-          font-weight: 600;
-        }
-
-        .navbar nav a:hover {
-          color: #13c8b5;
-        }
-
-        .nav-right-actions {
-          display: flex;
-          align-items: center;
-          gap: 10px;
-          flex-wrap: wrap;
-        }
-
-        .nav-account-badge {
-          padding: 7px 12px;
-          border-radius: 999px;
-          background: rgba(19, 200, 181, 0.16);
-          border: 1px solid rgba(19, 200, 181, 0.45);
-          color: #7ee8dc;
-          font-size: 12px;
-          font-weight: 700;
-          white-space: nowrap;
-        }
-
-        .nav-ghost-btn {
-          background: rgba(255, 255, 255, 0.06);
-          border: 1px solid rgba(255, 255, 255, 0.22);
-          color: #e6effa;
-          padding: 9px 14px;
-          border-radius: 9px;
-          font-size: 13px;
-          font-weight: 700;
-          cursor: pointer;
-          white-space: nowrap;
-        }
-
-        .nav-ghost-btn:hover {
-          border-color: #13c8b5;
-          color: #ffffff;
-        }
-
-        .nav-button {
-          background: linear-gradient(110deg, #347cf0, #13bcae);
-          color: #ffffff;
-          text-decoration: none;
-          padding: 10px 17px;
-          border-radius: 9px;
-          font-size: 13px;
-          font-weight: 700;
-          white-space: nowrap;
-        }
-
-        .hero {
-          max-width: 1260px;
-          margin: 0 auto;
-          padding: 58px 24px 52px;
-          display: grid;
-          grid-template-columns: minmax(0, 0.92fr) minmax(0, 1.38fr);
-          gap: 20px;
-          align-items: center;
-        }
-
-        .eyebrow {
-          color: #13c8b5;
-          font-size: 12px;
-          font-weight: 800;
-          letter-spacing: 1.6px;
-        }
-
-        .hero h1 {
-          font-size: 48px;
-          font-weight: 800;
-          line-height: 1.14;
-          margin: 14px 0;
-        }
-
-        .hero p {
-          color: #c2d1e4;
-          font-size: 16px;
-          line-height: 1.75;
-          max-width: 560px;
-          margin: 0;
-        }
-
-        .hero-actions {
-          display: flex;
-          align-items: center;
-          gap: 12px;
-          margin-top: 24px;
-          flex-wrap: wrap;
-        }
-
-        .primary-button {
-          display: inline-flex;
-          align-items: center;
-          justify-content: center;
-          background: linear-gradient(110deg, #347cf0, #13bcae);
-          color: #ffffff;
-          text-decoration: none;
-          padding: 11px 18px;
-          border-radius: 9px;
-          font-size: 13px;
-          font-weight: 700;
-          border: none;
-          cursor: pointer;
-        }
-
-        .secondary-button {
-          display: inline-flex;
-          align-items: center;
-          justify-content: center;
-          background: rgba(255, 255, 255, 0.05);
-          border: 1px solid rgba(255, 255, 255, 0.24);
-          color: #e6effa;
-          text-decoration: none;
-          padding: 11px 18px;
-          border-radius: 9px;
-          font-size: 13px;
-          font-weight: 700;
-        }
-
-        .secondary-button:hover {
-          background: rgba(255, 255, 255, 0.12);
-          border-color: #13c8b5;
-        }
-
-        .hero-caption {
-          margin-top: 20px;
-          font-size: 12px;
-          letter-spacing: 1.3px;
-          color: #93a7c2;
-          font-weight: 700;
-        }
-
-        .hero-visual {
+        .vn-orbit-panel {
           position: relative;
-          min-height: 410px;
-          width: 100%;
+          min-height: 270px;
+          border-radius: 20px;
+          background: rgba(11, 27, 48, 0.72);
+          border: 1px solid rgba(126, 232, 220, 0.18);
           display: grid;
           place-items: center;
-          background: transparent;
-          padding: 20px 8px;
-        }
-
-        .hero-ambient-glow {
-          position: absolute;
-          width: 440px;
-          height: 290px;
-          border-radius: 999px;
-          background: radial-gradient(
-            circle,
-            rgba(52, 124, 240, 0.28) 0%,
-            rgba(19, 200, 181, 0.16) 55%,
-            rgba(7, 17, 31, 0) 80%
-          );
-          filter: blur(24px);
-          pointer-events: none;
-          z-index: 1;
-        }
-
-        .hero-connector-svg {
-          position: absolute;
-          inset: 0;
-          width: 100%;
-          height: 100%;
-          z-index: 2;
-          pointer-events: none;
-          overflow: visible;
-        }
-
-        .connector-base {
-          stroke: rgba(126, 232, 220, 0.2);
-          stroke-width: 1.4;
-          stroke-linecap: round;
-        }
-
-        .connector-pulse {
-          stroke-width: 2.2;
-          stroke-linecap: round;
-          stroke-dasharray: 10 14;
-          filter: drop-shadow(0 0 6px rgba(19, 200, 181, 0.55));
-          animation: voinFlowDash 2.2s linear infinite;
-        }
-
-        .pulse-two {
-          animation-delay: -0.55s;
-        }
-
-        .pulse-three {
-          animation-delay: -1.1s;
-        }
-
-        .pulse-four {
-          animation-delay: -1.65s;
-        }
-
-        .connector-node {
-          fill: #7ee8dc;
-          filter: drop-shadow(0 0 7px rgba(19, 200, 181, 0.85));
-          animation: voinNodePulse 2.4s ease-in-out infinite;
-        }
-
-        @keyframes voinFlowDash {
-          from {
-            stroke-dashoffset: 0;
-          }
-          to {
-            stroke-dashoffset: -48;
-          }
-        }
-
-        @keyframes voinNodePulse {
-          0%,
-          100% {
-            opacity: 0.65;
-            transform: scale(0.95);
-          }
-          50% {
-            opacity: 1;
-            transform: scale(1.22);
-          }
-        }
-
-        .hero-network-img {
-          position: relative;
-          z-index: 2;
-          width: 100%;
-          max-width: 640px;
-          max-height: 380px;
-          object-fit: contain;
-          object-position: center;
-          filter: drop-shadow(0 12px 28px rgba(19, 200, 181, 0.2))
-            brightness(1.06) contrast(1.06);
-        }
-
-        .orbit-label {
-          position: absolute;
-          z-index: 3;
-          font-size: 11px;
-          font-weight: 800;
-          letter-spacing: 1.2px;
-          color: #7ee8dc;
-          background: rgba(13, 33, 58, 0.94);
-          border: 1px solid rgba(126, 232, 220, 0.35);
-          box-shadow: 0 0 14px rgba(19, 200, 181, 0.16);
-          padding: 5px 11px;
-          border-radius: 999px;
-        }
-
-        .label-one {
-          top: 10px;
-          left: 3%;
-        }
-
-        .label-two {
-          top: 10px;
-          right: 3%;
-        }
-
-        .label-three {
-          bottom: 10px;
-          left: 3%;
-        }
-
-        .label-four {
-          bottom: 10px;
-          right: 3%;
-        }
-
-        .platform-section,
-        .business-section {
-          max-width: 1200px;
-          margin: 0 auto;
-          padding: 44px 24px;
-        }
-
-        .section-heading span,
-        .business-section span,
-        .home-posts-header span {
-          color: #13c8b5;
-          font-size: 12px;
-          font-weight: 800;
-          letter-spacing: 1.6px;
-        }
-
-        .section-heading h2,
-        .home-posts-header h2 {
-          font-size: 32px;
-          font-weight: 800;
-          margin: 8px 0;
-        }
-
-        .section-heading p,
-        .home-posts-header p {
-          color: #b4c5da;
-          font-size: 15px;
-          line-height: 1.65;
-          margin: 0;
-        }
-
-        .module-grid {
-          margin-top: 24px;
-          display: grid;
-          grid-template-columns: repeat(3, minmax(0, 1fr));
-          gap: 16px;
-        }
-
-        .module-card {
-          background: #0e1e34;
-          border: 1px solid rgba(255, 255, 255, 0.08);
-          border-radius: 14px;
-          padding: 22px;
-          display: flex;
-          flex-direction: column;
-          gap: 7px;
-        }
-
-        .module-number {
-          font-size: 12px;
-          font-weight: 800;
-          color: #13c8b5;
-        }
-
-        .module-card h3 {
-          margin: 2px 0 0;
-          font-size: 19px;
-          font-weight: 700;
-          color: #ffffff;
-        }
-
-        .module-card p {
-          margin: 0;
-          color: #b2c3d8;
-          font-size: 14px;
-          line-height: 1.65;
-        }
-
-        .module-arrow {
-          margin-top: auto;
-          padding-top: 8px;
-          font-size: 14px;
-          color: #7ee8dc;
-          font-weight: 700;
-        }
-
-        .business-section {
-          padding-bottom: 56px;
-        }
-
-        .business-inner {
-          background: linear-gradient(125deg, #102b4d, #124663);
-          border: 1px solid rgba(126, 232, 220, 0.16);
-          border-radius: 18px;
-          padding: 36px 32px;
-        }
-
-        .business-section h2 {
-          font-size: 36px;
-          font-weight: 800;
-          line-height: 1.24;
-          margin: 12px 0;
-        }
-
-        .business-section p {
-          color: #cfe0f2;
-          font-size: 15px;
-          margin: 0;
-        }
-
-        .home-posts-section {
-          background: #f3f6fb;
-          color: #15243a;
-          padding: 56px 24px 72px;
-        }
-
-        .home-posts-inner {
-          max-width: 900px;
-          margin: 0 auto;
-        }
-
-        .home-posts-header {
-          display: flex;
-          justify-content: space-between;
-          align-items: flex-start;
-          gap: 16px;
-          flex-wrap: wrap;
-          margin-bottom: 24px;
-        }
-
-        .home-posts-header p {
-          color: #5b6d84;
-          margin-top: 6px;
-        }
-
-        .view-all-link {
-          color: #2874db;
-          font-size: 14px;
-          font-weight: 700;
-          text-decoration: none;
-          padding: 10px 15px;
-          background: #e6efff;
-          border-radius: 8px;
-          white-space: nowrap;
-        }
-
-        .home-posts-list {
-          display: flex;
-          flex-direction: column;
-          gap: 20px;
-        }
-
-        .home-post-card {
-          background: #ffffff;
-          border: 1px solid #e4eaf2;
-          border-radius: 14px;
           padding: 20px;
-          box-shadow: 0 5px 18px rgba(20, 42, 70, 0.04);
         }
 
-        .home-post-top {
+        .vn-core {
+          width: 108px;
+          height: 108px;
+          border-radius: 999px;
+          background: linear-gradient(135deg, #347cf0, #13c8b5);
+          color: #ffffff;
           display: flex;
-          justify-content: space-between;
+          flex-direction: column;
           align-items: center;
-          gap: 12px;
-          flex-wrap: wrap;
-          padding-bottom: 14px;
-          border-bottom: 1px solid #edf0f5;
+          justify-content: center;
+          box-shadow: 0 0 36px rgba(19, 200, 181, 0.35);
         }
 
-        .home-company-info {
-          display: flex;
-          align-items: center;
-          gap: 10px;
-        }
-
-        .home-company-info img,
-        .home-company-avatar {
-          width: 42px;
-          height: 42px;
-          border-radius: 10px;
-          object-fit: cover;
-          flex-shrink: 0;
-        }
-
-        .home-company-avatar {
-          display: grid;
-          place-items: center;
-          background: #e8f1ff;
-          color: #2874db;
+        .vn-core span {
+          font-size: 17px;
           font-weight: 800;
         }
 
-        .home-company-info strong {
-          display: block;
-          font-size: 14px;
-          font-weight: 700;
-          color: #1d3048;
+        .vn-core small {
+          font-size: 11px;
+          opacity: 0.9;
         }
 
-        .home-company-info small {
-          display: block;
-          font-size: 12px;
-          color: #7c8ea4;
-        }
-
-        .home-post-badge {
-          background: #edf5ff;
-          color: #397bd2;
+        .vn-node {
+          position: absolute;
           padding: 6px 12px;
           border-radius: 999px;
-          font-size: 12px;
-          font-weight: 700;
+          background: #102642;
+          border: 1px solid rgba(126, 232, 220, 0.35);
+          color: #9ff5eb;
+          font-size: 11px;
+          font-weight: 800;
+          letter-spacing: 1px;
         }
 
-        .home-post-body {
-          padding: 16px 0 6px;
+        .n-top {
+          top: 16px;
+        }
+        .n-bottom {
+          bottom: 16px;
+        }
+        .n-left {
+          left: 16px;
+        }
+        .n-right {
+          right: 16px;
         }
 
-        .home-post-body h3 {
-          margin: 0 0 8px;
-          font-size: 19px;
-          font-weight: 700;
-          color: #1d3048;
+        .vn-modules-section {
+          max-width: 1200px;
+          margin: 0 auto;
+          padding: 24px 24px 68px;
         }
 
-        .home-post-body p {
-          margin: 0;
-          color: #4d5f77;
-          font-size: 14px;
-          line-height: 1.72;
-          white-space: pre-wrap;
-        }
-
-        .home-images-grid {
-          margin-top: 14px;
-          display: grid;
-          gap: 10px;
-        }
-
-        .home-images-grid.single {
-          grid-template-columns: 1fr;
-        }
-
-        .home-images-grid.multi {
-          grid-template-columns: repeat(2, minmax(0, 1fr));
-        }
-
-        .home-image-card {
-          border-radius: 10px;
-          overflow: hidden;
-          background: #0d1d31;
-          border: 1px solid #e4eaf2;
-        }
-
-        .home-image-card img {
-          display: block;
-          width: 100%;
-          max-height: 360px;
-          object-fit: contain;
-          object-position: center;
-          background: #0d1d31;
-        }
-
-        .home-image-bar {
-          display: flex;
-          align-items: center;
-          justify-content: space-between;
-          gap: 8px;
-          padding: 9px 12px;
-          background: #10243d;
-          color: #e6eef8;
-          border-top: 1px solid #1d3656;
-        }
-
-        .home-image-caption {
-          font-size: 13px;
-          line-height: 1.4;
-          overflow-wrap: anywhere;
-        }
-
-        .home-image-comment-btn {
-          border: 1px solid rgba(255, 255, 255, 0.16);
-          background: rgba(255, 255, 255, 0.08);
+        .vn-section-head h2 {
+          margin: 8px 0 20px;
+          font-size: 28px;
+          font-weight: 800;
           color: #ffffff;
-          border-radius: 6px;
-          padding: 4px 9px;
+        }
+
+        .vn-modules-grid {
+          display: grid;
+          grid-template-columns: repeat(3, minmax(0, 1fr));
+          gap: 18px;
+        }
+
+        .vn-module-card {
+          display: flex;
+          flex-direction: column;
+          gap: 10px;
+          text-decoration: none;
+          background: #0d1e34;
+          border: 1px solid rgba(255, 255, 255, 0.1);
+          border-radius: 14px;
+          padding: 20px;
+          color: #eef4fb;
+        }
+
+        .vn-module-card:hover {
+          border-color: #13c8b5;
+        }
+
+        .vn-mod-tag {
+          align-self: flex-start;
+          padding: 3px 9px;
+          border-radius: 999px;
+          background: rgba(19, 200, 181, 0.16);
+          color: #7ee8dc;
+          font-size: 10px;
+          font-weight: 800;
+          letter-spacing: 1px;
+        }
+
+        .vn-module-card h3 {
+          margin: 0;
+          font-size: 18px;
+          font-weight: 800;
+          color: #ffffff;
+        }
+
+        .vn-module-card p {
+          margin: 0;
           font-size: 13px;
-          cursor: pointer;
-          flex-shrink: 0;
+          line-height: 1.65;
+          color: #b4c6dc;
+          flex: 1;
         }
 
-        .home-image-comment-btn:hover {
-          background: rgba(19, 188, 174, 0.35);
-          border-color: #13bcae;
+        .vn-mod-link {
+          font-size: 13px;
+          font-weight: 700;
+          color: #7ee8dc;
         }
 
-        .home-posts-empty {
-          background: #ffffff;
-          border: 1px solid #e4eaf2;
-          border-radius: 12px;
-          padding: 28px;
+        .vn-footer {
           text-align: center;
-          color: #5b6d84;
-        }
-
-        .footer {
-          text-align: center;
-          padding: 32px 20px;
-          background: #050d18;
-          color: #93a5bc;
-          border-top: 1px solid rgba(255, 255, 255, 0.06);
-        }
-
-        .footer p {
-          margin: 8px 0 4px;
-          font-size: 14px;
-          color: #d2deed;
-        }
-
-        .footer small {
+          padding: 24px;
+          border-top: 1px solid rgba(255, 255, 255, 0.08);
+          color: #8fa5c2;
           font-size: 12px;
         }
 
-        @media (max-width: 800px) {
-          .hero {
+        @media (max-width: 860px) {
+          .vn-hero-grid,
+          .vn-modules-grid {
             grid-template-columns: 1fr;
-            padding-top: 40px;
           }
 
-          .module-grid {
-            grid-template-columns: repeat(2, minmax(0, 1fr));
-          }
-        }
-
-        @media (max-width: 540px) {
-          .navbar {
-            padding: 12px 16px;
-          }
-
-          .navbar nav {
-            gap: 14px;
-          }
-
-          .navbar nav a {
-            font-size: 13px;
-          }
-
-          .hero h1 {
-            font-size: 34px;
-          }
-
-          .hero-visual {
-            min-height: 270px;
-          }
-
-          .business-inner {
-            padding: 24px 20px;
-          }
-
-          .business-section h2 {
-            font-size: 28px;
-          }
-
-          .module-grid,
-          .home-images-grid.multi {
-            grid-template-columns: 1fr;
+          .vn-hero-copy h1 {
+            font-size: 36px;
           }
         }
       `}</style>
