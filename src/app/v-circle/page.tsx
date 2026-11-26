@@ -18,6 +18,7 @@ type ProfessionalMember = {
   tags: string[];
   mutualConnections: number;
   online: boolean;
+  isLiveCompany?: boolean;
 };
 
 type NetworkCircle = {
@@ -27,6 +28,17 @@ type NetworkCircle = {
   membersCount: number;
   description: string;
   focusLabel: string;
+  logoUrl?: string | null;
+  isLiveCompany?: boolean;
+};
+
+type SupabaseCompanyRow = {
+  id: string;
+  company_name: string;
+  logo_url: string | null;
+  industry?: string | null;
+  description?: string | null;
+  location?: string | null;
 };
 
 type ConnectionNoteMap = Record<string, string>;
@@ -157,12 +169,29 @@ const SECTOR_FILTERS = [
   "Marketing & Growth",
 ] as const;
 
+function mapIndustryToSector(industry?: string | null): ProfessionalMember["sector"] {
+  const lower = (industry || "").toLowerCase();
+  if (lower.includes("tech") || lower.includes("software") || lower.includes("digital") || lower.includes("it")) {
+    return "Product & Tech";
+  }
+  if (lower.includes("market") || lower.includes("growth") || lower.includes("media") || lower.includes("brand")) {
+    return "Marketing & Growth";
+  }
+  if (lower.includes("trade") || lower.includes("supply") || lower.includes("partner") || lower.includes("consult")) {
+    return "Business & Partnerships";
+  }
+  return "Founder & CEO";
+}
+
 export default function VCirclePage() {
   const supabase = createClient();
 
   const [currentUserId, setCurrentUserId] = useState<string | null>(null);
   const [currentUserName, setCurrentUserName] = useState<string | null>(null);
   const [authModalOpen, setAuthModalOpen] = useState(false);
+
+  const [liveCompanies, setLiveCompanies] = useState<SupabaseCompanyRow[]>([]);
+  const [dbSyncEnabled, setDbSyncEnabled] = useState(false);
 
   const [searchQuery, setSearchQuery] = useState("");
   const [selectedSector, setSelectedSector] = useState<string>("All");
@@ -229,6 +258,51 @@ export default function VCirclePage() {
     }
   }, [notesByMember]);
 
+  async function loadCompaniesFromSupabase() {
+    const { data, error } = await supabase
+      .from("companies")
+      .select("id, company_name, logo_url, industry, description, location")
+      .order("created_at", { ascending: false })
+      .limit(12);
+
+    if (!error && Array.isArray(data)) {
+      setLiveCompanies(data as SupabaseCompanyRow[]);
+    }
+  }
+
+  async function loadUserCircleFromSupabase(uid: string) {
+    const { data: connRows, error: connErr } = await supabase
+      .from("v_circle_connections")
+      .select("target_key, note")
+      .eq("user_id", uid);
+
+    const { data: memRows, error: memErr } = await supabase
+      .from("v_circle_memberships")
+      .select("circle_id")
+      .eq("user_id", uid);
+
+    if (!connErr && Array.isArray(connRows)) {
+      setDbSyncEnabled(true);
+      if (connRows.length > 0) {
+        setConnectedIds(connRows.map((r) => r.target_key));
+        const noteMap: ConnectionNoteMap = {};
+        for (const r of connRows) {
+          if (r.note && r.note.trim()) {
+            noteMap[r.target_key] = r.note.trim();
+          }
+        }
+        setNotesByMember((prev) => ({ ...prev, ...noteMap }));
+      }
+    }
+
+    if (!memErr && Array.isArray(memRows)) {
+      setDbSyncEnabled(true);
+      if (memRows.length > 0) {
+        setJoinedGroupIds(memRows.map((m) => m.circle_id));
+      }
+    }
+  }
+
   async function syncActiveUser() {
     const {
       data: { user },
@@ -237,6 +311,7 @@ export default function VCirclePage() {
     if (!user) {
       setCurrentUserId(null);
       setCurrentUserName(null);
+      setDbSyncEnabled(false);
       return;
     }
 
@@ -264,10 +339,13 @@ export default function VCirclePage() {
         setCurrentUserName(companyData.company_name);
       }
     }
+
+    await loadUserCircleFromSupabase(user.id);
   }
 
   useEffect(() => {
     let active = true;
+    loadCompaniesFromSupabase();
     syncActiveUser();
 
     const {
@@ -289,14 +367,119 @@ export default function VCirclePage() {
     await supabase.auth.signOut();
     setCurrentUserId(null);
     setCurrentUserName(null);
+    setDbSyncEnabled(false);
   }
 
-  function toggleConnection(member: ProfessionalMember, customNote?: string) {
-    const alreadyConnected = connectedIds.includes(member.id);
+  const allCircles = useMemo<NetworkCircle[]>(() => {
+    const companyCircles: NetworkCircle[] = liveCompanies.slice(0, 3).map((comp) => ({
+      id: `company-circle-${comp.id}`,
+      name: comp.company_name,
+      category: comp.industry || "Verified Company",
+      membersCount: 64,
+      description:
+        comp.description?.trim() ||
+        `Official v-circle space for ${comp.company_name} updates, partnerships, and community discussions.`,
+      focusLabel: comp.location || "Verified Hub",
+      logoUrl: comp.logo_url,
+      isLiveCompany: true,
+    }));
 
-    if (alreadyConnected && !customNote) {
+    return [...companyCircles, ...INITIAL_CIRCLES];
+  }, [liveCompanies]);
+
+  const allProfessionals = useMemo<ProfessionalMember[]>(() => {
+    const companyProfiles: ProfessionalMember[] = liveCompanies.map((comp) => {
+      const cleanName = comp.company_name.trim() || "Company";
+      const initials = cleanName
+        .split(/\s+/)
+        .slice(0, 2)
+        .map((part) => part.charAt(0).toUpperCase())
+        .join("");
+
+      return {
+        id: `company-member-${comp.id}`,
+        name: cleanName,
+        handle: `@${cleanName.toLowerCase().replace(/[^a-z0-9]/g, "") || "company"}`,
+        avatarText: initials || "VN",
+        role: comp.industry || "Verified Business Profile",
+        company: cleanName,
+        sector: mapIndustryToSector(comp.industry),
+        location: comp.location || "Global · v-nect",
+        bio:
+          comp.description?.trim() ||
+          `Active company profile on v-nect open for collaborations, product updates, and business networking.`,
+        tags: [
+          (comp.industry || "Business").replace(/\s+/g, ""),
+          "VerifiedCompany",
+          "v-nect",
+        ],
+        mutualConnections: 18,
+        online: true,
+        isLiveCompany: true,
+      };
+    });
+
+    return [...companyProfiles, ...INITIAL_PROFESSIONALS];
+  }, [liveCompanies]);
+
+  async function persistConnectionToDb(
+    member: ProfessionalMember,
+    connected: boolean,
+    noteText: string
+  ) {
+    if (!currentUserId) return;
+
+    if (!connected) {
+      await supabase
+        .from("v_circle_connections")
+        .delete()
+        .eq("user_id", currentUserId)
+        .eq("target_key", member.id);
+      return;
+    }
+
+    await supabase.from("v_circle_connections").upsert(
+      {
+        user_id: currentUserId,
+        target_key: member.id,
+        target_name: member.name,
+        note: noteText,
+      },
+      { onConflict: "user_id,target_key" }
+    );
+  }
+
+  async function persistMembershipToDb(circle: NetworkCircle, joined: boolean) {
+    if (!currentUserId) return;
+
+    if (!joined) {
+      await supabase
+        .from("v_circle_memberships")
+        .delete()
+        .eq("user_id", currentUserId)
+        .eq("circle_id", circle.id);
+      return;
+    }
+
+    await supabase.from("v_circle_memberships").upsert(
+      {
+        user_id: currentUserId,
+        circle_id: circle.id,
+        circle_name: circle.name,
+      },
+      { onConflict: "user_id,circle_id" }
+    );
+  }
+
+  async function toggleConnection(member: ProfessionalMember, customNote?: string) {
+    const alreadyConnected = connectedIds.includes(member.id);
+    const noteToSave =
+      customNote !== undefined ? customNote.trim() : (notesByMember[member.id] || "").trim();
+
+    if (alreadyConnected && customNote === undefined) {
       setConnectedIds((prev) => prev.filter((id) => id !== member.id));
       setStatusBanner(`Koneksi dengan ${member.name} dilepas.`);
+      await persistConnectionToDb(member, false, "");
       return;
     }
 
@@ -313,6 +496,8 @@ export default function VCirclePage() {
     } else {
       setStatusBanner(`Terhubung dengan ${member.name} (${member.company}).`);
     }
+
+    await persistConnectionToDb(member, true, noteToSave);
   }
 
   function openNoteComposer(member: ProfessionalMember) {
@@ -320,26 +505,28 @@ export default function VCirclePage() {
     setDraftNote(notesByMember[member.id] || "");
   }
 
-  function submitConnectionWithNote(member: ProfessionalMember) {
-    toggleConnection(member, draftNote);
+  async function submitConnectionWithNote(member: ProfessionalMember) {
+    await toggleConnection(member, draftNote);
     setActiveNoteTargetId(null);
     setDraftNote("");
   }
 
-  function toggleJoinCircle(circle: NetworkCircle) {
+  async function toggleJoinCircle(circle: NetworkCircle) {
     const isJoined = joinedGroupIds.includes(circle.id);
     if (isJoined) {
       setJoinedGroupIds((prev) => prev.filter((id) => id !== circle.id));
       setStatusBanner(`Keluar dari circle "${circle.name}".`);
+      await persistMembershipToDb(circle, false);
     } else {
       setJoinedGroupIds((prev) => [...prev, circle.id]);
       setStatusBanner(`Bergabung ke circle "${circle.name}".`);
+      await persistMembershipToDb(circle, true);
     }
   }
 
   const filteredProfessionals = useMemo(() => {
     const q = searchQuery.trim().toLowerCase();
-    return INITIAL_PROFESSIONALS.filter((person) => {
+    return allProfessionals.filter((person) => {
       if (selectedSector !== "All" && person.sector !== selectedSector) {
         return false;
       }
@@ -356,7 +543,7 @@ export default function VCirclePage() {
         person.tags.some((t) => t.toLowerCase().includes(q))
       );
     });
-  }, [searchQuery, selectedSector, onlyOnline]);
+  }, [allProfessionals, searchQuery, selectedSector, onlyOnline]);
 
   return (
     <main className="circle-page">
@@ -370,7 +557,7 @@ export default function VCirclePage() {
           <nav className="circle-nav-links">
             <Link href="/">Home</Link>
             <Link href="/business-feed">Business Feed</Link>
-            <Link href="/v-meet">v-meet</Link>
+            <Link href="/company">Company</Link>
           </nav>
         </div>
 
@@ -397,7 +584,9 @@ export default function VCirclePage() {
       <section className="circle-container">
         <div className="circle-hero">
           <div>
-            <span className="circle-eyebrow">MODULE 05 · PROFESSIONAL &amp; BUSINESS NETWORK</span>
+            <span className="circle-eyebrow">
+              MODULE 05 · PROFESSIONAL &amp; BUSINESS NETWORK
+            </span>
             <h1>
               v-<span>circle.</span>
             </h1>
@@ -416,7 +605,7 @@ export default function VCirclePage() {
               <span>Joined Circles</span>
             </div>
             <div className="circle-stat">
-              <strong>{INITIAL_PROFESSIONALS.filter((p) => p.online).length}</strong>
+              <strong>{allProfessionals.filter((p) => p.online).length}</strong>
               <span>Online Now</span>
             </div>
           </div>
@@ -434,7 +623,9 @@ export default function VCirclePage() {
         <section className="circle-section">
           <div className="circle-section-head">
             <div>
-              <span className="circle-eyebrow">CURATED COMMUNITIES</span>
+              <span className="circle-eyebrow">
+                CURATED COMMUNITIES &amp; VERIFIED COMPANIES ({liveCompanies.length} DB)
+              </span>
               <h2>Active Network Circles</h2>
             </div>
             <Link href="/business-feed" className="circle-inline-link">
@@ -443,14 +634,16 @@ export default function VCirclePage() {
           </div>
 
           <div className="circle-groups-grid">
-            {INITIAL_CIRCLES.map((group) => {
+            {allCircles.map((group) => {
               const joined = joinedGroupIds.includes(group.id);
               const totalMembers = group.membersCount + (joined ? 1 : 0);
 
               return (
                 <article className="circle-group-card" key={group.id}>
                   <div className="circle-group-top">
-                    <span className="circle-badge">{group.category}</span>
+                    <span className="circle-badge">
+                      {group.isLiveCompany ? `★ ${group.category}` : group.category}
+                    </span>
                     <small>{totalMembers.toLocaleString()} members</small>
                   </div>
                   <h3>{group.name}</h3>
@@ -544,7 +737,12 @@ export default function VCirclePage() {
                         </div>
 
                         <div>
-                          <strong>{person.name}</strong>
+                          <strong>
+                            {person.name}{" "}
+                            {person.isLiveCompany && (
+                              <span className="circle-live-badge">LIVE DB</span>
+                            )}
+                          </strong>
                           <small>
                             {person.role} · <span>{person.company}</span>
                           </small>
@@ -626,8 +824,11 @@ export default function VCirclePage() {
       </section>
 
       <footer className="circle-footer">
-        v-nect v-circle · {currentUserId ? `Signed in as ${currentUserName}` : "Public Network Preview"} · ©{" "}
-        {new Date().getFullYear()} v-nect
+        v-nect v-circle ·{" "}
+        {currentUserId
+          ? `Signed in as ${currentUserName}${dbSyncEnabled ? " (Supabase Sync Active)" : " (Local Sync)"}`
+          : "Public Network Preview"}{" "}
+        · © {new Date().getFullYear()} v-nect
       </footer>
 
       <AccountAuthModal
@@ -878,6 +1079,17 @@ export default function VCirclePage() {
           border-radius: 999px;
           background: rgba(52, 124, 240, 0.2);
           color: #8cc0ff;
+        }
+
+        .circle-live-badge {
+          font-size: 10px;
+          font-weight: 800;
+          padding: 2px 7px;
+          border-radius: 999px;
+          background: rgba(19, 200, 181, 0.2);
+          color: #7ee8dc;
+          margin-left: 6px;
+          vertical-align: middle;
         }
 
         .circle-group-top small,
