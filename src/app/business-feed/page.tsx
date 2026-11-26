@@ -3,6 +3,7 @@
 import { useEffect, useRef, useState, type FormEvent } from "react";
 import Link from "next/link";
 import { createClient } from "@/lib/supabase";
+import { PostThreadComments } from "@/components/PostThreadComments";
 
 type Post = {
   id: string;
@@ -1075,6 +1076,13 @@ export default function BusinessFeedPage() {
                         </div>
                       )}
                     </div>
+
+                    <PostThreadComments
+                      supabase={supabase}
+                      postId={post.id}
+                      currentUserId={userId || null}
+                      currentUserName={company?.company_name || null}
+                    />
 
                     <div className="post-footer">
                       <span>◈ VOIN Business Feed</span>
