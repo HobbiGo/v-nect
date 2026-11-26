@@ -13,8 +13,8 @@ export function BusinessFeedNavbar({ activePath = "/business-feed" }: BusinessFe
         <div className="bf-topbar-left">
           <Link href="/" className="bf-brand-link">
             <img
-              src="/images/voinnect-logo.jpg"
-              alt="VOINNECT logo"
+              src="/images/v-nect-logo.jpg"
+              alt="v-nect logo"
               className="bf-brand-logo"
             />
             <span className="bf-brand-name">

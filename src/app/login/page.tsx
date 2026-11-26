@@ -64,7 +64,7 @@ export default function LoginPage() {
         <h1>Welcome Back</h1>
 
         <p>
-          Sign in to continue your VOINNECT journey.
+          Sign in to continue your v-nect journey.
         </p>
 
         <form

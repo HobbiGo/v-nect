@@ -1,14 +1,14 @@
-VOINNECT — SYSTEM ARCHITECTURE
+v-nect — SYSTEM ARCHITECTURE
 Document Version: 1.0
-Project: VOINNECT
+Project: v-nect
 Status: Draft / Proposed Architecture
 Category: Technical Architecture
 Tagline: Connect Beyond Boundaries.
 ---
 1. Introduction
-This document defines the proposed system architecture for VOINNECT, a global business communication and ecosystem platform.
+This document defines the proposed system architecture for v-nect, a global business communication and ecosystem platform.
 It establishes the architectural foundation for the platform's applications, backend systems, identity management, databases, communication services, security, and infrastructure.
-The architecture is designed to support gradual development, future expansion, and integration between VOINNECT modules.
+The architecture is designed to support gradual development, future expansion, and integration between v-nect modules.
 All technical decisions remain subject to review and validation during development.
 2. Architecture Goals
 The primary goals are:
@@ -21,14 +21,14 @@ Allow independent development of platform modules.
 Support future web, mobile, and enterprise applications.
 Prepare the platform for international expansion.
 3. High-Level System Architecture
-VOINNECT will use a layered architecture.
+v-nect will use a layered architecture.
 3.1 Client Applications
 The client layer represents applications used by platform users.
 Planned applications:
-VOINNECT Web Application
-VOINNECT Mobile Application
-VOINNECT Admin Dashboard
-VOINNECT Company Dashboard
+v-nect Web Application
+v-nect Mobile Application
+v-nect Admin Dashboard
+v-nect Company Dashboard
 3.2 API Layer
 The API layer connects client applications with backend services.
 Responsibilities:
@@ -39,7 +39,7 @@ Apply authorization rules.
 Route requests to the appropriate modules.
 Return structured responses.
 3.3 Backend Application Layer
-The backend contains the main business logic of VOINNECT.
+The backend contains the main business logic of v-nect.
 Proposed modules:
 Identity & Authentication
 User Profile Management
@@ -73,7 +73,7 @@ Simpler deployment and maintenance.
 Clear boundaries between modules.
 Easier testing during early development.
 4.2 Future Architecture
-As VOINNECT grows, selected modules may become independent services when justified by performance, scale, security, or operational requirements.
+As v-nect grows, selected modules may become independent services when justified by performance, scale, security, or operational requirements.
 Potential future services:
 Identity Service
 Messaging Service
@@ -83,9 +83,9 @@ Marketplace Service
 Notification Service
 Microservices are a future option, not an initial requirement.
 5. Identity Architecture — One Account, Entire Ecosystem
-VOINNECT will use one centralized identity system.
-5.1 VOINNECT ID
-Every registered user will have a unique VOINNECT ID.
+v-nect will use one centralized identity system.
+5.1 v-nect ID
+Every registered user will have a unique v-nect ID.
 The same account can access all authorized platform modules.
 5.2 Personal and Company Profiles
 One account may manage:
@@ -114,7 +114,7 @@ Account recovery.
 Login rate limiting.
 Security event logging.
 6. Platform Module Architecture
-Each VOINNECT module will have defined responsibilities.
+Each v-nect module will have defined responsibilities.
 6.1 VOIN Chat
 Responsibilities:
 Private messaging.
@@ -168,7 +168,7 @@ Supplier connections.
 Business inquiries.
 Commercial opportunities.
 7. Module Integration Architecture
-All modules will operate within the same VOINNECT ecosystem.
+All modules will operate within the same v-nect ecosystem.
 Examples:
 VOIN Business can publish updates to VOIN Business Feed.
 Users can contact companies through VOIN Chat.
@@ -225,7 +225,7 @@ Access must be restricted according to ownership, membership, and permissions.
 Company data must be isolated so that one organization cannot access another organization's private information without authorization.
 The database technology and detailed schema will be decided in a later development stage.
 9. Real-Time Communication Architecture
-Real-time communication is an important part of VOINNECT.
+Real-time communication is an important part of v-nect.
 9.1 Messaging
 The messaging architecture should support:
 Near real-time message delivery.
@@ -242,7 +242,7 @@ Connection management.
 Meeting access permissions.
 The technology or external provider for real-time messaging and audio/video communication remains To Be Decided.
 10. File and Media Storage
-VOINNECT may store:
+v-nect may store:
 User profile images.
 Company logos.
 Product images.
@@ -288,7 +288,7 @@ Administrative access restrictions.
 Secure secret and configuration management.
 Passwords, API keys, private tokens, and other secrets must never be committed to the GitHub repository.
 12. API Architecture
-VOINNECT will use an API-oriented backend architecture.
+v-nect will use an API-oriented backend architecture.
 API design principles:
 Consistent request and response formats.
 Authentication for protected endpoints.
@@ -337,7 +337,7 @@ Backup verification.
 Recovery procedures.
 Logs should not unnecessarily contain passwords, private message contents, or other sensitive information.
 15. Scalability Strategy
-VOINNECT will grow progressively.
+v-nect will grow progressively.
 Initial strategy:
 Start with a modular backend.
 Keep module boundaries clear.
@@ -374,7 +374,7 @@ Select the initial technology stack.
 Phase 2 — Identity Foundation
 Registration.
 Login.
-VOINNECT ID.
+v-nect ID.
 Personal profiles.
 Company profiles.
 Role and permission management.
@@ -401,7 +401,7 @@ Performance improvements.
 International readiness.
 Each phase requires testing and review before being considered complete.
 18. Architecture Principles
-VOINNECT development should follow these principles:
+v-nect development should follow these principles:
 One Account — Entire Ecosystem.
 Security by Design.
 Privacy by Design.
@@ -413,7 +413,7 @@ Maintainable Code.
 Documented Technical Decisions.
 Progressive Development.
 19. Project Independence
-VOINNECT is an independent platform project.
+v-nect is an independent platform project.
 Its repository, architecture, product development, and roadmap are maintained separately from Hobbigo and VOIN Blockchain.
 Future integrations with external platforms or other VOIN projects may be considered through clearly defined APIs, without making them dependencies of the core platform.
 20. Current Architecture Status
@@ -430,5 +430,5 @@ Technology Stack	Not Selected
 Backend Implementation	Not Started
 Production Infrastructure	Not Started
 ---
-VOINNECT — Building a More Connected Business World.
+v-nect — Building a More Connected Business World.
 This document is a proposed technical architecture. It does not indicate that the described systems or features have already been implemented or deployed.

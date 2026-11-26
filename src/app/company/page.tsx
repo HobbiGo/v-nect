@@ -245,7 +245,7 @@ export default function CompanyDashboard() {
       <main className="loading-page">
         <div className="loading-card">
           <div className="loader" />
-          <h2>VOINNECT</h2>
+          <h2>v-nect</h2>
           <p>Loading Company Workspace...</p>
         </div>
 
@@ -353,7 +353,7 @@ export default function CompanyDashboard() {
       <aside className="sidebar">
         <Link href="/company" className="brand">
           <span className="brand-mark">V</span>
-          <span>VOINNECT</span>
+          <span>v-nect</span>
         </Link>
 
         <div className="sidebar-label">COMPANY WORKSPACE</div>
@@ -435,7 +435,7 @@ export default function CompanyDashboard() {
               <h2>{company.company_name}</h2>
               <p>
                 Manage your company presence, build your brand
-                and grow your business with VOINNECT.
+                and grow your business with v-nect.
               </p>
             </div>
 
@@ -479,7 +479,7 @@ export default function CompanyDashboard() {
               <div className="section-eyebrow">COMPANY IDENTITY</div>
               <h2>Company Profile</h2>
               <p>
-                Manage how your company appears across VOINNECT.
+                Manage how your company appears across v-nect.
               </p>
             </div>
 
@@ -604,7 +604,7 @@ export default function CompanyDashboard() {
             id="business"
           >
             <div>
-              <div className="section-eyebrow">VOINNECT ECOSYSTEM</div>
+              <div className="section-eyebrow">v-nect ECOSYSTEM</div>
               <h2>Business Modules</h2>
               <p>
                 Your company's connected business tools.
@@ -684,7 +684,7 @@ export default function CompanyDashboard() {
           </section>
 
           <footer>
-            © 2026 VOINNECT. Connect Beyond Boundaries.
+            © 2026 v-nect. Connect Beyond Boundaries.
           </footer>
         </div>
       </section>

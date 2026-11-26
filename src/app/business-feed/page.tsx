@@ -46,7 +46,7 @@ type FocusTarget = {
 const BUCKET_NAME = "business-posts";
 const MAX_IMAGES = 5;
 const MAX_IMAGE_SIZE = 5 * 1024 * 1024;
-const LOCAL_CAPTIONS_STORAGE_KEY = "voinnect_business_post_image_captions_v1";
+const LOCAL_CAPTIONS_STORAGE_KEY = "v-nect_business_post_image_captions_v1";
 
 const categories = [
   { value: "all", label: "All Posts" },
@@ -327,7 +327,7 @@ export default function BusinessFeedPage() {
           ? err.message
           : "Something went wrong.";
 
-      console.error("VOINNECT Business Feed Error:", err);
+      console.error("v-nect Business Feed Error:", err);
       setError(message);
     } finally {
       setLoading(false);
@@ -649,7 +649,7 @@ export default function BusinessFeedPage() {
           : "Something went wrong.";
 
       console.error(
-        "VOINNECT moderated post submission error:",
+        "v-nect moderated post submission error:",
         err
       );
 
@@ -1308,7 +1308,7 @@ export default function BusinessFeedPage() {
       </section>
 
       <footer className="feed-footer">
-        © {new Date().getFullYear()} VOINNECT · Connecting Beyond Boundaries
+        © {new Date().getFullYear()} v-nect · Connecting Beyond Boundaries
       </footer>
 
       <style jsx>{`

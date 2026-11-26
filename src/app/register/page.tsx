@@ -62,7 +62,7 @@ export default function RegisterPage() {
       });
 
       if (error) {
-        console.error("VOINNECT SIGNUP ERROR:", error);
+        console.error("v-nect SIGNUP ERROR:", error);
 
         setErrorMessage(
           `Registration failed: ${error.message}`
@@ -81,7 +81,7 @@ export default function RegisterPage() {
       );
 
     } catch (error) {
-      console.error("VOINNECT REGISTER ERROR:", error);
+      console.error("v-nect REGISTER ERROR:", error);
 
       setErrorMessage(
         error instanceof Error
@@ -105,7 +105,7 @@ export default function RegisterPage() {
         <h1>Create Your Account</h1>
 
         <p>
-          Join VOINNECT and connect beyond boundaries.
+          Join v-nect and connect beyond boundaries.
         </p>
 
         <form

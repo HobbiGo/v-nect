@@ -2,7 +2,7 @@ import "./globals.css";
 import type { Metadata } from "next";
 
 export const metadata: Metadata = {
-  title: "VOINNECT",
+  title: "v-nect",
   description:
     "Global Business Communication & Ecosystem Platform",
 };

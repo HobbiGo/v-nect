@@ -1,17 +1,17 @@
-VOINNECT — USER FLOW
+v-nect — USER FLOW
 Document Version: 1.0
-Project: VOINNECT
+Project: v-nect
 Status: Draft / Proposed User Experience Flow
 Category: Product & UX Architecture
 Core Principle: One Account — Entire Ecosystem
 ---
 1. INTRODUCTION
-This document defines the proposed user journeys and interaction flows across the VOINNECT platform.
+This document defines the proposed user journeys and interaction flows across the v-nect platform.
 The objective is to create a consistent, simple, and connected experience for individuals, professionals, companies, and organizations.
-All VOINNECT modules will operate under one centralized account identity.
+All v-nect modules will operate under one centralized account identity.
 Users should be able to access authorized platform features without creating separate accounts for each module.
 2. USER CATEGORIES
-VOINNECT will support the following user categories.
+v-nect will support the following user categories.
 2.1 Individual Users
 Users who want to:
 Communicate with other users.
@@ -43,9 +43,9 @@ Enterprise communication.
 Business collaboration.
 Future API integrations.
 3. MAIN PLATFORM ENTRY FLOW
-The main entry point is the VOINNECT landing page.
+The main entry point is the v-nect landing page.
 3.1 Landing Page
-The landing page introduces VOINNECT and its ecosystem.
+The landing page introduces v-nect and its ecosystem.
 Main navigation:
 Home
 About
@@ -56,7 +56,7 @@ Marketplace
 Login
 Register
 3.2 First-Time User Flow
-OPEN VOINNECT
+OPEN v-nect
       |
       v
 LANDING PAGE
@@ -71,7 +71,7 @@ ENTER ACCOUNT INFORMATION
 VERIFY EMAIL
       |
       v
-CREATE VOINNECT ID
+CREATE v-nect ID
       |
       v
 SET UP PERSONAL PROFILE
@@ -80,7 +80,7 @@ SET UP PERSONAL PROFILE
 ENTER PERSONAL DASHBOARD
       |
       v
-EXPLORE VOINNECT ECOSYSTEM
+EXPLORE v-nect ECOSYSTEM
 
 4. ACCOUNT REGISTRATION FLOW
 4.1 Registration Process
@@ -93,7 +93,7 @@ User accepts the applicable terms and privacy policy.
 System sends an email verification request.
 User completes email verification.
 System creates the account.
-System generates a unique VOINNECT ID.
+System generates a unique v-nect ID.
 User proceeds to profile setup.
 4.2 Registration Information
 Initial required information:
@@ -104,13 +104,13 @@ Acceptance of applicable terms.
 Additional profile information can be completed later.
 4.3 Registration Completion
 After successful registration:
-User receives a VOINNECT ID.
+User receives a v-nect ID.
 Personal profile becomes available.
 Account security settings become accessible.
 User can enter the platform.
 5. LOGIN AND ACCOUNT ACCESS FLOW
 5.1 Login
-OPEN VOINNECT
+OPEN v-nect
       |
       v
 SELECT LOGIN
@@ -185,7 +185,7 @@ Add professional information.
 Configure profile visibility.
 Manage networking preferences.
 7. COMPANY REGISTRATION AND MANAGEMENT FLOW
-A user may create a company profile using the same VOINNECT account.
+A user may create a company profile using the same v-nect account.
 7.1 Create Company Profile
 PERSONAL DASHBOARD
       |
@@ -476,7 +476,7 @@ Mark notifications as read.
 Manage notification preferences.
 Configure available communication channels.
 15. ADMINISTRATOR USER FLOW
-The VOINNECT Admin Dashboard will support authorized platform administration.
+The v-nect Admin Dashboard will support authorized platform administration.
 15.1 Administration Capabilities
 User management.
 Company management.
@@ -493,7 +493,7 @@ Platform administrators should only access private user or company information w
 16. ACCOUNT AND PROFILE SWITCHING
 One account can access multiple authorized contexts.
 Example:
-ONE VOINNECT ACCOUNT
+ONE v-nect ACCOUNT
         |
         v
 PERSONAL DASHBOARD
@@ -509,7 +509,7 @@ PERSONAL DASHBOARD
 Users should be able to switch between their personal context and authorized company contexts.
 Switching contexts must not expose information belonging to other users or organizations.
 17. USER EXPERIENCE PRINCIPLES
-VOINNECT should provide:
+v-nect should provide:
 Simple registration.
 Clear navigation.
 Consistent design across modules.
@@ -537,7 +537,7 @@ Users should receive clear and understandable feedback without exposing sensitiv
 19. USER FLOW DEVELOPMENT PRIORITY
 Recommended implementation order:
 Phase	User Flow
-1	Registration and VOINNECT ID
+1	Registration and v-nect ID
 2	Login and Account Security
 3	Personal Dashboard
 4	Company Profile and Dashboard
@@ -554,7 +554,7 @@ The order may be adjusted after technical evaluation.
 Component	Status
 Registration Flow	Proposed
 Login Flow	Proposed
-VOINNECT ID Flow	Proposed
+v-nect ID Flow	Proposed
 Personal Dashboard	Proposed
 Company Registration	Proposed
 Company Dashboard	Proposed
@@ -567,5 +567,5 @@ Marketplace	Proposed
 Administration	Proposed
 UI/UX Implementation	Not Started
 ---
-VOINNECT — Building a More Connected Business World.
+v-nect — Building a More Connected Business World.
 This document describes proposed user journeys and does not indicate that the flows have already been implemented.

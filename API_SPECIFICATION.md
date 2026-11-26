@@ -1,13 +1,13 @@
 Penulisan
-VOINNECT — API SPECIFICATION
+v-nect — API SPECIFICATION
 Document Version: 1.0
-Project: VOINNECT
+Project: v-nect
 Status: Proposed — Initial Development Specification
 Category: Backend & System Integration
 Core Principle: One Account — Entire Ecosystem
 1. INTRODUCTION
-This document defines the initial API structure for the VOINNECT platform.
-The API will connect all VOINNECT modules through a shared backend system.
+This document defines the initial API structure for the v-nect platform.
+The API will connect all v-nect modules through a shared backend system.
 The objective is to ensure that users can access different modules through one account while maintaining consistent data, permissions, and communication between services.
 2. API DEVELOPMENT PRINCIPLES
 The API should follow these principles:
@@ -23,14 +23,14 @@ Maintainable implementation.
 Future integration support.
 3. INITIAL API ARCHITECTURE
 The proposed initial architecture uses a centralized API with modular backend functionality.
-             VOINNECT CLIENT
+             v-nect CLIENT
                     |
                     v
                API LAYER
                     |
           AUTHENTICATION SYSTEM
                     |
-             VOINNECT ID
+             v-nect ID
                     |
           CENTRAL BACKEND SYSTEM
                     |
@@ -63,7 +63,7 @@ This is a logical architecture. The initial implementation may use a modular mon
 Proposed API base path:
 /api/v1
 Example:
-https://api.voinnect.com/api/v1
+https://api.v-nect.com/api/v1
 The actual production domain will be configured later.
 4.2 Communication Format
 The initial API will use:
@@ -102,7 +102,7 @@ Error response example:
 }
 Responses must not expose passwords, authentication secrets, or internal security information.
 5. AUTHENTICATION API
-Authentication is the foundation of the VOINNECT ecosystem.
+Authentication is the foundation of the v-nect ecosystem.
 All modules must use the same central authentication system.
 5.1 Registration
 POST /auth/register
@@ -138,8 +138,8 @@ GET /auth/sessions
 DELETE /auth/sessions/{sessionId}
 Purpose:
 Review and revoke active sessions.
-6. VOINNECT ID API
-The VOINNECT ID is the central identity used throughout the ecosystem.
+6. v-nect ID API
+The v-nect ID is the central identity used throughout the ecosystem.
 Proposed Endpoints
 GET /users/me
 PATCH /users/me
@@ -385,11 +385,11 @@ Critical operations that may be retried should use idempotency protection where 
 Error Handling
 The API should return consistent error codes and understandable messages.
 19. CROSS-MODULE INTEGRATION
-The most important objective is to connect the entire VOINNECT ecosystem.
+The most important objective is to connect the entire v-nect ecosystem.
 Source Module
 Connected Module
 Integration
-VOINNECT ID
+v-nect ID
 All Modules
 Shared identity
 VOIN Business
@@ -425,7 +425,7 @@ The recommended development sequence is:
 Phase
 Development
 1
-Authentication and VOINNECT ID
+Authentication and v-nect ID
 2
 Personal Profiles
 3
@@ -467,7 +467,7 @@ API Architecture
 Proposed
 Authentication Endpoints
 Proposed
-VOINNECT ID Endpoints
+v-nect ID Endpoints
 Proposed
 Organization Endpoints
 Proposed
@@ -491,5 +491,5 @@ Backend Implementation
 Not Started
 API Integration Testing
 Not Started
-VOINNECT — Building a More Connected Business World.
+v-nect — Building a More Connected Business World.
 This document defines the proposed API contract. Endpoints and functionality must be implemented, tested, and validated before being considered operational.

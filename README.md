@@ -1,13 +1,13 @@
 Penulisan
-VOINNECT
+v-nect
 Global Business Communication & Ecosystem Platform
 Connect Beyond Boundaries.
-VOINNECT is an integrated digital platform designed to connect businesses, professionals, communities, and opportunities through seamless communication, collaboration, networking, and business solutions.
+v-nect is an integrated digital platform designed to connect businesses, professionals, communities, and opportunities through seamless communication, collaboration, networking, and business solutions.
 Our vision is to build a connected global business ecosystem where people and organizations can communicate, collaborate, discover opportunities, and grow together.
-1. About VOINNECT
-VOINNECT is an independent technology platform focused on global business communication and digital ecosystem development.
+1. About v-nect
+v-nect is an independent technology platform focused on global business communication and digital ecosystem development.
 The platform aims to bring essential business interactions into one connected environment, combining communication tools, professional networking, business discovery, product presentations, communities, and marketplace capabilities.
-VOINNECT is designed for individuals, entrepreneurs, startups, small and medium-sized businesses, and enterprises.
+v-nect is designed for individuals, entrepreneurs, startups, small and medium-sized businesses, and enterprises.
 2. Vision
 To become a global business ecosystem that connects people, businesses, and opportunities without boundaries.
 3. Mission
@@ -18,7 +18,7 @@ Provide an integrated environment for business discovery.
 Support digital transformation for businesses of all sizes.
 Build a scalable, secure, and accessible technology ecosystem.
 4. Platform Ecosystem
-VOINNECT is designed around interconnected products and services.
+v-nect is designed around interconnected products and services.
 4.1 VOIN Chat
 A communication platform supporting:
 Private messaging.
@@ -77,7 +77,7 @@ Supplier connections.
 Business inquiries.
 Commercial opportunities.
 5. Dashboards
-VOINNECT aims to provide dedicated dashboard experiences.
+v-nect aims to provide dedicated dashboard experiences.
 Personal Dashboard
 For individual users and professionals:
 Personal profile.
@@ -95,7 +95,7 @@ Customer communication.
 Team collaboration.
 Business activity overview.
 6. Enterprise Solutions
-VOINNECT plans to provide scalable solutions for organizations and larger businesses.
+v-nect plans to provide scalable solutions for organizations and larger businesses.
 Potential capabilities include:
 Enterprise communication.
 Team collaboration.
@@ -111,7 +111,7 @@ Integration services.
 Authentication interfaces.
 Developer tools.
 8. Business Model
-VOINNECT is designed with multiple potential revenue streams:
+v-nect is designed with multiple potential revenue streams:
 Subscription plans.
 Premium business services.
 Marketplace commissions.
@@ -120,7 +120,7 @@ Enterprise contracts.
 API and platform usage fees.
 Specific pricing and commercial policies will be determined during product development.
 9. Technology Strategy
-VOINNECT will be developed as an independent, modular, and scalable technology platform.
+v-nect will be developed as an independent, modular, and scalable technology platform.
 The architecture will be evaluated around:
 Web applications.
 Mobile applications.
@@ -133,7 +133,7 @@ Cloud infrastructure.
 API integrations.
 Technology choices will be documented as the architecture is finalized.
 10. Security & Privacy
-Security and privacy are important foundations of VOINNECT.
+Security and privacy are important foundations of v-nect.
 Development priorities include:
 Secure authentication.
 Access control.
@@ -143,7 +143,7 @@ Secure communication.
 Infrastructure monitoring.
 Responsible data management.
 11. Development Roadmap
-VOINNECT will be developed through progressive stages.
+v-nect will be developed through progressive stages.
 Phase
 Focus
 Phase 1
@@ -166,19 +166,19 @@ Phase 9
 Testing, optimization, and expansion
 The roadmap may evolve as the platform develops.
 12. Project Independence
-VOINNECT is an independent platform with its own identity, product architecture, development roadmap, and business model.
+v-nect is an independent platform with its own identity, product architecture, development roadmap, and business model.
 Future integrations with external platforms or technology ecosystems may be considered when they provide clear value, security, and technical compatibility.
 13. Project Status
 Current Stage: Project Foundation
 The repository has been established. Product architecture, technical specifications, and initial development planning are the next priorities.
 All features described in this document represent the intended product vision unless explicitly marked as implemented in future project documentation.
 14. Project Repository
-Repository: HobbiGo/voinnect
+Repository: HobbiGo/v-nect
 Visibility: Private
-Project: VOINNECT
+Project: v-nect
 Platform Category: Global Business Communication & Ecosystem
 15. Future Development & Global Expansion
-VOINNECT aims to grow into a globally connected business technology ecosystem.
+v-nect aims to grow into a globally connected business technology ecosystem.
 Long-term development opportunities include:
 Expansion into international markets.
 Global business partnerships and collaborations.
@@ -189,4 +189,4 @@ Building a wider global professional and business community.
 Continuous innovation and technology development.
 Global expansion will be pursued progressively, with a focus on platform reliability, user trust, security, and sustainable growth.
 Connect Beyond Boundaries.
-VOINNECT — Building a More Connected Business World.
+v-nect — Building a More Connected Business World.

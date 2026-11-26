@@ -32,9 +32,9 @@ type FocusTarget = {
 };
 
 const MAX_IMAGES = 5;
-const LOCAL_CAPTIONS_STORAGE_KEY = "voinnect_business_post_image_captions_v1";
-const BRAND_LOGO_SRC = "/images/voinnect-logo.jpg";
-const HERO_NETWORK_IMG_SRC = "/images/logonew-voinnect.png";
+const LOCAL_CAPTIONS_STORAGE_KEY = "v-nect_business_post_image_captions_v1";
+const BRAND_LOGO_SRC = "/images/v-nect-logo.jpg";
+const HERO_NETWORK_IMG_SRC = "/images/logonew-v-nect.png";
 
 const modules = [
   {
@@ -234,7 +234,7 @@ export default function Home() {
           <span className="logo-mark-wrap">
             <img
               src={BRAND_LOGO_SRC}
-              alt="VOINNECT logo"
+              alt="v-nect logo"
               className="logo-mark"
             />
           </span>
@@ -354,7 +354,7 @@ export default function Home() {
 
           <img
             src={HERO_NETWORK_IMG_SRC}
-            alt="VOINNECT Global Business Network"
+            alt="v-nect Global Business Network"
             className="hero-network-img"
           />
 
@@ -367,7 +367,7 @@ export default function Home() {
 
       <section className="platform-section" id="platform">
         <div className="section-heading">
-          <span>THE VOINNECT ECOSYSTEM</span>
+          <span>THE v-nect ECOSYSTEM</span>
           <h2>Everything Connected.</h2>
           <p>
             A unified digital environment designed to
@@ -398,7 +398,7 @@ export default function Home() {
             Your Opportunities.
           </h2>
           <p>
-            VOINNECT — Building a More Connected Business World.
+            v-nect — Building a More Connected Business World.
           </p>
         </div>
       </section>
@@ -540,7 +540,7 @@ export default function Home() {
           VOIN<span>NECT</span>
         </div>
         <p>Connect Beyond Boundaries.</p>
-        <small>© 2026 VOINNECT. All rights reserved.</small>
+        <small>© 2026 v-nect. All rights reserved.</small>
       </footer>
 
       <style jsx>{`

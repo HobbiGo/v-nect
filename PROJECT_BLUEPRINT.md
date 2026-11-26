@@ -1,18 +1,18 @@
-VOINNECT — PROJECT BLUEPRINT
+v-nect — PROJECT BLUEPRINT
 Global Business Communication & Ecosystem Platform
 Connect Beyond Boundaries.
 Document: Project Blueprint
 Version: 1.0
-Project: VOINNECT
-Repository: HobbiGo/voinnect
+Project: v-nect
+Repository: HobbiGo/v-nect
 Status: Initial Architecture Planning
 ---
 1. PROJECT OVERVIEW
 1.1 Introduction
-VOINNECT is an independent global business communication and ecosystem platform designed to connect individuals, professionals, businesses, organizations, and communities through an integrated digital environment.
+v-nect is an independent global business communication and ecosystem platform designed to connect individuals, professionals, businesses, organizations, and communities through an integrated digital environment.
 The platform combines communication, networking, business discovery, collaboration, product presentations, and commercial opportunities.
 1.2 Core Concept
-VOINNECT aims to provide a unified digital environment where users can communicate, build professional relationships, manage business identities, discover products, and participate in business communities.
+v-nect aims to provide a unified digital environment where users can communicate, build professional relationships, manage business identities, discover products, and participate in business communities.
 1.3 Core Principles
 One Account — Entire Ecosystem.
 Integrated Digital Experience.
@@ -32,7 +32,7 @@ Enable professional networking.
 Provide integrated business tools.
 Create opportunities for commercial collaboration.
 2.3 Long-Term Direction
-VOINNECT aims to evolve from a communication platform into a comprehensive global business ecosystem.
+v-nect aims to evolve from a communication platform into a comprehensive global business ecosystem.
 3. TARGET USERS
 The platform is intended for several user categories.
 3.1 Individual Users
@@ -46,7 +46,7 @@ Companies requiring digital business profiles, communication, promotion, and pro
 3.5 Enterprises
 Organizations requiring scalable communication, collaboration, administration, and integration solutions.
 4. PLATFORM ECOSYSTEM
-VOINNECT will consist of interconnected product modules.
+v-nect will consist of interconnected product modules.
 4.1 VOIN Chat
 Messaging and communication.
 Core capabilities:
@@ -117,10 +117,10 @@ Marketplace administration.
 5. USER IDENTITY & AUTHENTICATION
 5.1 Core Principle
 ONE ACCOUNT — ENTIRE ECOSYSTEM
-VOINNECT will use one centralized account identity across the entire platform.
-Users should not need separate accounts for each VOINNECT product.
-5.2 VOINNECT ID
-VOINNECT ID will serve as the central identity for every registered user.
+v-nect will use one centralized account identity across the entire platform.
+Users should not need separate accounts for each v-nect product.
+5.2 v-nect ID
+v-nect ID will serve as the central identity for every registered user.
 It will support:
 Unique user identification.
 Account registration.
@@ -131,16 +131,16 @@ Security management.
 Access to authorized platform modules.
 5.3 Registration
 Planned registration flow:
-User opens VOINNECT.
+User opens v-nect.
 User selects registration.
 User provides the required account information.
 User creates authentication credentials.
 Email verification is completed.
 User accepts applicable terms and privacy policies.
-VOINNECT creates the account.
+v-nect creates the account.
 User enters the personal dashboard.
 5.4 Login
-A centralized authentication system will support access to authorized VOINNECT services.
+A centralized authentication system will support access to authorized v-nect services.
 Planned capabilities:
 Email-based login.
 Secure password authentication.
@@ -234,7 +234,7 @@ Post interactions.
 Business announcements.
 Content moderation.
 Reporting mechanisms.
-Business Feed will connect relevant content to other VOINNECT modules.
+Business Feed will connect relevant content to other v-nect modules.
 10. VOIN COMMUNITY ARCHITECTURE
 VOIN Community will provide professional and business discussion environments.
 Planned components:
@@ -265,7 +265,7 @@ Transaction-related workflows.
 Payment, settlement, and transaction services will require separate security, compliance, and operational planning before implementation.
 13. SYSTEM ARCHITECTURE
 13.1 Architecture Principles
-VOINNECT will use a modular architecture that allows individual platform capabilities to evolve independently while maintaining consistent identity, permissions, and integration.
+v-nect will use a modular architecture that allows individual platform capabilities to evolve independently while maintaining consistent identity, permissions, and integration.
 13.2 Application Layers
 The proposed architecture includes:
 Presentation Layer
@@ -303,7 +303,7 @@ Deployment architecture.
 API standards.
 13.4 Repository Organization
 Proposed structure:
-voinnect/
+v-nect/
 ├── apps/
 │   ├── web/
 │   ├── mobile/
@@ -337,7 +337,7 @@ API and platform usage fees.
 Pricing, payment providers, billing policies, and commercial terms will be defined in a separate business specification.
 15. SECURITY, ROADMAP & GLOBAL EXPANSION
 15.1 Security and Privacy
-VOINNECT will follow security and privacy principles throughout development.
+v-nect will follow security and privacy principles throughout development.
 Priorities:
 Secure authentication.
 Data access control.
@@ -352,7 +352,7 @@ Phase	Development Focus
 1	Project foundation
 2	Technical architecture
 3	UI/UX design system
-4	VOINNECT ID
+4	v-nect ID
 5	Personal dashboard
 6	Company profiles and dashboard
 7	VOIN Chat
@@ -374,7 +374,7 @@ Global professional networking.
 External platform integrations.
 Continuous product innovation.
 15.4 Project Independence
-VOINNECT will maintain its own identity, product architecture, infrastructure decisions, development roadmap, and business model.
+v-nect will maintain its own identity, product architecture, infrastructure decisions, development roadmap, and business model.
 Future external integrations will be evaluated independently based on technical compatibility, security, and business value.
 ---
 PROJECT DEVELOPMENT PRINCIPLES
@@ -388,7 +388,7 @@ Maintain clear version control.
 Document important architectural decisions.
 Never expose credentials, private keys, or secrets in the repository.
 ---
-VOINNECT
+v-nect
 Global Business Communication & Ecosystem Platform
 Connect Beyond Boundaries.
 Building a More Connected Business World.

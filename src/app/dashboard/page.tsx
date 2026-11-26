@@ -178,7 +178,7 @@ export default function DashboardPage() {
           profileData?.full_name ||
           user.user_metadata?.full_name ||
           user.email?.split("@")[0] ||
-          "VOINNECT User";
+          "v-nect User";
 
         setFullName(name);
 
@@ -386,7 +386,7 @@ export default function DashboardPage() {
     }
   }
 
-  const displayName = fullName || "VOINNECT User";
+  const displayName = fullName || "v-nect User";
 
   const initials = displayName
     .trim()
@@ -1543,10 +1543,10 @@ export default function DashboardPage() {
               YOUR DIGITAL ECOSYSTEM
             </div>
 
-            <h2>Welcome to VOINNECT.</h2>
+            <h2>Welcome to v-nect.</h2>
 
             <p>
-              VOINNECT is an integrated digital platform designed
+              v-nect is an integrated digital platform designed
               to connect businesses, professionals, communities,
               and opportunities through communication,
               collaboration, networking, and business solutions.
@@ -1558,7 +1558,7 @@ export default function DashboardPage() {
           </div>
 
           <section className="vn-intro">
-            <div className="vn-eyebrow">ABOUT VOINNECT</div>
+            <div className="vn-eyebrow">ABOUT v-nect</div>
 
             <h2>Building a More Connected Business World.</h2>
 
@@ -1566,7 +1566,7 @@ export default function DashboardPage() {
               Our vision is to build a connected global business
               ecosystem where people and organizations can
               communicate, collaborate, discover opportunities,
-              and grow together. VOINNECT brings communication,
+              and grow together. v-nect brings communication,
               professional networking, business discovery,
               product presentations, communities, and marketplace
               capabilities into one connected environment.
@@ -1580,7 +1580,7 @@ export default function DashboardPage() {
                   COMMUNITY STANDARDS
                 </div>
 
-                <h2>VOINNECT Community Guidelines</h2>
+                <h2>v-nect Community Guidelines</h2>
 
                 <p>
                   Help us maintain a safe, respectful, and
@@ -1614,7 +1614,7 @@ export default function DashboardPage() {
             <div className="vn-guidelines-warning">
               <strong>Important:</strong> Content that violates
               these guidelines may be rejected, removed, or result
-              in account restrictions in accordance with VOINNECT
+              in account restrictions in accordance with v-nect
               policies. Users are responsible for the content they
               publish and share.
             </div>
@@ -1670,7 +1670,7 @@ export default function DashboardPage() {
 
               <p>
                 Build your company's identity and become part of
-                the VOINNECT business ecosystem.
+                the v-nect business ecosystem.
               </p>
 
               <form onSubmit={createCompany}>
@@ -1742,7 +1742,7 @@ export default function DashboardPage() {
                 <h3>Build Your Business Identity</h3>
                 <p>
                   Create a company profile to access your
-                  VOINNECT business workspace.
+                  v-nect business workspace.
                 </p>
               </div>
 
@@ -1793,7 +1793,7 @@ export default function DashboardPage() {
                   YOUR APPLICATIONS
                 </div>
 
-                <h2>Explore VOINNECT</h2>
+                <h2>Explore v-nect</h2>
               </div>
 
               <div className="vn-count">06 MODULES</div>
@@ -1828,7 +1828,7 @@ export default function DashboardPage() {
           </div>
 
           <div id="activity" className="vn-footer">
-            © 2026 VOINNECT. All rights reserved.
+            © 2026 v-nect. All rights reserved.
             <br />
             Global Business Communication & Ecosystem Platform.
             <br />

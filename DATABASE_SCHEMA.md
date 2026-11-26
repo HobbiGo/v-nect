@@ -1,12 +1,12 @@
-VOINNECT — DATABASE SCHEMA
+v-nect — DATABASE SCHEMA
 Document Version: 1.0
-Project: VOINNECT
+Project: v-nect
 Status: Draft / Proposed Data Model
 Category: Database Architecture
 Architecture Principle: One Account — Entire Ecosystem
 ---
 1. INTRODUCTION
-This document defines the proposed database schema and data relationships for the VOINNECT platform.
+This document defines the proposed database schema and data relationships for the v-nect platform.
 The database architecture is designed to support a unified global business communication and ecosystem platform.
 It covers:
 User identity and authentication.
@@ -46,7 +46,7 @@ Maintenance requirements.
 Development cost.
 3. DATABASE RELATIONSHIP OVERVIEW
 The central relationship is:
-One User Account → Multiple Authorized VOINNECT Modules
+One User Account → Multiple Authorized v-nect Modules
 A user may have a personal profile and participate in multiple companies or organizations.
 A simplified relationship overview:
 USER
@@ -79,13 +79,13 @@ USER
 
 This diagram represents the conceptual structure. Detailed relationships are defined below.
 4. IDENTITY AND ACCOUNT DATABASE
-The identity database is the foundation of VOINNECT.
+The identity database is the foundation of v-nect.
 All platform modules must reference the same central user identity.
 4.1 users
 Stores the main account information.
 Field	Description
 id	Primary key
-voinnect_id	Unique public platform identifier
+v-nect_id	Unique public platform identifier
 email	Unique verified or pending email
 account_status	Account status
 email_verified_at	Email verification timestamp
@@ -532,7 +532,7 @@ Deletion and retention policies must be defined for each data category.
 Indexes should be considered for frequently accessed fields.
 Initial candidates:
 users.email
-users.voinnect_id
+users.v-nect_id
 organizations.slug
 organization_memberships.user_id
 organization_memberships.organization_id
@@ -631,7 +631,7 @@ Database Engine	Not Selected
 Database Deployment	Not Started
 ---
 DATABASE DESIGN PRINCIPLES
-VOINNECT database development must follow these principles:
+v-nect database development must follow these principles:
 One central identity.
 Clear data ownership.
 Secure organization isolation.
@@ -643,5 +643,5 @@ Scalable data management.
 Documented schema changes.
 Security from the beginning.
 ---
-VOINNECT — Building a More Connected Business World.
+v-nect — Building a More Connected Business World.
 This document defines a proposed conceptual database schema. It does not indicate that the database has already been created or deployed.
