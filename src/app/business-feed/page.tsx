@@ -5,6 +5,16 @@ import Link from "next/link";
 import { createClient } from "@/lib/supabase";
 import { PostThreadComments } from "@/components/PostThreadComments";
 import { BusinessFeedNavbar } from "@/components/BusinessFeedNavbar";
+import {
+  LiveStoriesAndVideoComposer,
+  type QueuedVideoItem,
+} from "@/components/LiveStoriesAndVideoComposer";
+import { VChatPanel } from "@/components/VChatPanel";
+import {
+  PostEngagementBar,
+  ComposerActionToolbar,
+  type ComposerToolKey,
+} from "@/components/FeedPostActionsAndToolbar";
 
 type Post = {
   id: string;
@@ -162,6 +172,7 @@ function getPostImageCaptions(post: Post, images: string[]): string[] {
 export default function BusinessFeedPage() {
   const supabase = createClient();
   const feedbackRef = useRef<HTMLDivElement | null>(null);
+  const videoSectionRef = useRef<HTMLDivElement | null>(null);
 
   const [posts, setPosts] = useState<Post[]>([]);
   const [company, setCompany] = useState<Company | null>(null);
@@ -172,7 +183,9 @@ export default function BusinessFeedPage() {
   const [loading, setLoading] = useState(true);
   const [submitting, setSubmitting] = useState(false);
   const [showComposer, setShowComposer] = useState(false);
+  const [showVChat, setShowVChat] = useState(false);
   const [editingPostId, setEditingPostId] = useState<string | null>(null);
+  const [activeComposerTool, setActiveComposerTool] = useState<ComposerToolKey | null>("image");
 
   const [error, setError] = useState("");
   const [success, setSuccess] = useState("");
@@ -181,11 +194,17 @@ export default function BusinessFeedPage() {
   const [content, setContent] = useState("");
   const [postType, setPostType] = useState("announcement");
 
+  const [pollQuestion, setPollQuestion] = useState("");
+  const [pollOptions, setPollOptions] = useState(["", ""]);
+  const [eventTitle, setEventTitle] = useState("");
+  const [eventDate, setEventDate] = useState("");
+
   const [existingImages, setExistingImages] = useState<string[]>([]);
   const [existingImageCaptions, setExistingImageCaptions] = useState<string[]>([]);
   const [imageFiles, setImageFiles] = useState<File[]>([]);
   const [newImageCaptions, setNewImageCaptions] = useState<string[]>([]);
   const [previewItems, setPreviewItems] = useState<PreviewItem[]>([]);
+  const [publishedVideoClips, setPublishedVideoClips] = useState<QueuedVideoItem[]>([]);
 
   useEffect(() => {
     loadFeed();
@@ -222,6 +241,23 @@ export default function BusinessFeedPage() {
       imageIndex,
       trigger: (prev?.trigger || 0) + 1,
     }));
+  }
+
+  function handleSelectComposerTool(tool: ComposerToolKey) {
+    setActiveComposerTool(tool);
+    if (tool === "video") {
+      videoSectionRef.current?.scrollIntoView({
+        behavior: "smooth",
+        block: "center",
+      });
+    }
+  }
+
+  function handlePublishVideoBatch(items: QueuedVideoItem[], maxDurationSec: number) {
+    setPublishedVideoClips((prev) => [...items, ...prev]);
+    setSuccess(
+      `${items.length} klip video (batas max ${maxDurationSec}s) berhasil ditambahkan ke pratinjau feed.`
+    );
   }
 
   async function loadFeed() {
@@ -338,6 +374,10 @@ export default function BusinessFeedPage() {
     setTitle("");
     setContent("");
     setPostType("announcement");
+    setPollQuestion("");
+    setPollOptions(["", ""]);
+    setEventTitle("");
+    setEventDate("");
     setExistingImages([]);
     setExistingImageCaptions([]);
     setImageFiles([]);
@@ -350,6 +390,10 @@ export default function BusinessFeedPage() {
     setTitle("");
     setContent("");
     setPostType("announcement");
+    setPollQuestion("");
+    setPollOptions(["", ""]);
+    setEventTitle("");
+    setEventDate("");
     setExistingImages([]);
     setExistingImageCaptions([]);
     setImageFiles([]);
@@ -475,6 +519,31 @@ export default function BusinessFeedPage() {
     );
   }
 
+  function buildFinalContent(): string {
+    const parts: string[] = [content.trim()];
+
+    if (pollQuestion.trim()) {
+      const validOpts = pollOptions.map((o) => o.trim()).filter(Boolean);
+      if (validOpts.length > 0) {
+        parts.push(
+          `\n\n📊 Poll: ${pollQuestion.trim()}\n${validOpts
+            .map((opt, idx) => `• ${idx + 1}. ${opt}`)
+            .join("\n")}`
+        );
+      }
+    }
+
+    if (eventTitle.trim()) {
+      parts.push(
+        `\n\n📅 Event: ${eventTitle.trim()}${
+          eventDate ? ` (${eventDate})` : ""
+        }`
+      );
+    }
+
+    return parts.join("");
+  }
+
   async function handleSubmit(event: FormEvent<HTMLFormElement>) {
     event.preventDefault();
 
@@ -488,12 +557,14 @@ export default function BusinessFeedPage() {
       return;
     }
 
+    const finalContent = buildFinalContent();
+
     if (title.trim().length > 200) {
       setError("Title cannot exceed 200 characters.");
       return;
     }
 
-    if (content.trim().length > 10000) {
+    if (finalContent.length > 10000) {
       setError("Content cannot exceed 10,000 characters.");
       return;
     }
@@ -553,7 +624,7 @@ export default function BusinessFeedPage() {
 
       formData.append("company_id", company.id);
       formData.append("title", title.trim());
-      formData.append("content", content.trim());
+      formData.append("content", finalContent);
       formData.append(
         "post_type",
         normalizePostTypeForDb(postType)
@@ -780,16 +851,26 @@ export default function BusinessFeedPage() {
       <BusinessFeedNavbar activePath="/business-feed" />
 
       <section className="feed-container">
-        <div className="back-home-bar">
-          <Link href="/" className="back-home-button">
-            ← Back to Home
-          </Link>
+        <div className="top-action-strip">
+          <div className="back-home-bar">
+            <Link href="/" className="back-home-button">
+              ← Back to Home
+            </Link>
+          </div>
+
+          <button
+            type="button"
+            className={showVChat ? "vchat-toggle-btn active" : "vchat-toggle-btn"}
+            onClick={() => setShowVChat((v) => !v)}
+          >
+            💬 {showVChat ? "Tutup v-chat" : "Buka v-chat Live"}
+          </button>
         </div>
 
         <div className="hero">
           <div>
             <div className="eyebrow">
-              VOIN NETWORK ECOSYSTEM
+              v-nect BUSINESS ECOSYSTEM
             </div>
 
             <h1>
@@ -804,6 +885,12 @@ export default function BusinessFeedPage() {
 
           <div className="hero-icon">◈</div>
         </div>
+
+        {showVChat && (
+          <div className="vchat-drawer">
+            <VChatPanel currentUserName={company?.company_name || "Member"} />
+          </div>
+        )}
 
         <div className="feed-layout">
           <aside className="left-panel">
@@ -909,6 +996,36 @@ export default function BusinessFeedPage() {
               )}
             </div>
 
+            {/* STORIES LIVE & MULTI-UPLOAD VIDEO (30-60 DETIK) */}
+            <div ref={videoSectionRef}>
+              <LiveStoriesAndVideoComposer
+                currentAuthorName={company?.company_name || "Member"}
+                onPublishVideos={handlePublishVideoBatch}
+              />
+            </div>
+
+            {publishedVideoClips.length > 0 && (
+              <div className="panel-card">
+                <div className="panel-heading">
+                  VIDEO CLIPS QUEUED ({publishedVideoClips.length})
+                </div>
+                <div className="video-clips-grid">
+                  {publishedVideoClips.map((clip) => (
+                    <div className="video-clip-card" key={clip.id}>
+                      <video src={clip.previewUrl} controls />
+                      <div className="video-clip-meta">
+                        <strong>{clip.file.name}</strong>
+                        <small>
+                          Durasi klip: {clip.startSec}s – {clip.endSec}s (
+                          {clip.endSec - clip.startSec} detik)
+                        </small>
+                      </div>
+                    </div>
+                  ))}
+                </div>
+              </div>
+            )}
+
             {showComposer && company && (
               <div className="composer">
                 <div className="composer-heading">
@@ -969,11 +1086,69 @@ export default function BusinessFeedPage() {
                     onChange={(e) =>
                       setContent(e.target.value)
                     }
-                    placeholder="Share something about your company..."
+                    placeholder="What's on your mind? Share something about your company..."
                     rows={5}
                     maxLength={10000}
                     required
                   />
+
+                  <ComposerActionToolbar
+                    activeTool={activeComposerTool}
+                    onSelectTool={handleSelectComposerTool}
+                  />
+
+                  {activeComposerTool === "poll" && (
+                    <div className="extra-tool-box">
+                      <label>Poll Question</label>
+                      <input
+                        value={pollQuestion}
+                        onChange={(e) => setPollQuestion(e.target.value)}
+                        placeholder="Contoh: Fitur mana yang paling dibutuhkan tim Anda?"
+                      />
+                      <div className="poll-options-row">
+                        {pollOptions.map((opt, idx) => (
+                          <input
+                            key={idx}
+                            value={opt}
+                            onChange={(e) =>
+                              setPollOptions((prev) =>
+                                prev.map((item, i) =>
+                                  i === idx ? e.target.value : item
+                                )
+                              )
+                            }
+                            placeholder={`Opsi ${idx + 1}`}
+                          />
+                        ))}
+                      </div>
+                    </div>
+                  )}
+
+                  {activeComposerTool === "event" && (
+                    <div className="extra-tool-box">
+                      <label>Event Title &amp; Date</label>
+                      <div className="poll-options-row">
+                        <input
+                          value={eventTitle}
+                          onChange={(e) => setEventTitle(e.target.value)}
+                          placeholder="Nama acara / webinar / product demo"
+                        />
+                        <input
+                          type="date"
+                          value={eventDate}
+                          onChange={(e) => setEventDate(e.target.value)}
+                        />
+                      </div>
+                    </div>
+                  )}
+
+                  {activeComposerTool === "more" && (
+                    <div className="extra-tool-box">
+                      <small>
+                        Tips koneksi cepat: gunakan Video Upload di atas untuk unggah video multi-klip (otomatis potong max 30–60 detik) atau aktifkan v-chat Live untuk diskusi real-time.
+                      </small>
+                    </div>
+                  )}
 
                   <label>
                     Images ({totalComposerImages}/{MAX_IMAGES})
@@ -1262,6 +1437,10 @@ export default function BusinessFeedPage() {
                       )}
                     </div>
 
+                    <PostEngagementBar
+                      onCommentClick={() => handleFocusImageComment(post.id, 0)}
+                    />
+
                     <PostThreadComments
                       supabase={supabase}
                       postId={post.id}
@@ -1277,7 +1456,7 @@ export default function BusinessFeedPage() {
                     />
 
                     <div className="post-footer">
-                      <span>◈ VOIN Business Feed</span>
+                      <span>◈ v-nect Business Feed</span>
 
                       {isOwner && (
                         <div className="post-actions">
@@ -1325,8 +1504,16 @@ export default function BusinessFeedPage() {
           padding: 24px 24px 70px;
         }
 
-        .back-home-bar {
+        .top-action-strip {
           margin-bottom: 16px;
+          display: flex;
+          align-items: center;
+          justify-content: space-between;
+          gap: 12px;
+          flex-wrap: wrap;
+        }
+
+        .back-home-bar {
           display: inline-flex;
           align-items: center;
           padding: 4px;
@@ -1352,6 +1539,27 @@ export default function BusinessFeedPage() {
 
         .back-home-button:hover {
           filter: brightness(0.95);
+        }
+
+        .vchat-toggle-btn {
+          border: 1px solid #b9cce6;
+          background: #0d1e34;
+          color: #eef4fb;
+          padding: 10px 16px;
+          border-radius: 10px;
+          font-size: 13px;
+          font-weight: 700;
+          cursor: pointer;
+        }
+
+        .vchat-toggle-btn.active {
+          border-color: #13c8b5;
+          background: #10324e;
+          color: #7ee8dc;
+        }
+
+        .vchat-drawer {
+          margin-top: 18px;
         }
 
         .hero {
@@ -1524,6 +1732,67 @@ export default function BusinessFeedPage() {
           display: flex;
           flex-direction: column;
           gap: 18px;
+        }
+
+        .video-clips-grid {
+          display: grid;
+          grid-template-columns: repeat(auto-fill, minmax(220px, 1fr));
+          gap: 12px;
+        }
+
+        .video-clip-card {
+          border: 1px solid #e4eaf2;
+          border-radius: 10px;
+          overflow: hidden;
+          background: #0d1e34;
+          color: #eef4fb;
+        }
+
+        .video-clip-card video {
+          width: 100%;
+          height: 140px;
+          object-fit: cover;
+          display: block;
+          background: #050d18;
+        }
+
+        .video-clip-meta {
+          padding: 10px 12px;
+        }
+
+        .video-clip-meta strong {
+          display: block;
+          font-size: 13px;
+          overflow-wrap: anywhere;
+        }
+
+        .video-clip-meta small {
+          display: block;
+          margin-top: 4px;
+          font-size: 12px;
+          color: #7ee8dc;
+        }
+
+        .extra-tool-box {
+          padding: 12px;
+          border-radius: 10px;
+          background: #f5f9ff;
+          border: 1px solid #d7e4f8;
+          display: flex;
+          flex-direction: column;
+          gap: 8px;
+        }
+
+        .extra-tool-box small {
+          font-size: 12px;
+          color: #4f647d;
+          line-height: 1.5;
+        }
+
+        .poll-options-row {
+          display: grid;
+          grid-template-columns: 1fr 1fr;
+          gap: 8px;
         }
 
         .timeline-heading {
@@ -1729,7 +1998,7 @@ export default function BusinessFeedPage() {
         }
 
         .post-body {
-          padding: 20px 0;
+          padding: 20px 0 10px;
           min-width: 0;
         }
 
@@ -1998,7 +2267,8 @@ export default function BusinessFeedPage() {
             font-size: 45px;
           }
 
-          .left-panel {
+          .left-panel,
+          .poll-options-row {
             grid-template-columns: 1fr;
           }
 
