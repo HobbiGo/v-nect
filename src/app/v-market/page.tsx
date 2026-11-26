@@ -13,8 +13,8 @@ type MarketplaceListing = {
   region: string;
   priceLabel: string;
   description: string;
+  featureNotes?: string;
   imageUrl?: string | null;
-  videoUrl?: string | null;
   verified: boolean;
   connectHref: string;
   connectLabel: string;
@@ -34,7 +34,6 @@ type LaunchPostRow = {
   content: string;
   image_url: string | null;
   image_urls?: string[] | null;
-  video_url?: string | null;
   companies: {
     company_name: string;
   } | null;
@@ -42,19 +41,40 @@ type LaunchPostRow = {
 
 const MARKET_INQUIRIES_STORAGE_KEY = "v-nect_v_market_inquiries_v1";
 const MARKET_COMMENTS_STORAGE_KEY = "v-nect_v_market_comments_v1";
+const MARKET_CUSTOM_LISTINGS_KEY = "v-nect_v_market_custom_listings_v1";
+
+const DEFAULT_FEATURE_PHOTO =
+  "data:image/svg+xml;utf8," +
+  encodeURIComponent(
+    `<svg xmlns="http://www.w3.org/2000/svg" width="800" height="420" viewBox="0 0 800 420">
+      <defs>
+        <linearGradient id="bg" x1="0%" y1="0%" x2="100%" y2="100%">
+          <stop offset="0%" stop-color="#102b4d"/>
+          <stop offset="100%" stop-color="#134a66"/>
+        </linearGradient>
+      </defs>
+      <rect width="800" height="420" fill="url(#bg)"/>
+      <circle cx="670" cy="85" r="110" fill="#13c8b5" fill-opacity="0.16"/>
+      <circle cx="130" cy="350" r="130" fill="#347cf0" fill-opacity="0.18"/>
+      <text x="48" y="185" fill="#7ee8dc" font-family="Arial, sans-serif" font-size="18" font-weight="bold" letter-spacing="2">V-MARKET PRODUCT FEATURE</text>
+      <text x="48" y="232" fill="#ffffff" font-family="Arial, sans-serif" font-size="34" font-weight="bold">Showcase &amp; Feature Highlights</text>
+      <text x="48" y="272" fill="#c7d9ec" font-family="Arial, sans-serif" font-size="18">Klik foto untuk memperbesar detail fitur produk perusahaan</text>
+    </svg>`
+  );
 
 const INITIAL_LISTINGS: MarketplaceListing[] = [
   {
     id: "mkt-1",
-    name: "Orbiss Promo Showcase & Video Kit",
+    name: "Orbiss Promo Showcase & Feature Kit",
     supplier: "Orbiss Commerce",
     category: "Products",
     region: "Singapore & APAC",
     priceLabel: "From $290 / batch",
     description:
-      "Short-form product highlight clips and commercial launch assets ready for multi-channel campaign deployment.",
-    imageUrl: null,
-    videoUrl: "https://commondatastorage.googleapis.com/gtv-videos-bucket/sample/ForBiggerBlazes.mp4",
+      "Short-form product highlight visuals and commercial launch assets ready for multi-channel campaign deployment.",
+    featureNotes:
+      "Fitur utama: Template kampanye siap pakai, aset visual resolusi tinggi, dan paket distribusi multi-kanal untuk peluncuran produk.",
+    imageUrl: DEFAULT_FEATURE_PHOTO,
     verified: true,
     connectHref: "/business-feed",
     connectLabel: "Lihat di Feed ->",
@@ -68,8 +88,9 @@ const INITIAL_LISTINGS: MarketplaceListing[] = [
     priceLabel: "Custom MOQ",
     description:
       "Verified regional manufacturing and trade sourcing with transparent quality checks and logistics coordination.",
+    featureNotes:
+      "Fitur utama: Inspeksi kualitas pra-pengiriman, koordinasi logistik lintas negara, dan skema MOQ fleksibel untuk partner bisnis.",
     imageUrl: null,
-    videoUrl: null,
     verified: true,
     connectHref: "/v-circle",
     connectLabel: "Konek di Circle ->",
@@ -83,8 +104,9 @@ const INITIAL_LISTINGS: MarketplaceListing[] = [
     priceLabel: "Consultation",
     description:
       "Strategic partnership structuring, distributor introductions, and regional market entry roadmaps.",
+    featureNotes:
+      "Fitur utama: Pemetaan distribusi regional, introduksi mitra strategis, dan penyusunan rencana ekspansi pasar.",
     imageUrl: null,
-    videoUrl: null,
     verified: true,
     connectHref: "/v-circle",
     connectLabel: "Konek di Circle ->",
@@ -98,8 +120,9 @@ const INITIAL_LISTINGS: MarketplaceListing[] = [
     priceLabel: "Fixed Scope",
     description:
       "Responsive web interfaces, brand component libraries, and high-clarity product experiences.",
+    featureNotes:
+      "Fitur utama: Komponen antarmuka responsif, panduan desain terstandar, dan implementasi cepat untuk produk web.",
     imageUrl: null,
-    videoUrl: null,
     verified: false,
     connectHref: "/v-hub",
     connectLabel: "Buka v-hub ->",
@@ -107,14 +130,6 @@ const INITIAL_LISTINGS: MarketplaceListing[] = [
 ];
 
 const CATEGORIES = ["All", "Products", "Services", "Suppliers"] as const;
-
-function extractVideoUrl(rawContent: string, explicitVideo?: string | null): string | null {
-  if (explicitVideo && explicitVideo.trim()) {
-    return explicitVideo.trim();
-  }
-  const match = rawContent.match(/Link Video:\s*(https?:\/\/\S+)/i);
-  return match ? match[1].trim() : null;
-}
 
 export default function VMarketPage() {
   const supabase = createClient();
@@ -125,17 +140,30 @@ export default function VMarketPage() {
   const [dbSyncActive, setDbSyncActive] = useState(false);
 
   const [liveLaunchListings, setLiveLaunchListings] = useState<MarketplaceListing[]>([]);
+  const [customListings, setCustomListings] = useState<MarketplaceListing[]>([]);
   const [searchQuery, setSearchQuery] = useState("");
   const [selectedCategory, setSelectedCategory] = useState<string>("All");
   const [requestedIds, setRequestedIds] = useState<string[]>([]);
   const [inquiryBanner, setInquiryBanner] = useState("");
 
-  // Media preview modal (foto / video)
-  const [previewMedia, setPreviewMedia] = useState<{
+  // Form tambah produk / fitur oleh company
+  const [showCreateForm, setShowCreateForm] = useState(false);
+  const [newCompanyName, setNewCompanyName] = useState("");
+  const [newProductName, setNewProductName] = useState("");
+  const [newCategory, setNewCategory] = useState<"Products" | "Services" | "Suppliers">("Products");
+  const [newRegion, setNewRegion] = useState("Indonesia & APAC");
+  const [newPriceLabel, setNewPriceLabel] = useState("Contact for Quote");
+  const [newDescription, setNewDescription] = useState("");
+  const [newFeatureNotes, setNewFeatureNotes] = useState("");
+  const [newImageUrl, setNewImageUrl] = useState("");
+  const [savingListing, setSavingListing] = useState(false);
+
+  // Modal lihat foto fitur produk
+  const [previewPhoto, setPreviewPhoto] = useState<{
     title: string;
     supplier: string;
-    imageUrl?: string | null;
-    videoUrl?: string | null;
+    featureNotes?: string;
+    imageUrl: string;
   } | null>(null);
 
   // Komentar per listing
@@ -159,6 +187,14 @@ export default function VMarketPage() {
         const parsedCom = JSON.parse(rawCom);
         if (parsedCom && typeof parsedCom === "object") {
           setCommentsByListing(parsedCom as Record<string, MarketComment[]>);
+        }
+      }
+
+      const rawCustom = window.localStorage.getItem(MARKET_CUSTOM_LISTINGS_KEY);
+      if (rawCustom) {
+        const parsedCustom = JSON.parse(rawCustom);
+        if (Array.isArray(parsedCustom)) {
+          setCustomListings(parsedCustom as MarketplaceListing[]);
         }
       }
     } catch {
@@ -223,6 +259,7 @@ export default function VMarketPage() {
           .maybeSingle();
         if (comp?.company_name) {
           displayName = comp.company_name;
+          setNewCompanyName((prev) => prev || comp.company_name);
         }
       }
 
@@ -244,7 +281,6 @@ export default function VMarketPage() {
         content,
         image_url,
         image_urls,
-        video_url,
         companies (
           company_name
         )
@@ -260,7 +296,6 @@ export default function VMarketPage() {
           (Array.isArray(row.image_urls) && row.image_urls[0]) ||
           row.image_url ||
           null;
-        const vid = extractVideoUrl(row.content || "", row.video_url);
         const cleanDesc = (row.content || "")
           .replace(/\[VideoCaption:\s*[^\]]*\]/gi, "")
           .replace(/^\s*Link Video:\s*https?:\/\/\S+\s*$/gim, "")
@@ -275,8 +310,8 @@ export default function VMarketPage() {
           priceLabel: "Product Launch",
           description:
             cleanDesc || "Featured product launch published on v-nect Business Feed.",
+          featureNotes: cleanDesc || undefined,
           imageUrl: img,
-          videoUrl: vid,
           verified: true,
           connectHref: "/business-feed",
           connectLabel: "Lihat di Feed ->",
@@ -312,9 +347,80 @@ export default function VMarketPage() {
     setDbSyncActive(false);
   }
 
+  function handleImageFileChange(e: React.ChangeEvent<HTMLInputElement>) {
+    const file = e.target.files?.[0];
+    if (!file) return;
+    const reader = new FileReader();
+    reader.onload = () => {
+      if (typeof reader.result === "string") {
+        setNewImageUrl(reader.result);
+      }
+    };
+    reader.readAsDataURL(file);
+  }
+
+  async function handleCreateCompanyListing(e: React.FormEvent) {
+    e.preventDefault();
+    const title = newProductName.trim();
+    const desc = newDescription.trim();
+    if (!title || !desc) return;
+
+    setSavingListing(true);
+    const companyLabel =
+      newCompanyName.trim() || currentUserName || "v-nect Company";
+    const chosenImage = newImageUrl.trim() || DEFAULT_FEATURE_PHOTO;
+
+    const createdItem: MarketplaceListing = {
+      id: `custom-${Date.now()}`,
+      name: title,
+      supplier: companyLabel,
+      category: newCategory,
+      region: newRegion.trim() || "APAC",
+      priceLabel: newPriceLabel.trim() || "Contact for Quote",
+      description: desc,
+      featureNotes: newFeatureNotes.trim() || undefined,
+      imageUrl: chosenImage,
+      verified: true,
+      connectHref: "/business-feed",
+      connectLabel: "Lihat di Feed ->",
+    };
+
+    const nextCustom = [createdItem, ...customListings];
+    setCustomListings(nextCustom);
+    try {
+      window.localStorage.setItem(MARKET_CUSTOM_LISTINGS_KEY, JSON.stringify(nextCustom));
+    } catch {
+      // Ignore storage errors
+    }
+
+    if (currentUserId) {
+      await supabase.from("v_market_listings").insert({
+        user_id: currentUserId,
+        company_name: companyLabel,
+        category: newCategory,
+        region: newRegion.trim() || "APAC",
+        name: title,
+        price_label: newPriceLabel.trim() || "Contact for Quote",
+        description: desc,
+        feature_notes: newFeatureNotes.trim(),
+        image_url: chosenImage.startsWith("data:") ? null : chosenImage,
+      });
+    }
+
+    setSavingListing(false);
+    setNewProductName("");
+    setNewDescription("");
+    setNewFeatureNotes("");
+    setNewImageUrl("");
+    setShowCreateForm(false);
+    setInquiryBanner(
+      `Produk & keterangan fitur "${title}" oleh ${companyLabel} berhasil ditambahkan ke v-market.`
+    );
+  }
+
   const allListings = useMemo(
-    () => [...liveLaunchListings, ...INITIAL_LISTINGS],
-    [liveLaunchListings]
+    () => [...customListings, ...liveLaunchListings, ...INITIAL_LISTINGS],
+    [customListings, liveLaunchListings]
   );
 
   const filteredListings = useMemo(() => {
@@ -328,7 +434,8 @@ export default function VMarketPage() {
         item.name.toLowerCase().includes(q) ||
         item.supplier.toLowerCase().includes(q) ||
         item.region.toLowerCase().includes(q) ||
-        item.description.toLowerCase().includes(q)
+        item.description.toLowerCase().includes(q) ||
+        (item.featureNotes || "").toLowerCase().includes(q)
       );
     });
   }, [allListings, searchQuery, selectedCategory]);
@@ -453,21 +560,147 @@ export default function VMarketPage() {
       <section className="market-container">
         <div className="market-hero">
           <div>
-            <span className="market-eyebrow">MODULE 06 · COMPANY PRODUCTS, MEDIA &amp; B2B DISCUSSION</span>
+            <span className="market-eyebrow">MODULE 06 · COMPANY PRODUCTS, FEATURE PHOTOS &amp; B2B DISCUSSION</span>
             <h1>
               v-<span>market.</span>
             </h1>
             <p>
-              Explore products posted by companies, inspect photos or videos, comment as another company, and initiate business inquiries.
+              Browse products and feature photos posted by companies, add your company product with feature notes, comment as another company, and initiate business inquiries.
             </p>
           </div>
 
           <div className="market-hero-actions">
-            <Link href="/business-feed" className="market-btn-primary">
-              Publish Product Launch -&gt;
+            <button
+              type="button"
+              className="market-btn-primary"
+              onClick={() => setShowCreateForm((prev) => !prev)}
+            >
+              {showCreateForm ? "Tutup Form Produk ✕" : "+ Posting Produk Company"}
+            </button>
+            <Link href="/business-feed" className="market-secondary-btn">
+              Publish Launch di Feed -&gt;
             </Link>
           </div>
         </div>
+
+        {showCreateForm && (
+          <form className="market-create-card" onSubmit={handleCreateCompanyListing}>
+            <div className="market-create-head">
+              <div>
+                <span className="market-eyebrow">COMPANY PRODUCT &amp; FEATURE BUILDER</span>
+                <h2>Tambah Produk, Foto Fitur &amp; Keterangan Company</h2>
+              </div>
+            </div>
+
+            <div className="market-form-grid">
+              <label>
+                Nama Company
+                <input
+                  type="text"
+                  value={newCompanyName}
+                  onChange={(e) => setNewCompanyName(e.target.value)}
+                  placeholder="Contoh: PT Nusantara Digital"
+                  required
+                />
+              </label>
+
+              <label>
+                Nama Produk / Layanan
+                <input
+                  type="text"
+                  value={newProductName}
+                  onChange={(e) => setNewProductName(e.target.value)}
+                  placeholder="Contoh: Smart POS & Inventory Suite"
+                  required
+                />
+              </label>
+
+              <label>
+                Kategori
+                <select
+                  value={newCategory}
+                  onChange={(e) =>
+                    setNewCategory(e.target.value as "Products" | "Services" | "Suppliers")
+                  }
+                >
+                  <option value="Products">Products</option>
+                  <option value="Services">Services</option>
+                  <option value="Suppliers">Suppliers</option>
+                </select>
+              </label>
+
+              <label>
+                Wilayah / Market
+                <input
+                  type="text"
+                  value={newRegion}
+                  onChange={(e) => setNewRegion(e.target.value)}
+                  placeholder="Contoh: Indonesia & Singapore"
+                />
+              </label>
+
+              <label>
+                Harga / Skema Penawaran
+                <input
+                  type="text"
+                  value={newPriceLabel}
+                  onChange={(e) => setNewPriceLabel(e.target.value)}
+                  placeholder="Contoh: Mulai Rp 1.500.000 / bulan"
+                />
+              </label>
+
+              <label>
+                URL Foto Fitur Produk (opsional)
+                <input
+                  type="url"
+                  value={newImageUrl}
+                  onChange={(e) => setNewImageUrl(e.target.value)}
+                  placeholder="https://... atau upload file di bawah"
+                />
+              </label>
+            </div>
+
+            <label>
+              Upload Foto Fitur Produk dari Perangkat (opsional)
+              <input
+                type="file"
+                accept="image/*"
+                onChange={handleImageFileChange}
+              />
+            </label>
+
+            <label>
+              Penjelasan / Keterangan Produk
+              <textarea
+                rows={2}
+                value={newDescription}
+                onChange={(e) => setNewDescription(e.target.value)}
+                placeholder="Jelaskan kegunaan utama produk atau layanan perusahaan Anda..."
+                required
+              />
+            </label>
+
+            <label>
+              Detail Fitur &amp; Keunggulan Produk (Teks Penjelasan Fitur)
+              <textarea
+                rows={2}
+                value={newFeatureNotes}
+                onChange={(e) => setNewFeatureNotes(e.target.value)}
+                placeholder="Contoh: Sinkronisasi stok real-time, laporan multi-cabang, dan integrasi pembayaran..."
+              />
+            </label>
+
+            <div className="market-form-submit-row">
+              <button
+                type="submit"
+                className="market-btn-primary"
+                disabled={savingListing}
+              >
+                {savingListing ? "Menyimpan..." : "Simpan & Tampilkan di v-market"}
+              </button>
+            </div>
+          </form>
+        )}
 
         {inquiryBanner && (
           <div className="market-banner">
@@ -483,7 +716,7 @@ export default function VMarketPage() {
             type="search"
             value={searchQuery}
             onChange={(e) => setSearchQuery(e.target.value)}
-            placeholder="Cari produk, layanan, perusahaan/supplier, atau wilayah..."
+            placeholder="Cari produk, fitur, perusahaan/supplier, atau wilayah..."
             className="market-search-input"
           />
 
@@ -506,44 +739,21 @@ export default function VMarketPage() {
             const requested = requestedIds.includes(item.id);
             const itemComments = commentsByListing[item.id] || [];
             const isCommentsOpen = openCommentsForId === item.id;
-            const hasMedia = Boolean(item.imageUrl || item.videoUrl);
 
             return (
               <article className="market-card" key={item.id}>
-                {item.videoUrl ? (
-                  <div className="market-media-box">
-                    <video
-                      src={item.videoUrl}
-                      controls
-                      preload="metadata"
-                      className="market-card-media"
-                    />
-                    <button
-                      type="button"
-                      className="market-media-expand"
-                      onClick={() =>
-                        setPreviewMedia({
-                          title: item.name,
-                          supplier: item.supplier,
-                          imageUrl: item.imageUrl,
-                          videoUrl: item.videoUrl,
-                        })
-                      }
-                    >
-                      Lihat Video Penuh
-                    </button>
-                  </div>
-                ) : item.imageUrl ? (
+                {item.imageUrl && (
                   <div className="market-media-box">
                     <img
                       src={item.imageUrl}
-                      alt={item.name}
+                      alt={`Foto fitur ${item.name}`}
                       className="market-card-media"
                       onClick={() =>
-                        setPreviewMedia({
+                        setPreviewPhoto({
                           title: item.name,
                           supplier: item.supplier,
-                          imageUrl: item.imageUrl,
+                          featureNotes: item.featureNotes || item.description,
+                          imageUrl: item.imageUrl!,
                         })
                       }
                     />
@@ -551,17 +761,18 @@ export default function VMarketPage() {
                       type="button"
                       className="market-media-expand"
                       onClick={() =>
-                        setPreviewMedia({
+                        setPreviewPhoto({
                           title: item.name,
                           supplier: item.supplier,
-                          imageUrl: item.imageUrl,
+                          featureNotes: item.featureNotes || item.description,
+                          imageUrl: item.imageUrl!,
                         })
                       }
                     >
-                      Klik Lihat Foto
+                      Klik Lihat Foto Fitur
                     </button>
                   </div>
-                ) : null}
+                )}
 
                 <div className="market-card-top">
                   <span className="market-cat-badge">{item.category}</span>
@@ -574,26 +785,33 @@ export default function VMarketPage() {
                 <div className="market-supplier">Posted by {item.supplier}</div>
                 <p className="market-desc">{item.description}</p>
 
+                {item.featureNotes && (
+                  <div className="market-feature-box">
+                    <strong>Keterangan Fitur Produk:</strong>
+                    <p>{item.featureNotes}</p>
+                  </div>
+                )}
+
                 <div className="market-card-divider" />
 
                 <div className="market-card-foot">
                   <strong className="market-price">{item.priceLabel}</strong>
 
                   <div className="market-action-row">
-                    {hasMedia && (
+                    {item.imageUrl && (
                       <button
                         type="button"
                         className="market-secondary-btn"
                         onClick={() =>
-                          setPreviewMedia({
+                          setPreviewPhoto({
                             title: item.name,
                             supplier: item.supplier,
-                            imageUrl: item.imageUrl,
-                            videoUrl: item.videoUrl,
+                            featureNotes: item.featureNotes || item.description,
+                            imageUrl: item.imageUrl!,
                           })
                         }
                       >
-                        {item.videoUrl ? "Buka Video" : "Lihat Foto"}
+                        Lihat Foto
                       </button>
                     )}
 
@@ -676,10 +894,10 @@ export default function VMarketPage() {
         </div>
       </section>
 
-      {previewMedia && (
+      {previewPhoto && (
         <div
           className="market-modal-backdrop"
-          onClick={() => setPreviewMedia(null)}
+          onClick={() => setPreviewPhoto(null)}
         >
           <div
             className="market-modal-card"
@@ -687,32 +905,27 @@ export default function VMarketPage() {
           >
             <div className="market-modal-head">
               <div>
-                <strong>{previewMedia.title}</strong>
-                <small>by {previewMedia.supplier}</small>
+                <strong>{previewPhoto.title}</strong>
+                <small>by {previewPhoto.supplier}</small>
               </div>
               <button
                 type="button"
                 className="market-ghost-btn"
-                onClick={() => setPreviewMedia(null)}
+                onClick={() => setPreviewPhoto(null)}
               >
                 Tutup ✕
               </button>
             </div>
 
-            {previewMedia.videoUrl ? (
-              <video
-                src={previewMedia.videoUrl}
-                controls
-                autoPlay
-                className="market-modal-media"
-              />
-            ) : previewMedia.imageUrl ? (
-              <img
-                src={previewMedia.imageUrl}
-                alt={previewMedia.title}
-                className="market-modal-media"
-              />
-            ) : null}
+            <img
+              src={previewPhoto.imageUrl}
+              alt={previewPhoto.title}
+              className="market-modal-media"
+            />
+
+            {previewPhoto.featureNotes && (
+              <p className="market-modal-notes">{previewPhoto.featureNotes}</p>
+            )}
           </div>
         </div>
       )}
@@ -858,7 +1071,64 @@ export default function VMarketPage() {
           color: #d2e2f3;
           font-size: 15px;
           line-height: 1.65;
-          max-width: 580px;
+          max-width: 600px;
+        }
+
+        .market-hero-actions {
+          display: flex;
+          gap: 10px;
+          flex-wrap: wrap;
+        }
+
+        .market-create-card {
+          margin-top: 20px;
+          background: #0d1e34;
+          border: 1px solid rgba(126, 232, 220, 0.28);
+          border-radius: 16px;
+          padding: 24px;
+          display: flex;
+          flex-direction: column;
+          gap: 14px;
+        }
+
+        .market-create-head h2 {
+          margin: 4px 0 0;
+          font-size: 20px;
+        }
+
+        .market-form-grid {
+          display: grid;
+          grid-template-columns: repeat(3, minmax(0, 1fr));
+          gap: 12px;
+        }
+
+        .market-create-card label {
+          display: flex;
+          flex-direction: column;
+          gap: 6px;
+          font-size: 12px;
+          font-weight: 700;
+          color: #c5d5e8;
+        }
+
+        .market-create-card input,
+        .market-create-card select,
+        .market-create-card textarea {
+          width: 100%;
+          box-sizing: border-box;
+          padding: 9px 12px;
+          border-radius: 8px;
+          border: 1px solid rgba(255, 255, 255, 0.16);
+          background: #081526;
+          color: #ffffff;
+          font: inherit;
+          font-size: 13px;
+          outline: none;
+        }
+
+        .market-form-submit-row {
+          display: flex;
+          justify-content: flex-end;
         }
 
         .market-btn-primary {
@@ -878,6 +1148,9 @@ export default function VMarketPage() {
         }
 
         .market-secondary-btn {
+          display: inline-flex;
+          align-items: center;
+          justify-content: center;
           border: 1px solid rgba(126, 232, 220, 0.35);
           background: rgba(255, 255, 255, 0.05);
           color: #dcebfa;
@@ -885,6 +1158,7 @@ export default function VMarketPage() {
           border-radius: 9px;
           font-size: 12px;
           font-weight: 700;
+          text-decoration: none;
           cursor: pointer;
           white-space: nowrap;
         }
@@ -994,7 +1268,7 @@ export default function VMarketPage() {
 
         .market-card-media {
           width: 100%;
-          max-height: 220px;
+          height: 200px;
           object-fit: cover;
           border-radius: 10px;
           background: #07111f;
@@ -1056,11 +1330,32 @@ export default function VMarketPage() {
         }
 
         .market-desc {
-          margin: 10px 0 16px;
+          margin: 10px 0 10px;
           font-size: 13px;
           color: #b7c8dd;
           line-height: 1.65;
           overflow-wrap: anywhere;
+        }
+
+        .market-feature-box {
+          margin-bottom: 14px;
+          padding: 10px 12px;
+          border-radius: 9px;
+          background: rgba(255, 255, 255, 0.04);
+          border-left: 3px solid #13c8b5;
+          font-size: 12px;
+        }
+
+        .market-feature-box strong {
+          display: block;
+          color: #7ee8dc;
+          margin-bottom: 4px;
+        }
+
+        .market-feature-box p {
+          margin: 0;
+          color: #dce8f7;
+          line-height: 1.55;
         }
 
         .market-card-divider {
@@ -1219,6 +1514,13 @@ export default function VMarketPage() {
           background: #07111f;
         }
 
+        .market-modal-notes {
+          margin: 0;
+          font-size: 13px;
+          color: #dce8f7;
+          line-height: 1.6;
+        }
+
         .market-footer {
           text-align: center;
           padding: 26px 20px;
@@ -1226,6 +1528,12 @@ export default function VMarketPage() {
           color: #8fa4bf;
           font-size: 12px;
           border-top: 1px solid rgba(255, 255, 255, 0.06);
+        }
+
+        @media (max-width: 900px) {
+          .market-form-grid {
+            grid-template-columns: 1fr;
+          }
         }
 
         @media (max-width: 820px) {
