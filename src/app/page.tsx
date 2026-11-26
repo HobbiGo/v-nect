@@ -230,11 +230,13 @@ export default function Home() {
     <main className="home-page">
       <header className="navbar">
         <a className="logo" href="#">
-          <img
-            src={BRAND_LOGO_SRC}
-            alt="VOINNECT logo"
-            className="logo-mark"
-          />
+          <span className="logo-mark-wrap">
+            <img
+              src={BRAND_LOGO_SRC}
+              alt="VOINNECT logo"
+              className="logo-mark"
+            />
+          </span>
           <div className="logo-text-wrap">
             <div className="logo-main">
               VOIN<span>NECT</span>
@@ -294,7 +296,6 @@ export default function Home() {
               alt="VOINNECT Global Ecosystem"
               className="hero-logo-img"
             />
-            <div className="hero-edge-fade" />
           </div>
           <div className="orbit-label label-one">BUSINESS</div>
           <div className="orbit-label label-two">CONNECT</div>
@@ -510,13 +511,35 @@ export default function Home() {
           flex-shrink: 0;
         }
 
+        .logo-mark-wrap {
+          width: 40px;
+          height: 40px;
+          display: grid;
+          place-items: center;
+          overflow: hidden;
+          background: transparent;
+          -webkit-mask-image: radial-gradient(
+            circle at 50% 42%,
+            #000 44%,
+            rgba(0, 0, 0, 0.5) 68%,
+            transparent 95%
+          );
+          mask-image: radial-gradient(
+            circle at 50% 42%,
+            #000 44%,
+            rgba(0, 0, 0, 0.5) 68%,
+            transparent 95%
+          );
+        }
+
         .logo-mark {
-          width: 38px;
-          height: 38px;
-          border-radius: 999px;
+          width: 100%;
+          height: 100%;
           object-fit: cover;
-          border: 1px solid rgba(126, 232, 220, 0.35);
-          box-shadow: 0 0 14px rgba(52, 124, 240, 0.28);
+          object-position: center 26%;
+          transform: scale(1.45);
+          mix-blend-mode: screen;
+          filter: brightness(1.12) contrast(1.1) saturate(1.18);
         }
 
         .logo-text-wrap {
@@ -580,8 +603,8 @@ export default function Home() {
           margin: 0 auto;
           padding: 60px 24px 52px;
           display: grid;
-          grid-template-columns: minmax(0, 1.25fr) minmax(0, 0.95fr);
-          gap: 36px;
+          grid-template-columns: minmax(0, 1.15fr) minmax(0, 1.05fr);
+          gap: 32px;
           align-items: center;
         }
 
@@ -658,25 +681,25 @@ export default function Home() {
 
         .hero-visual {
           position: relative;
-          min-height: 310px;
+          min-height: 350px;
           display: grid;
           place-items: center;
           background: transparent;
-          padding: 28px 16px;
+          padding: 24px 12px;
         }
 
         .hero-ambient-glow {
           position: absolute;
-          width: 260px;
-          height: 260px;
+          width: 310px;
+          height: 310px;
           border-radius: 999px;
           background: radial-gradient(
             circle,
-            rgba(52, 124, 240, 0.28) 0%,
-            rgba(19, 200, 181, 0.14) 48%,
-            rgba(7, 17, 31, 0) 75%
+            rgba(52, 124, 240, 0.3) 0%,
+            rgba(19, 200, 181, 0.16) 46%,
+            rgba(7, 17, 31, 0) 76%
           );
-          filter: blur(14px);
+          filter: blur(18px);
           pointer-events: none;
           z-index: 1;
         }
@@ -684,23 +707,25 @@ export default function Home() {
         .hero-logo-stage {
           position: relative;
           z-index: 2;
-          width: 210px;
-          height: 235px;
+          width: 285px;
+          height: 300px;
           display: grid;
           place-items: center;
           overflow: hidden;
-          border-radius: 999px;
+          background: transparent;
           -webkit-mask-image: radial-gradient(
-            ellipse 76% 78% at 50% 48%,
-            #000 52%,
-            rgba(0, 0, 0, 0.55) 76%,
-            transparent 100%
+            ellipse 68% 66% at 50% 45%,
+            #000 38%,
+            rgba(0, 0, 0, 0.62) 64%,
+            rgba(0, 0, 0, 0.18) 82%,
+            transparent 98%
           );
           mask-image: radial-gradient(
-            ellipse 76% 78% at 50% 48%,
-            #000 52%,
-            rgba(0, 0, 0, 0.55) 76%,
-            transparent 100%
+            ellipse 68% 66% at 50% 45%,
+            #000 38%,
+            rgba(0, 0, 0, 0.62) 64%,
+            rgba(0, 0, 0, 0.18) 82%,
+            transparent 98%
           );
         }
 
@@ -708,21 +733,10 @@ export default function Home() {
           width: 100%;
           height: 100%;
           object-fit: cover;
-          object-position: center 36%;
-          transform: scale(1.12);
-          filter: contrast(1.05) saturate(1.12);
-        }
-
-        .hero-edge-fade {
-          position: absolute;
-          inset: 0;
-          pointer-events: none;
-          background: radial-gradient(
-            circle at 50% 48%,
-            rgba(7, 17, 31, 0) 48%,
-            rgba(7, 17, 31, 0.45) 78%,
-            #07111f 100%
-          );
+          object-position: center 34%;
+          transform: scale(1.16);
+          mix-blend-mode: screen;
+          filter: brightness(1.06) contrast(1.08) saturate(1.15);
         }
 
         .orbit-label {
@@ -739,23 +753,23 @@ export default function Home() {
         }
 
         .label-one {
-          top: 14px;
-          left: 8%;
+          top: 12px;
+          left: 6%;
         }
 
         .label-two {
-          top: 14px;
-          right: 8%;
+          top: 12px;
+          right: 6%;
         }
 
         .label-three {
-          bottom: 14px;
-          left: 8%;
+          bottom: 12px;
+          left: 6%;
         }
 
         .label-four {
-          bottom: 14px;
-          right: 8%;
+          bottom: 12px;
+          right: 6%;
         }
 
         .platform-section,
@@ -1095,9 +1109,13 @@ export default function Home() {
             font-size: 32px;
           }
 
+          .hero-visual {
+            min-height: 310px;
+          }
+
           .hero-logo-stage {
-            width: 185px;
-            height: 205px;
+            width: 245px;
+            height: 260px;
           }
 
           .business-inner {
