@@ -36,12 +36,6 @@ const BUCKET_NAME = "business-posts";
 const MAX_IMAGES = 5;
 const MAX_IMAGE_SIZE = 5 * 1024 * 1024;
 
-const ALLOWED_IMAGE_TYPES: Record<string, string> = {
-  "image/jpeg": "jpg",
-  "image/png": "png",
-  "image/webp": "webp",
-};
-
 const categories = [
   { value: "all", label: "All Posts" },
   { value: "announcement", label: "Announcements" },
@@ -259,28 +253,6 @@ export default function BusinessFeedPage() {
     setShowComposer(false);
   }
 
-  function getSupportedImageType(file: File): string | null {
-    if (ALLOWED_IMAGE_TYPES[file.type]) {
-      return file.type;
-    }
-
-    const extension = file.name.split(".").pop()?.toLowerCase();
-
-    if (extension === "jpg" || extension === "jpeg") {
-      return "image/jpeg";
-    }
-
-    if (extension === "png") {
-      return "image/png";
-    }
-
-    if (extension === "webp") {
-      return "image/webp";
-    }
-
-    return null;
-  }
-
   function validateImage(file: File): string | null {
     if (file.size <= 0) {
       return "The selected image is empty.";
@@ -290,8 +262,14 @@ export default function BusinessFeedPage() {
       return "Ukuran gambar maksimal 5 MB per file.";
     }
 
-    if (!getSupportedImageType(file)) {
-      return "Format gambar belum didukung. Gunakan JPG, PNG, atau WebP.";
+    const hasImageMime = file.type.startsWith("image/");
+    const hasImageExt =
+      /\.(jpg|jpeg|png|webp|gif|heic|heif|avif|bmp|svg|tiff?)$/i.test(
+        file.name
+      );
+
+    if (!hasImageMime && !hasImageExt) {
+      return "File yang dipilih harus berupa gambar.";
     }
 
     return null;
@@ -802,7 +780,7 @@ export default function BusinessFeedPage() {
                     <input
                       type="file"
                       multiple
-                      accept=".jpg,.jpeg,.png,.webp,image/jpeg,image/png,image/webp"
+                      accept="image/*"
                       onChange={(e) => {
                         handleImagesChange(e.target.files);
                         e.currentTarget.value = "";
@@ -810,7 +788,7 @@ export default function BusinessFeedPage() {
                     />
 
                     <small>
-                      JPG, PNG, or WebP · Max {MAX_IMAGES} images · Max 5 MB each
+                      All image formats supported · Max {MAX_IMAGES} images · Max 5 MB each
                     </small>
                   </div>
 
