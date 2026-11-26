@@ -1226,11 +1226,12 @@ export default function BusinessFeedPage() {
                                   </a>
                                 </div>
 
-                                {captionText && (
-                                  <div className="post-image-caption">
-                                    {captionText}
-                                  </div>
-                                )}
+                                <div className="post-image-bar">
+                                  <span className="post-image-caption">
+                                    {captionText || `Image ${idx + 1}`}
+                                  </span>
+                                  <span className="post-image-comment-hint">💬</span>
+                                </div>
                               </div>
                             );
                           })}
@@ -1758,14 +1759,30 @@ export default function BusinessFeedPage() {
           object-fit: cover;
         }
 
+        .post-image-bar {
+          display: flex;
+          align-items: center;
+          justify-content: space-between;
+          gap: 8px;
+          padding: 8px 12px;
+          background: #10243d;
+          color: #e6eef8;
+          border-top: 1px solid #1d3656;
+        }
+
         .post-image-caption {
-          padding: 9px 12px;
-          background: #f8fafd;
-          border-top: 1px solid #e4eaf2;
-          color: #263a53;
+          padding: 0;
+          background: transparent;
+          border: none;
+          color: #e6eef8;
           font-size: 12px;
-          line-height: 1.5;
+          line-height: 1.45;
           overflow-wrap: anywhere;
+        }
+
+        .post-image-comment-hint {
+          font-size: 12px;
+          flex-shrink: 0;
         }
 
         .image-error {
