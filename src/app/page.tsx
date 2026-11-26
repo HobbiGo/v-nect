@@ -1,3 +1,38 @@
+"use client";
+
+import { useEffect, useState } from "react";
+import Link from "next/link";
+import { createClient } from "@/lib/supabase";
+import { PostThreadComments } from "@/components/PostThreadComments";
+
+type HomePost = {
+  id: string;
+  company_id: string;
+  author_id: string;
+  title: string;
+  content: string;
+  post_type: string;
+  image_url: string | null;
+  image_urls?: string[] | null;
+  image_captions?: string[] | null;
+  status: string;
+  created_at: string;
+  companies: {
+    company_name: string;
+    logo_url: string | null;
+  } | null;
+};
+
+type LocalCaptionMap = Record<string, Record<string, string>>;
+
+type FocusTarget = {
+  postId: string;
+  imageIndex: number;
+  trigger: number;
+};
+
+const MAX_IMAGES = 5;
+const LOCAL_CAPTIONS_STORAGE_KEY = "voinnect_business_post_image_captions_v1";
 
 const modules = [
   {
@@ -32,9 +67,166 @@ const modules = [
   },
 ];
 
+const categoryLabels: Record<string, string> = {
+  announcement: "Announcement",
+  company_news: "Company News",
+  news: "Company News",
+  product_launch: "Product Launch",
+  presentation: "Presentation",
+};
+
+function getPostImages(post: HomePost): string[] {
+  const list: string[] = [];
+
+  if (Array.isArray(post.image_urls)) {
+    for (const item of post.image_urls) {
+      if (typeof item === "string" && item.trim()) {
+        list.push(item.trim());
+      }
+    }
+  }
+
+  if (list.length === 0 && post.image_url && post.image_url.trim()) {
+    list.push(post.image_url.trim());
+  }
+
+  return list.slice(0, MAX_IMAGES);
+}
+
+function readLocalCaptionMap(): LocalCaptionMap {
+  if (typeof window === "undefined") return {};
+  try {
+    const raw = window.localStorage.getItem(LOCAL_CAPTIONS_STORAGE_KEY);
+    if (!raw) return {};
+    const parsed = JSON.parse(raw);
+    return parsed && typeof parsed === "object" ? parsed : {};
+  } catch {
+    return {};
+  }
+}
+
+function getPostImageCaptions(post: HomePost, images: string[]): string[] {
+  const localMap = readLocalCaptionMap()[post.id] || {};
+  return images.map((url, idx) => {
+    const dbCaption =
+      Array.isArray(post.image_captions) &&
+      typeof post.image_captions[idx] === "string"
+        ? post.image_captions[idx].trim()
+        : "";
+    if (dbCaption) return dbCaption;
+    return (localMap[url] || "").trim();
+  });
+}
+
+function formatDate(date: string) {
+  return new Date(date).toLocaleDateString("en-US", {
+    day: "numeric",
+    month: "short",
+    year: "numeric",
+  });
+}
+
 export default function Home() {
+  const supabase = createClient();
+
+  const [posts, setPosts] = useState<HomePost[]>([]);
+  const [loadingPosts, setLoadingPosts] = useState(true);
+  const [currentUserId, setCurrentUserId] = useState<string | null>(null);
+  const [currentUserName, setCurrentUserName] = useState<string | null>(null);
+  const [focusTarget, setFocusTarget] = useState<FocusTarget | null>(null);
+
+  useEffect(() => {
+    let active = true;
+
+    async function loadHomeData() {
+      setLoadingPosts(true);
+
+      const {
+        data: { user },
+      } = await supabase.auth.getUser();
+
+      if (active && user) {
+        setCurrentUserId(user.id);
+        const fallbackName =
+          (user.user_metadata?.full_name as string | undefined)?.trim() ||
+          user.email?.split("@")[0] ||
+          "Member";
+        setCurrentUserName(fallbackName);
+
+        const { data: settings } = await supabase
+          .from("account_settings")
+          .select("active_profile_type, active_company_id")
+          .eq("user_id", user.id)
+          .maybeSingle();
+
+        if (
+          active &&
+          settings?.active_profile_type === "company" &&
+          settings.active_company_id
+        ) {
+          const { data: companyData } = await supabase
+            .from("companies")
+            .select("company_name")
+            .eq("id", settings.active_company_id)
+            .maybeSingle();
+
+          if (companyData?.company_name) {
+            setCurrentUserName(companyData.company_name);
+          }
+        }
+      }
+
+      const { data, error } = await supabase
+        .from("business_posts")
+        .select(`
+          id,
+          company_id,
+          author_id,
+          title,
+          content,
+          post_type,
+          image_url,
+          image_urls,
+          status,
+          created_at,
+          companies (
+            company_name,
+            logo_url
+          )
+        `)
+        .eq("status", "published")
+        .order("created_at", { ascending: false })
+        .limit(6);
+
+      if (!active) return;
+
+      if (error) {
+        console.error("Home feed load error:", error);
+        setPosts([]);
+      } else {
+        setPosts((data || []) as unknown as HomePost[]);
+      }
+
+      setLoadingPosts(false);
+    }
+
+    loadHomeData();
+
+    return () => {
+      active = false;
+    };
+  }, [supabase]);
+
+  function handleFocusImageComment(postId: string, imageIndex: number) {
+    setFocusTarget((prev) => ({
+      postId,
+      imageIndex,
+      trigger: (prev?.trigger || 0) + 1,
+    }));
+  }
+
   return (
-    <main>
+    <main className="home-page">
       <header className="navbar">
         <a className="logo" href="#">
           VOIN<span>NECT</span>
@@ -44,12 +236,13 @@ export default function Home() {
         <nav>
           <a href="#platform">Platform</a>
           <a href="#business">Business</a>
+          <a href="#community-posts">Community</a>
           <a href="#about">About</a>
         </nav>
 
-        <a className="nav-button" href="#get-started">
-          Get Started ↗
-        </a>
+        <Link className="nav-button" href="/business-feed">
+          Business Feed ↗
+        </Link>
       </header>
 
       <section className="hero" id="about">
@@ -73,9 +266,9 @@ export default function Home() {
             <a className="primary-button" href="#platform">
               Explore Platform ↗
             </a>
-            <a className="secondary-button" href="#business">
-              Discover VOINNECT
-            </a>
+            <Link className="secondary-button" href="/business-feed">
+              Open Business Feed
+            </Link>
           </div>
 
           <div className="hero-caption">
@@ -137,6 +330,138 @@ export default function Home() {
         </p>
       </section>
 
+      <section className="home-posts-section" id="community-posts">
+        <div className="home-posts-inner">
+          <div className="home-posts-header">
+            <div>
+              <span>LIVE COMMUNITY &amp; BUSINESS UPDATES</span>
+              <h2>Latest Posts &amp; Discussion</h2>
+              <p>
+                Explore published business updates and join the live comment thread directly from the main page.
+              </p>
+            </div>
+
+            <Link href="/business-feed" className="view-all-link">
+              View Full Feed →
+            </Link>
+          </div>
+
+          {loadingPosts ? (
+            <div className="home-posts-empty">
+              <p>Loading latest posts...</p>
+            </div>
+          ) : posts.length === 0 ? (
+            <div className="home-posts-empty">
+              <p>No published posts yet.</p>
+              <Link href="/business-feed" className="primary-button">
+                Go to Business Feed ↗
+              </Link>
+            </div>
+          ) : (
+            <div className="home-posts-list">
+              {posts.map((post) => {
+                const postImages = getPostImages(post);
+                const postImageCaptions = getPostImageCaptions(post, postImages);
+                const isFocusedPost = focusTarget?.postId === post.id;
+
+                return (
+                  <article className="home-post-card" key={post.id}>
+                    <div className="home-post-top">
+                      <div className="home-company-info">
+                        {post.companies?.logo_url ? (
+                          <img
+                            src={post.companies.logo_url}
+                            alt={post.companies.company_name || "Company"}
+                          />
+                        ) : (
+                          <div className="home-company-avatar">
+                            {post.companies?.company_name
+                              ?.charAt(0)
+                              .toUpperCase() || "C"}
+                          </div>
+                        )}
+                        <div>
+                          <strong>
+                            {post.companies?.company_name || "Company"}
+                          </strong>
+                          <small>{formatDate(post.created_at)}</small>
+                        </div>
+                      </div>
+
+                      <span className="home-post-badge">
+                        {categoryLabels[post.post_type] || post.post_type}
+                      </span>
+                    </div>
+
+                    <div className="home-post-body">
+                      <h3>{post.title}</h3>
+                      <p>{post.content}</p>
+
+                      {postImages.length > 0 && (
+                        <div
+                          className={
+                            postImages.length === 1
+                              ? "home-images-grid single"
+                              : "home-images-grid multi"
+                          }
+                        >
+                          {postImages.map((imgUrl, idx) => {
+                            const captionText = postImageCaptions[idx] || "";
+                            return (
+                              <div
+                                className="home-image-card"
+                                key={`${post.id}-home-img-${idx}`}
+                              >
+                                <img
+                                  src={imgUrl}
+                                  alt={`${post.title} (${idx + 1})`}
+                                  loading="lazy"
+                                />
+                                <div className="home-image-bar">
+                                  <span className="home-image-caption">
+                                    {captionText || `Image ${idx + 1}`}
+                                  </span>
+                                  <button
+                                    type="button"
+                                    className="home-image-comment-btn"
+                                    onClick={() =>
+                                      handleFocusImageComment(post.id, idx)
+                                    }
+                                    title={`Comment on ${
+                                      captionText || `Image ${idx + 1}`
+                                    }`}
+                                  >
+                                    💬
+                                  </button>
+                                </div>
+                              </div>
+                            );
+                          })}
+                        </div>
+                      )}
+                    </div>
+
+                    <PostThreadComments
+                      supabase={supabase}
+                      postId={post.id}
+                      currentUserId={currentUserId}
+                      currentUserName={currentUserName}
+                      imageLabels={postImages.map(
+                        (_, idx) => postImageCaptions[idx] || `Image ${idx + 1}`
+                      )}
+                      focusedImageIndex={
+                        isFocusedPost ? focusTarget.imageIndex : null
+                      }
+                      focusTrigger={isFocusedPost ? focusTarget.trigger : 0}
+                    />
+                  </article>
+                );
+              })}
+            </div>
+          )}
+        </div>
+      </section>
+
       <footer className="footer">
         <div className="logo">
           VOIN<span>NECT</span>
@@ -144,6 +469,485 @@ export default function Home() {
         <p>Connect Beyond Boundaries.</p>
         <small>© 2026 VOINNECT. All rights reserved.</small>
       </footer>
+
+      <style jsx>{`
+        .home-page {
+          min-height: 100vh;
+          background: #07111f;
+          color: #eef4fb;
+          font-family: Arial, sans-serif;
+        }
+
+        .navbar {
+          min-height: 74px;
+          padding: 0 7%;
+          background: #07111f;
+          border-bottom: 1px solid rgba(255, 255, 255, 0.08);
+          display: flex;
+          align-items: center;
+          justify-content: space-between;
+          gap: 16px;
+          flex-wrap: wrap;
+        }
+
+        .logo {
+          color: #ffffff;
+          font-size: 22px;
+          font-weight: 900;
+          text-decoration: none;
+          letter-spacing: 1px;
+          display: inline-flex;
+          flex-direction: column;
+        }
+
+        .logo span,
+        .hero h1 span {
+          color: #13c8b5;
+        }
+
+        .logo small {
+          font-size: 9px;
+          font-weight: 700;
+          letter-spacing: 1.8px;
+          color: #8fa3bd;
+          margin-top: 2px;
+        }
+
+        .navbar nav {
+          display: flex;
+          align-items: center;
+          gap: 22px;
+          flex-wrap: wrap;
+        }
+
+        .navbar nav a {
+          color: #c5d2e4;
+          text-decoration: none;
+          font-size: 13px;
+        }
+
+        .nav-button {
+          background: linear-gradient(110deg, #347cf0, #13bcae);
+          color: #ffffff;
+          text-decoration: none;
+          padding: 9px 15px;
+          border-radius: 8px;
+          font-size: 12px;
+          font-weight: 700;
+        }
+
+        .hero {
+          max-width: 1200px;
+          margin: 0 auto;
+          padding: 56px 24px;
+          display: grid;
+          grid-template-columns: minmax(0, 1.3fr) minmax(0, 0.7fr);
+          gap: 32px;
+          align-items: center;
+        }
+
+        .eyebrow {
+          color: #13c8b5;
+          font-size: 11px;
+          font-weight: 800;
+          letter-spacing: 2px;
+        }
+
+        .hero h1 {
+          font-size: 46px;
+          line-height: 1.15;
+          margin: 14px 0;
+        }
+
+        .hero p {
+          color: #b7c8dd;
+          font-size: 15px;
+          line-height: 1.7;
+          max-width: 560px;
+        }
+
+        .hero-actions {
+          display: flex;
+          gap: 12px;
+          margin-top: 22px;
+          flex-wrap: wrap;
+        }
+
+        .primary-button {
+          display: inline-block;
+          background: linear-gradient(110deg, #347cf0, #13bcae);
+          color: #ffffff;
+          text-decoration: none;
+          padding: 11px 18px;
+          border-radius: 9px;
+          font-size: 12px;
+          font-weight: 700;
+        }
+
+        .secondary-button {
+          display: inline-block;
+          border: 1px solid rgba(255, 255, 255, 0.2);
+          color: #e2ecf8;
+          text-decoration: none;
+          padding: 11px 18px;
+          border-radius: 9px;
+          font-size: 12px;
+          font-weight: 700;
+        }
+
+        .hero-caption {
+          margin-top: 18px;
+          font-size: 10px;
+          letter-spacing: 1.5px;
+          color: #7f95b0;
+          font-weight: 700;
+        }
+
+        .hero-visual {
+          position: relative;
+          min-height: 240px;
+          display: grid;
+          place-items: center;
+        }
+
+        .core {
+          width: 84px;
+          height: 84px;
+          border-radius: 999px;
+          background: linear-gradient(135deg, #347cf0, #13bcae);
+          display: grid;
+          place-items: center;
+          font-size: 32px;
+          font-weight: 900;
+          color: #ffffff;
+        }
+
+        .orbit-label {
+          position: absolute;
+          font-size: 10px;
+          font-weight: 800;
+          letter-spacing: 1.5px;
+          color: #7ee8dc;
+          background: rgba(16, 36, 61, 0.9);
+          border: 1px solid rgba(126, 232, 220, 0.25);
+          padding: 4px 10px;
+          border-radius: 999px;
+        }
+
+        .label-one {
+          top: 16px;
+          left: 16%;
+        }
+
+        .label-two {
+          top: 16px;
+          right: 16%;
+        }
+
+        .label-three {
+          bottom: 16px;
+          left: 16%;
+        }
+
+        .label-four {
+          bottom: 16px;
+          right: 16%;
+        }
+
+        .platform-section,
+        .business-section {
+          max-width: 1200px;
+          margin: 0 auto;
+          padding: 44px 24px;
+        }
+
+        .section-heading span,
+        .business-section span,
+        .home-posts-header span {
+          color: #13c8b5;
+          font-size: 11px;
+          font-weight: 800;
+          letter-spacing: 2px;
+        }
+
+        .section-heading h2,
+        .home-posts-header h2 {
+          font-size: 30px;
+          margin: 8px 0;
+        }
+
+        .section-heading p,
+        .home-posts-header p {
+          color: #a9bcd3;
+          font-size: 14px;
+          line-height: 1.6;
+        }
+
+        .module-grid {
+          margin-top: 24px;
+          display: grid;
+          grid-template-columns: repeat(3, minmax(0, 1fr));
+          gap: 16px;
+        }
+
+        .module-card {
+          background: #0e1e34;
+          border: 1px solid rgba(255, 255, 255, 0.08);
+          border-radius: 14px;
+          padding: 20px;
+        }
+
+        .module-number {
+          font-size: 11px;
+          font-weight: 800;
+          color: #13c8b5;
+        }
+
+        .module-card h3 {
+          margin: 8px 0 6px;
+          font-size: 17px;
+        }
+
+        .module-card p {
+          margin: 0;
+          color: #9fb2c9;
+          font-size: 13px;
+          line-height: 1.6;
+        }
+
+        .business-section h2 {
+          font-size: 34px;
+          line-height: 1.25;
+          margin: 10px 0;
+        }
+
+        .business-section p {
+          color: #a9bcd3;
+          font-size: 14px;
+        }
+
+        .home-posts-section {
+          background: #f3f6fb;
+          color: #15243a;
+          padding: 52px 24px 70px;
+        }
+
+        .home-posts-inner {
+          max-width: 900px;
+          margin: 0 auto;
+        }
+
+        .home-posts-header {
+          display: flex;
+          justify-content: space-between;
+          align-items: flex-start;
+          gap: 16px;
+          flex-wrap: wrap;
+          margin-bottom: 24px;
+        }
+
+        .home-posts-header p {
+          color: #5b6d84;
+          margin: 6px 0 0;
+        }
+
+        .view-all-link {
+          color: #2874db;
+          font-size: 13px;
+          font-weight: 700;
+          text-decoration: none;
+          padding: 8px 12px;
+          background: #e6efff;
+          border-radius: 8px;
+        }
+
+        .home-posts-list {
+          display: flex;
+          flex-direction: column;
+          gap: 20px;
+        }
+
+        .home-post-card {
+          background: #ffffff;
+          border: 1px solid #e4eaf2;
+          border-radius: 14px;
+          padding: 20px;
+          box-shadow: 0 5px 18px rgba(20, 42, 70, 0.04);
+        }
+
+        .home-post-top {
+          display: flex;
+          justify-content: space-between;
+          align-items: center;
+          gap: 12px;
+          padding-bottom: 14px;
+          border-bottom: 1px solid #edf0f5;
+        }
+
+        .home-company-info {
+          display: flex;
+          align-items: center;
+          gap: 10px;
+        }
+
+        .home-company-info img,
+        .home-company-avatar {
+          width: 40px;
+          height: 40px;
+          border-radius: 10px;
+          object-fit: cover;
+        }
+
+        .home-company-avatar {
+          display: grid;
+          place-items: center;
+          background: #e8f1ff;
+          color: #2874db;
+          font-weight: 800;
+        }
+
+        .home-company-info strong {
+          display: block;
+          font-size: 13px;
+          color: #1d3048;
+        }
+
+        .home-company-info small {
+          display: block;
+          font-size: 11px;
+          color: #8b9bb0;
+        }
+
+        .home-post-badge {
+          background: #edf5ff;
+          color: #397bd2;
+          padding: 6px 10px;
+          border-radius: 999px;
+          font-size: 11px;
+          font-weight: 700;
+        }
+
+        .home-post-body {
+          padding: 16px 0 6px;
+        }
+
+        .home-post-body h3 {
+          margin: 0 0 8px;
+          font-size: 18px;
+          color: #1d3048;
+        }
+
+        .home-post-body p {
+          margin: 0;
+          color: #5b6d84;
+          font-size: 13px;
+          line-height: 1.7;
+          white-space: pre-wrap;
+        }
+
+        .home-images-grid {
+          margin-top: 14px;
+          display: grid;
+          gap: 10px;
+        }
+
+        .home-images-grid.single {
+          grid-template-columns: 1fr;
+        }
+
+        .home-images-grid.multi {
+          grid-template-columns: repeat(2, minmax(0, 1fr));
+        }
+
+        .home-image-card {
+          border-radius: 10px;
+          overflow: hidden;
+          background: #edf1f6;
+          border: 1px solid #e4eaf2;
+        }
+
+        .home-image-card img {
+          display: block;
+          width: 100%;
+          height: 240px;
+          object-fit: cover;
+        }
+
+        .home-image-bar {
+          display: flex;
+          align-items: center;
+          justify-content: space-between;
+          gap: 8px;
+          padding: 8px 12px;
+          background: #10243d;
+          color: #e6eef8;
+        }
+
+        .home-image-caption {
+          font-size: 12px;
+          line-height: 1.4;
+          overflow-wrap: anywhere;
+        }
+
+        .home-image-comment-btn {
+          border: 1px solid rgba(255, 255, 255, 0.16);
+          background: rgba(255, 255, 255, 0.08);
+          color: #ffffff;
+          border-radius: 6px;
+          padding: 3px 8px;
+          font-size: 12px;
+          cursor: pointer;
+          flex-shrink: 0;
+        }
+
+        .home-posts-empty {
+          background: #ffffff;
+          border: 1px solid #e4eaf2;
+          border-radius: 12px;
+          padding: 28px;
+          text-align: center;
+          color: #5b6d84;
+        }
+
+        .footer {
+          text-align: center;
+          padding: 32px 20px;
+          background: #050d18;
+          color: #8494aa;
+          border-top: 1px solid rgba(255, 255, 255, 0.06);
+        }
+
+        .footer p {
+          margin: 8px 0 4px;
+          font-size: 13px;
+          color: #c5d2e4;
+        }
+
+        .footer small {
+          font-size: 11px;
+        }
+
+        @media (max-width: 800px) {
+          .hero {
+            grid-template-columns: 1fr;
+          }
+
+          .module-grid {
+            grid-template-columns: repeat(2, minmax(0, 1fr));
+          }
+        }
+
+        @media (max-width: 540px) {
+          .hero h1 {
+            font-size: 32px;
+          }
+
+          .module-grid,
+          .home-images-grid.multi {
+            grid-template-columns: 1fr;
+          }
+        }
+      `}</style>
     </main>
   );
 }
