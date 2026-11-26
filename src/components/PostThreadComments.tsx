@@ -18,6 +18,8 @@ type PostThreadCommentsProps = {
   currentUserId?: string | null;
   currentUserName?: string | null;
   imageLabels?: string[];
+  focusedImageIndex?: number | null;
+  focusTrigger?: number;
 };
 
 function formatCommentTime(isoString: string) {
@@ -32,6 +34,8 @@ export function PostThreadComments({
   currentUserId,
   currentUserName,
   imageLabels = [],
+  focusedImageIndex = null,
+  focusTrigger = 0,
 }: PostThreadCommentsProps) {
   const [comments, setComments] = useState<BusinessPostComment[]>([]);
   const [loading, setLoading] = useState(true);
@@ -42,6 +46,19 @@ export function PostThreadComments({
   const [errorMsg, setErrorMsg] = useState<string | null>(null);
   const listEndRef = useRef<HTMLDivElement | null>(null);
   const inputRef = useRef<HTMLTextAreaElement | null>(null);
+
+  useEffect(() => {
+    if (focusTrigger > 0) {
+      if (
+        typeof focusedImageIndex === "number" &&
+        focusedImageIndex >= 0 &&
+        focusedImageIndex < imageLabels.length
+      ) {
+        setSelectedImageIdx(String(focusedImageIndex));
+      }
+      inputRef.current?.focus({ preventScroll: true });
+    }
+  }, [focusTrigger, focusedImageIndex, imageLabels.length]);
 
   useEffect(() => {
     let active = true;
@@ -552,6 +569,40 @@ export function PostThreadComments({
         .thread-form button:disabled {
           opacity: 0.55;
           cursor: not-allowed;
+        }
+
+        @media (max-width: 540px) {
+          .thread-action-bar {
+            padding: 7px 8px;
+            gap: 6px;
+          }
+
+          .thread-icon-btn,
+          .thread-filter-btn {
+            font-size: 10px;
+            padding: 5px 8px;
+          }
+
+          .thread-live-badge {
+            width: 100%;
+            margin-left: 0;
+            text-align: right;
+          }
+
+          .thread-list {
+            max-height: 210px;
+            padding: 9px;
+          }
+
+          .thread-form {
+            flex-direction: column;
+            align-items: stretch;
+          }
+
+          .thread-form button {
+            width: 100%;
+            height: 38px;
+          }
         }
       `}</style>
     </div>
