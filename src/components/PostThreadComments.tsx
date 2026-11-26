@@ -36,10 +36,12 @@ export function PostThreadComments({
   const [comments, setComments] = useState<BusinessPostComment[]>([]);
   const [loading, setLoading] = useState(true);
   const [selectedImageIdx, setSelectedImageIdx] = useState<string>("");
+  const [onlyMyHistory, setOnlyMyHistory] = useState(false);
   const [draft, setDraft] = useState("");
   const [submitting, setSubmitting] = useState(false);
   const [errorMsg, setErrorMsg] = useState<string | null>(null);
   const listEndRef = useRef<HTMLDivElement | null>(null);
+  const inputRef = useRef<HTMLTextAreaElement | null>(null);
 
   useEffect(() => {
     let active = true;
@@ -185,22 +187,58 @@ export function PostThreadComments({
     setComments((prev) => prev.filter((item) => item.id !== commentId));
   }
 
+  const visibleComments =
+    onlyMyHistory && currentUserId
+      ? comments.filter((c) => c.author_id === currentUserId)
+      : comments;
+
+  const myCommentCount = currentUserId
+    ? comments.filter((c) => c.author_id === currentUserId).length
+    : 0;
+
   return (
     <div className="thread-box">
-      <div className="thread-meta">
-        <span>Discussion Thread ({comments.length})</span>
-        <span>Live updates</span>
+      <div className="thread-action-bar">
+        <button
+          type="button"
+          className="thread-icon-btn"
+          onClick={() => inputRef.current?.focus()}
+        >
+          <span>💬</span>
+          <span>Comment ({comments.length})</span>
+        </button>
+
+        {currentUserId && (
+          <button
+            type="button"
+            className={
+              onlyMyHistory ? "thread-filter-btn active" : "thread-filter-btn"
+            }
+            onClick={() => setOnlyMyHistory((prev) => !prev)}
+          >
+            <span>🕘</span>
+            <span>
+              {onlyMyHistory
+                ? `My History (${myCommentCount}) · Show All`
+                : `My History (${myCommentCount})`}
+            </span>
+          </button>
+        )}
+
+        <span className="thread-live-badge">Live updates</span>
       </div>
 
       <div className="thread-list">
         {loading ? (
           <p className="thread-empty">Loading thread...</p>
-        ) : comments.length === 0 ? (
+        ) : visibleComments.length === 0 ? (
           <p className="thread-empty">
-            No comments yet. Start the conversation below.
+            {onlyMyHistory
+              ? "You have no comment history on this post yet."
+              : "No comments yet. Start the conversation below."}
           </p>
         ) : (
-          comments.map((item) => {
+          visibleComments.map((item) => {
             const isOwner = Boolean(currentUserId && item.author_id === currentUserId);
             return (
               <div className="thread-item" key={item.id}>
@@ -209,7 +247,12 @@ export function PostThreadComments({
                 </div>
                 <div className="thread-content">
                   <div className="thread-item-top">
-                    <strong>{item.author_name}</strong>
+                    <div className="thread-author-wrap">
+                      <strong>{item.author_name}</strong>
+                      {isOwner && (
+                        <span className="thread-you-tag">Active Account</span>
+                      )}
+                    </div>
                     <div className="thread-item-right">
                       <span>{formatCommentTime(item.created_at)}</span>
                       {isOwner && (
@@ -255,6 +298,7 @@ export function PostThreadComments({
 
       <form onSubmit={handleSendComment} className="thread-form">
         <textarea
+          ref={inputRef}
           rows={1}
           value={draft}
           onChange={(e) => setDraft(e.target.value)}
@@ -281,19 +325,53 @@ export function PostThreadComments({
 
       <style jsx>{`
         .thread-box {
-          margin-top: 18px;
-          padding-top: 14px;
+          margin-top: 14px;
+          padding-top: 12px;
           border-top: 1px solid #edf0f5;
         }
 
-        .thread-meta {
+        .thread-action-bar {
           display: flex;
-          justify-content: space-between;
           align-items: center;
+          gap: 8px;
+          flex-wrap: wrap;
+          margin-bottom: 10px;
+          padding: 7px 10px;
+          background: #10243d;
+          border-radius: 9px;
+        }
+
+        .thread-icon-btn,
+        .thread-filter-btn {
+          display: inline-flex;
+          align-items: center;
+          gap: 6px;
+          border: 1px solid rgba(255, 255, 255, 0.14);
+          background: rgba(255, 255, 255, 0.06);
+          color: #e6eef8;
+          border-radius: 7px;
+          padding: 5px 10px;
           font-size: 11px;
           font-weight: 700;
-          color: #6f8198;
-          margin-bottom: 10px;
+          cursor: pointer;
+        }
+
+        .thread-icon-btn:hover,
+        .thread-filter-btn:hover {
+          background: rgba(255, 255, 255, 0.14);
+        }
+
+        .thread-filter-btn.active {
+          background: #13bcae;
+          border-color: #13bcae;
+          color: #ffffff;
+        }
+
+        .thread-live-badge {
+          margin-left: auto;
+          font-size: 10px;
+          font-weight: 700;
+          color: #7ee8dc;
         }
 
         .thread-list {
@@ -349,12 +427,29 @@ export function PostThreadComments({
           gap: 8px;
         }
 
+        .thread-author-wrap {
+          display: flex;
+          align-items: center;
+          gap: 6px;
+          min-width: 0;
+        }
+
         .thread-item-top strong {
           font-size: 12px;
           color: #1d3048;
           overflow: hidden;
           text-overflow: ellipsis;
           white-space: nowrap;
+        }
+
+        .thread-you-tag {
+          background: #e6f7f5;
+          color: #0e8a7d;
+          font-size: 9px;
+          font-weight: 700;
+          padding: 2px 6px;
+          border-radius: 999px;
+          flex-shrink: 0;
         }
 
         .thread-item-right {
