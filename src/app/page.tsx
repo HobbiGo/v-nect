@@ -180,37 +180,24 @@ const categoryLabels: Record<string, string> = {
 
 function extractVideoUrlFromPost(post: HomePost): string | null {
   const text = post.content || "";
+  const linkVideoMatch = text.match(/Link Video:\s*(https?:\/\/\S+)/i);
 
-  const linkVideoMatch = text.match(
-    /Link Video:\s*(https?:\/\/\S+)/i
-  );
-
-  if (linkVideoMatch?.[1]) {
-    return linkVideoMatch[1].trim();
-  }
+  if (linkVideoMatch?.[1]) return linkVideoMatch[1].trim();
 
   const mediaMatch = text.match(
     /(https?:\/\/\S+\.(?:mp4|webm|mov|m4v)(?:\?\S*)?)/i
   );
 
-  if (mediaMatch?.[1]) {
-    return mediaMatch[1].trim();
-  }
-
-  return null;
+  return mediaMatch?.[1] ? mediaMatch[1].trim() : null;
 }
 
 function extractVideoCaptionFromPost(post: HomePost): string {
-  const text = post.content || "";
-  const match = text.match(/\(VideoCaption:\s*([^)]+)\)/i);
-
+  const match = (post.content || "").match(/\(VideoCaption:\s*([^)]+)\)/i);
   return match?.[1] ? match[1].trim() : "";
 }
 
 function cleanPostContentForDisplay(post: HomePost): string {
-  const raw = post.content || "";
-
-  return raw
+  return (post.content || "")
     .replace(/\(VideoCaption:\s*[^)]*\)/gi, "")
     .replace(/^\s*Link Video:\s*https?:\/\/\S+\s*$/gim, "")
     .replace(/\n{3,}/g, "\n\n")
@@ -220,7 +207,6 @@ function cleanPostContentForDisplay(post: HomePost): string {
 function formatCleanPostTitle(title: string): string {
   const trimmed = (title || "").trim();
   const withoutPrefix = trimmed.replace(/^Video:\s*/i, "");
-
   const withoutExt = withoutPrefix.replace(
     /\.(mp4|webm|mov|m4v|avi|mkv)$/i,
     ""
@@ -247,11 +233,7 @@ function getPostImages(post: HomePost): string[] {
     }
   }
 
-  if (
-    list.length === 0 &&
-    post.image_url &&
-    post.image_url.trim()
-  ) {
+  if (list.length === 0 && post.image_url?.trim()) {
     list.push(post.image_url.trim());
   }
 
@@ -262,14 +244,10 @@ function readLocalCaptionMap(): LocalCaptionMap {
   if (typeof window === "undefined") return {};
 
   try {
-    const raw = window.localStorage.getItem(
-      LOCAL_CAPTIONS_STORAGE_KEY
-    );
-
+    const raw = window.localStorage.getItem(LOCAL_CAPTIONS_STORAGE_KEY);
     if (!raw) return {};
 
     const parsed = JSON.parse(raw);
-
     return parsed && typeof parsed === "object" ? parsed : {};
   } catch {
     return {};
@@ -289,9 +267,7 @@ function getPostImageCaptions(
         ? post.image_captions[idx].trim()
         : "";
 
-    if (dbCaption) return dbCaption;
-
-    return (localMap[url] || "").trim();
+    return dbCaption || (localMap[url] || "").trim();
   });
 }
 
@@ -375,7 +351,6 @@ export default function Home() {
 
     async function loadHomeData() {
       setLoadingPosts(true);
-
       await syncActiveUser();
 
       const { data, error } = await supabase
@@ -417,9 +392,7 @@ export default function Home() {
     const {
       data: { subscription },
     } = supabase.auth.onAuthStateChange(() => {
-      if (active) {
-        syncActiveUser();
-      }
+      if (active) syncActiveUser();
     });
 
     return () => {
@@ -435,10 +408,7 @@ export default function Home() {
     setCurrentUserName(null);
   }
 
-  function handleFocusImageComment(
-    postId: string,
-    imageIndex: number
-  ) {
+  function handleFocusImageComment(postId: string, imageIndex: number) {
     setFocusTarget((prev) => ({
       postId,
       imageIndex,
@@ -451,8 +421,7 @@ export default function Home() {
   const sideFeedPosts = posts.slice(2, 5);
 
   const featuredImages = featuredPost ? getPostImages(featuredPost) : [];
-  const featuredLeadImage =
-    featuredImages[0] || HERO_NETWORK_IMG_SRC;
+  const featuredLeadImage = featuredImages[0] || HERO_NETWORK_IMG_SRC;
 
   return (
     <main className="home-page">
@@ -480,7 +449,6 @@ export default function Home() {
           <a href="#community-posts">Community</a>
           <a href="#business">Business</a>
           <a href="#about">More</a>
-
           <Link className="nav-button" href="/business-feed">
             Business Feed →
           </Link>
@@ -492,7 +460,6 @@ export default function Home() {
               <span className="nav-account-badge">
                 ● {currentUserName}
               </span>
-
               <button
                 type="button"
                 className="nav-ghost-btn"
@@ -534,7 +501,6 @@ export default function Home() {
             <a className="primary-button" href="#platform">
               Explore Platform →
             </a>
-
             <Link className="secondary-button" href="/business-feed">
               Watch Overview
             </Link>
@@ -625,7 +591,7 @@ export default function Home() {
         </div>
 
         <div className="module-grid">
-          {modules.map((module, index) => (
+          {modules.map((module) => (
             <Link
               href={module.href}
               className={`module-card module-card-link module-card-${module.icon}`}
@@ -637,21 +603,26 @@ export default function Home() {
                   <ModuleIcon name={module.icon} />
                 </span>
 
-                <span className="module-index">
-                  {String(index + 1).padStart(2, "0")}
+                <span className="module-icon-decoration" aria-hidden="true">
+                  <ModuleIcon name={module.icon} />
+                </span>
+
+                <span className="module-card-tag">
+                  <span className="module-tag-dot" />
+                  V-NECT
                 </span>
               </div>
 
-              <span className="module-label">{module.label}</span>
+              <div className="module-card-content">
+                <span className="module-label">{module.label}</span>
+                <h3>{module.name}</h3>
+                <p>{module.description}</p>
+              </div>
 
-              <h3>{module.name}</h3>
-
-              <p>{module.description}</p>
-
-              <span className="module-card-footer">
+              <div className="module-card-footer">
                 <span>Explore feature</span>
                 <span className="module-arrow">↗</span>
-              </span>
+              </div>
             </Link>
           ))}
         </div>
@@ -661,14 +632,10 @@ export default function Home() {
         <div className="home-posts-inner">
           <div className="home-posts-header">
             <div className="home-posts-heading-copy">
-              <span className="home-posts-kicker">
-                ✦ LIVE COMMUNITY
-              </span>
-
+              <span className="home-posts-kicker">✦ LIVE COMMUNITY</span>
               <h2>
                 Latest Posts <span>&amp; Discussion</span>
               </h2>
-
               <p>
                 Explore business insights, join the conversation, and be part
                 of our growing community.
@@ -690,7 +657,6 @@ export default function Home() {
               <div className="empty-icon">✦</div>
               <h3>Be the first to share.</h3>
               <p>Published business updates will appear here.</p>
-
               <Link href="/business-feed" className="primary-button">
                 View Full Feed →
               </Link>
@@ -707,12 +673,8 @@ export default function Home() {
                   <div className="hub-featured-scrim" />
 
                   <div className="hub-featured-content">
-                    <span className="hub-featured-pill">
-                      ★ Featured
-                    </span>
-
+                    <span className="hub-featured-pill">★ Featured</span>
                     <h3>{formatCleanPostTitle(featuredPost.title)}</h3>
-
                     <p>
                       {cleanPostContentForDisplay(featuredPost) ||
                         "Connecting companies, professionals, and communities across v-nect."}
@@ -728,149 +690,160 @@ export default function Home() {
                 </article>
               )}
 
-              {spotlightPost && (() => {
-                const postImages = getPostImages(spotlightPost);
-                const postImageCaptions = getPostImageCaptions(
-                  spotlightPost,
-                  postImages
-                );
-                const videoUrl = extractVideoUrlFromPost(spotlightPost);
-                const videoCaption = extractVideoCaptionFromPost(spotlightPost);
-                const displayContent = cleanPostContentForDisplay(spotlightPost);
-                const displayTitle = formatCleanPostTitle(spotlightPost.title);
-                const isFocusedPost = focusTarget?.postId === spotlightPost.id;
+              {spotlightPost &&
+                (() => {
+                  const postImages = getPostImages(spotlightPost);
+                  const postImageCaptions = getPostImageCaptions(
+                    spotlightPost,
+                    postImages
+                  );
+                  const videoUrl = extractVideoUrlFromPost(spotlightPost);
+                  const videoCaption =
+                    extractVideoCaptionFromPost(spotlightPost);
+                  const displayContent =
+                    cleanPostContentForDisplay(spotlightPost);
+                  const displayTitle =
+                    formatCleanPostTitle(spotlightPost.title);
+                  const isFocusedPost =
+                    focusTarget?.postId === spotlightPost.id;
 
-                return (
-                  <article className="hub-spotlight-card">
-                    <div className="home-post-top">
-                      <div className="home-company-info">
-                        {spotlightPost.companies?.logo_url ? (
-                          <img
-                            src={spotlightPost.companies.logo_url}
-                            alt={
-                              spotlightPost.companies.company_name || "Company"
-                            }
-                          />
-                        ) : (
-                          <div className="home-company-avatar">
-                            {spotlightPost.companies?.company_name
-                              ?.charAt(0)
-                              .toUpperCase() || "V"}
+                  return (
+                    <article className="hub-spotlight-card">
+                      <div className="home-post-top">
+                        <div className="home-company-info">
+                          {spotlightPost.companies?.logo_url ? (
+                            <img
+                              src={spotlightPost.companies.logo_url}
+                              alt={
+                                spotlightPost.companies.company_name ||
+                                "Company"
+                              }
+                            />
+                          ) : (
+                            <div className="home-company-avatar">
+                              {spotlightPost.companies?.company_name
+                                ?.charAt(0)
+                                .toUpperCase() || "V"}
+                            </div>
+                          )}
+
+                          <div>
+                            <strong>
+                              {spotlightPost.companies?.company_name ||
+                                "v-nect Official"}{" "}
+                              <span className="verified-check">✓</span>
+                            </strong>
+                            <small>
+                              {formatDate(spotlightPost.created_at)}
+                            </small>
+                          </div>
+                        </div>
+
+                        <span className="home-post-badge">
+                          {categoryLabels[spotlightPost.post_type] ||
+                            spotlightPost.post_type ||
+                            "Business"}
+                        </span>
+                      </div>
+
+                      <div className="home-post-body">
+                        <h3>{displayTitle}</h3>
+                        {displayContent && <p>{displayContent}</p>}
+
+                        {videoUrl && (
+                          <div className="home-video-box">
+                            <video
+                              src={videoUrl}
+                              controls
+                              playsInline
+                              preload="metadata"
+                              className="home-video-player"
+                            />
+                            <div className="home-video-footer">
+                              <span className="home-video-caption">
+                                {videoCaption || "Video Clip"}
+                              </span>
+                              <a
+                                href={videoUrl}
+                                target="_blank"
+                                rel="noreferrer"
+                              >
+                                Open Video ↗
+                              </a>
+                            </div>
                           </div>
                         )}
 
-                        <div>
-                          <strong>
-                            {spotlightPost.companies?.company_name ||
-                              "v-nect Official"}{" "}
-                            <span className="verified-check">✓</span>
-                          </strong>
-                          <small>{formatDate(spotlightPost.created_at)}</small>
-                        </div>
+                        {postImages.length > 0 && (
+                          <div
+                            className={
+                              postImages.length === 1
+                                ? "home-images-grid single"
+                                : "home-images-grid multi"
+                            }
+                          >
+                            {postImages.map((imgUrl, idx) => {
+                              const captionText =
+                                postImageCaptions[idx] || "";
+
+                              return (
+                                <div
+                                  className="home-image-card"
+                                  key={`${spotlightPost.id}-spot-img-${idx}`}
+                                >
+                                  <img
+                                    src={imgUrl}
+                                    alt={`${displayTitle} (${idx + 1})`}
+                                    loading="lazy"
+                                  />
+                                  <div className="home-image-bar">
+                                    <span className="home-image-caption">
+                                      {captionText || `Image ${idx + 1}`}
+                                    </span>
+                                    <button
+                                      type="button"
+                                      className="home-image-comment-btn"
+                                      onClick={() =>
+                                        handleFocusImageComment(
+                                          spotlightPost.id,
+                                          idx
+                                        )
+                                      }
+                                      title={`Comment on ${
+                                        captionText || `Image ${idx + 1}`
+                                      }`}
+                                    >
+                                      💬
+                                    </button>
+                                  </div>
+                                </div>
+                              );
+                            })}
+                          </div>
+                        )}
                       </div>
 
-                      <span className="home-post-badge">
-                        {categoryLabels[spotlightPost.post_type] ||
-                          spotlightPost.post_type ||
-                          "Business"}
-                      </span>
-                    </div>
-
-                    <div className="home-post-body">
-                      <h3>{displayTitle}</h3>
-                      {displayContent && <p>{displayContent}</p>}
-
-                      {videoUrl && (
-                        <div className="home-video-box">
-                          <video
-                            src={videoUrl}
-                            controls
-                            playsInline
-                            preload="metadata"
-                            className="home-video-player"
-                          />
-                          <div className="home-video-footer">
-                            <span className="home-video-caption">
-                              {videoCaption || "Video Clip"}
-                            </span>
-                            <a
-                              href={videoUrl}
-                              target="_blank"
-                              rel="noreferrer"
-                            >
-                              Open Video ↗
-                            </a>
-                          </div>
-                        </div>
-                      )}
-
-                      {postImages.length > 0 && (
-                        <div
-                          className={
-                            postImages.length === 1
-                              ? "home-images-grid single"
-                              : "home-images-grid multi"
-                          }
-                        >
-                          {postImages.map((imgUrl, idx) => {
-                            const captionText = postImageCaptions[idx] || "";
-
-                            return (
-                              <div
-                                className="home-image-card"
-                                key={`${spotlightPost.id}-spot-img-${idx}`}
-                              >
-                                <img
-                                  src={imgUrl}
-                                  alt={`${displayTitle} (${idx + 1})`}
-                                  loading="lazy"
-                                />
-                                <div className="home-image-bar">
-                                  <span className="home-image-caption">
-                                    {captionText || `Image ${idx + 1}`}
-                                  </span>
-                                  <button
-                                    type="button"
-                                    className="home-image-comment-btn"
-                                    onClick={() =>
-                                      handleFocusImageComment(
-                                        spotlightPost.id,
-                                        idx
-                                      )
-                                    }
-                                    title={`Comment on ${
-                                      captionText || `Image ${idx + 1}`
-                                    }`}
-                                  >
-                                    💬
-                                  </button>
-                                </div>
-                              </div>
-                            );
-                          })}
-                        </div>
-                      )}
-                    </div>
-
-                    <PostThreadComments
-                      supabase={supabase}
-                      postId={spotlightPost.id}
-                      currentUserId={currentUserId}
-                      currentUserName={currentUserName}
-                      imageLabels={postImages.map(
-                        (_, idx) =>
-                          postImageCaptions[idx] || `Image ${idx + 1}`
-                      )}
-                      focusedImageIndex={
-                        isFocusedPost ? focusTarget?.imageIndex ?? null : null
-                      }
-                      focusTrigger={
-                        isFocusedPost ? focusTarget?.trigger ?? 0 : 0
-                      }
-                    />
-                  </article>
-                );
-              })()}
+                      <PostThreadComments
+                        supabase={supabase}
+                        postId={spotlightPost.id}
+                        currentUserId={currentUserId}
+                        currentUserName={currentUserName}
+                        imageLabels={postImages.map(
+                          (_, idx) =>
+                            postImageCaptions[idx] || `Image ${idx + 1}`
+                        )}
+                        focusedImageIndex={
+                          isFocusedPost
+                            ? focusTarget?.imageIndex ?? null
+                            : null
+                        }
+                        focusTrigger={
+                          isFocusedPost ? focusTarget?.trigger ?? 0 : 0
+                        }
+                      />
+                    </article>
+                  );
+                })()}
 
               <aside className="hub-side-stack">
                 {sideFeedPosts.map((item, idx) => {
@@ -955,20 +928,20 @@ export default function Home() {
       <style jsx>{`
         .home-page {
           min-height: 100vh;
-          background:
-            radial-gradient(circle at 78% 14%, rgba(78, 108, 255, 0.34), transparent 36%),
-            radial-gradient(circle at 22% 28%, rgba(28, 63, 184, 0.28), transparent 42%),
-            linear-gradient(180deg, #060b24 0%, #091338 52%, #060b24 100%);
           color: #f3f7ff;
           font-family: var(--font-sans), Arial, sans-serif;
+          background:
+            radial-gradient(circle at 78% 14%, rgba(78,108,255,.3), transparent 36%),
+            radial-gradient(circle at 22% 28%, rgba(28,63,184,.24), transparent 42%),
+            linear-gradient(180deg, #060b24 0%, #091338 52%, #060b24 100%);
         }
 
         .navbar {
           min-height: 72px;
           padding: 10px 6%;
-          background: rgba(6, 11, 34, 0.88);
-          backdrop-filter: blur(14px);
-          border-bottom: 1px solid rgba(138, 165, 255, 0.14);
+          background: rgba(6,11,34,.88);
+          backdrop-filter: blur(16px);
+          border-bottom: 1px solid rgba(138,165,255,.14);
           display: flex;
           align-items: center;
           justify-content: space-between;
@@ -988,8 +961,8 @@ export default function Home() {
         }
 
         .logo-mark-wrap {
-          width: 34px;
-          height: 34px;
+          width: 36px;
+          height: 36px;
           display: grid;
           place-items: center;
           overflow: hidden;
@@ -1008,15 +981,16 @@ export default function Home() {
         }
 
         .logo-main {
-          font-size: 20px;
-          font-weight: 800;
-          letter-spacing: 0.3px;
+          font-size: 21px;
+          font-weight: 850;
+          letter-spacing: .3px;
           white-space: nowrap;
           line-height: 1.05;
         }
 
-        .logo-main span {
-          color: #7da6ff;
+        .logo-main span,
+        .footer-logo span {
+          color: #8ab4ff;
         }
 
         .logo small {
@@ -1024,7 +998,7 @@ export default function Home() {
           font-weight: 700;
           letter-spacing: 1.2px;
           color: #9cb0d9;
-          margin-top: 3px;
+          margin-top: 4px;
           white-space: nowrap;
         }
 
@@ -1037,14 +1011,24 @@ export default function Home() {
         .navbar nav a {
           color: #d9e4ff;
           text-decoration: none;
-          font-size: 13.5px;
+          font-size: 13px;
           font-weight: 600;
           white-space: nowrap;
-          transition: color 0.2s ease;
+          transition: color .2s ease;
         }
 
         .navbar nav a:hover {
           color: #8ab4ff;
+        }
+
+        .navbar nav a.nav-button {
+          background: linear-gradient(110deg, #4b6bff, #7854ff);
+          color: #fff;
+          padding: 10px 16px;
+          border-radius: 11px;
+          font-size: 12px;
+          font-weight: 750;
+          box-shadow: 0 7px 20px rgba(75,107,255,.22);
         }
 
         .nav-right-actions {
@@ -1055,10 +1039,10 @@ export default function Home() {
         }
 
         .nav-account-badge {
-          padding: 7px 12px;
+          padding: 8px 12px;
           border-radius: 999px;
-          background: rgba(91, 124, 255, 0.18);
-          border: 1px solid rgba(138, 165, 255, 0.42);
+          background: rgba(91,124,255,.18);
+          border: 1px solid rgba(138,165,255,.42);
           color: #b7ccff;
           font-size: 12px;
           font-weight: 700;
@@ -1066,50 +1050,43 @@ export default function Home() {
         }
 
         .nav-ghost-btn {
-          background: rgba(255, 255, 255, 0.06);
-          border: 1px solid rgba(154, 178, 255, 0.28);
+          background: rgba(255,255,255,.06);
+          border: 1px solid rgba(154,178,255,.28);
           color: #eef3ff;
-          padding: 8px 14px;
+          padding: 9px 14px;
           border-radius: 10px;
-          font-size: 12.5px;
+          font-size: 12px;
           font-weight: 700;
           cursor: pointer;
           white-space: nowrap;
+          transition: .2s ease;
         }
 
         .nav-ghost-btn:hover {
           border-color: #8ab4ff;
-          background: rgba(138, 180, 255, 0.14);
+          background: rgba(138,180,255,.14);
         }
 
-        .navbar nav a.nav-button {
-          background: linear-gradient(110deg, #4b6bff, #7854ff);
-          color: #fff;
-          padding: 9px 15px;
-          border-radius: 10px;
-          font-size: 12.5px;
-          font-weight: 700;
-          white-space: nowrap;
-        }
+        /* HERO */
 
         .hero {
           max-width: 1220px;
           margin: 0 auto;
-          padding: 46px 24px 36px;
+          padding: 52px 24px 42px;
           display: grid;
-          grid-template-columns: minmax(0, 1fr) minmax(0, 1.25fr);
-          gap: 28px;
+          grid-template-columns: minmax(0,1fr) minmax(0,1.25fr);
+          gap: 30px;
           align-items: center;
         }
 
         .eyebrow {
           display: inline-flex;
           align-items: center;
-          gap: 7px;
+          gap: 8px;
           color: #a4c3ff;
-          background: rgba(52, 79, 196, 0.24);
-          border: 1px solid rgba(136, 166, 255, 0.28);
-          padding: 4px 10px;
+          background: rgba(52,79,196,.24);
+          border: 1px solid rgba(136,166,255,.28);
+          padding: 7px 12px;
           border-radius: 999px;
           font-size: 10px;
           font-weight: 800;
@@ -1117,29 +1094,34 @@ export default function Home() {
         }
 
         .eyebrow-dot {
-          width: 6px;
-          height: 6px;
+          width: 7px;
+          height: 7px;
           border-radius: 50%;
           background: #5eead4;
+          box-shadow: 0 0 10px #5eead4;
         }
 
         .hero h1 {
-          font-size: clamp(38px, 4.4vw, 54px);
-          font-weight: 800;
+          font-size: clamp(38px,4.4vw,58px);
+          font-weight: 850;
           line-height: 1.08;
-          letter-spacing: -0.8px;
-          margin: 14px 0 12px;
-          color: #ffffff;
+          letter-spacing: -1.4px;
+          margin: 17px 0 14px;
+          color: #fff;
         }
 
         .hero h1 span {
-          color: #7da6ff;
+          display: block;
+          background: linear-gradient(100deg,#8bb4ff,#a99aff 55%,#5eead4);
+          background-clip: text;
+          -webkit-background-clip: text;
+          color: transparent;
         }
 
         .hero p {
           color: #c2d1f0;
-          font-size: 15.5px;
-          line-height: 1.68;
+          font-size: 15px;
+          line-height: 1.75;
           max-width: 530px;
           margin: 0;
         }
@@ -1148,7 +1130,7 @@ export default function Home() {
           display: flex;
           align-items: center;
           gap: 12px;
-          margin-top: 22px;
+          margin-top: 25px;
           flex-wrap: wrap;
         }
 
@@ -1157,20 +1139,20 @@ export default function Home() {
           display: inline-flex;
           align-items: center;
           justify-content: center;
-          padding: 10px 18px;
-          border-radius: 10px;
+          padding: 11px 18px;
+          border-radius: 11px;
           font-size: 13px;
-          font-weight: 700;
+          font-weight: 750;
           text-decoration: none;
-          transition: transform 0.2s ease, background 0.2s ease;
+          transition: transform .2s ease, background .2s ease;
         }
 
         .primary-button {
-          background: linear-gradient(110deg, #4b6bff, #7357ff);
+          background: linear-gradient(110deg,#4b6bff,#7357ff);
           color: #fff;
           border: none;
           cursor: pointer;
-          box-shadow: 0 10px 24px rgba(75, 107, 255, 0.35);
+          box-shadow: 0 10px 24px rgba(75,107,255,.35);
         }
 
         .primary-button:hover {
@@ -1178,45 +1160,45 @@ export default function Home() {
         }
 
         .secondary-button {
-          background: rgba(16, 29, 78, 0.72);
-          border: 1px solid rgba(145, 173, 255, 0.34);
+          background: rgba(16,29,78,.72);
+          border: 1px solid rgba(145,173,255,.34);
           color: #e6eeff;
         }
 
         .secondary-button:hover {
-          background: rgba(34, 57, 134, 0.78);
+          background: rgba(34,57,134,.78);
         }
 
         .hero-stats-strip {
           display: flex;
           align-items: center;
-          gap: 26px;
+          gap: 28px;
           flex-wrap: wrap;
-          margin-top: 24px;
-          padding-top: 18px;
-          border-top: 1px solid rgba(145, 173, 255, 0.16);
+          margin-top: 27px;
+          padding-top: 19px;
+          border-top: 1px solid rgba(145,173,255,.16);
         }
 
         .hero-stat-item {
           display: flex;
           flex-direction: column;
-          gap: 2px;
+          gap: 3px;
         }
 
         .hero-stat-item strong {
-          font-size: 19px;
-          font-weight: 800;
-          color: #ffffff;
+          font-size: 20px;
+          font-weight: 850;
+          color: #fff;
         }
 
         .hero-stat-item span {
-          font-size: 11.5px;
+          font-size: 11px;
           color: #9cb2dc;
         }
 
         .hero-visual {
           position: relative;
-          min-height: 370px;
+          min-height: 380px;
           width: 100%;
           display: grid;
           place-items: center;
@@ -1228,12 +1210,7 @@ export default function Home() {
           width: 420px;
           height: 280px;
           border-radius: 999px;
-          background: radial-gradient(
-            circle,
-            rgba(88, 124, 255, 0.34),
-            rgba(19, 200, 181, 0.16) 55%,
-            transparent 80%
-          );
+          background: radial-gradient(circle,rgba(88,124,255,.34),rgba(19,200,181,.16) 55%,transparent 80%);
           filter: blur(26px);
           pointer-events: none;
         }
@@ -1248,7 +1225,7 @@ export default function Home() {
         }
 
         .connector-base {
-          stroke: rgba(145, 173, 255, 0.24);
+          stroke: rgba(145,173,255,.24);
           stroke-width: 1.4;
           stroke-linecap: round;
         }
@@ -1257,11 +1234,11 @@ export default function Home() {
           stroke-width: 2.2;
           stroke-linecap: round;
           stroke-dasharray: 10 14;
-          filter: drop-shadow(0 0 6px rgba(114, 154, 255, 0.65));
+          filter: drop-shadow(0 0 6px rgba(114,154,255,.65));
           animation: voinFlowDash 2.2s linear infinite;
         }
 
-        .pulse-two { animation-delay: -0.55s; }
+        .pulse-two { animation-delay: -.55s; }
         .pulse-three { animation-delay: -1.1s; }
         .pulse-four { animation-delay: -1.65s; }
 
@@ -1269,7 +1246,7 @@ export default function Home() {
           fill: #8bb4ff;
           transform-box: fill-box;
           transform-origin: center;
-          filter: drop-shadow(0 0 7px rgba(114, 154, 255, 0.85));
+          filter: drop-shadow(0 0 7px rgba(114,154,255,.85));
           animation: voinNodePulse 2.4s ease-in-out infinite;
         }
 
@@ -1279,14 +1256,8 @@ export default function Home() {
         }
 
         @keyframes voinNodePulse {
-          0%, 100% {
-            opacity: 0.65;
-            transform: scale(0.95);
-          }
-          50% {
-            opacity: 1;
-            transform: scale(1.22);
-          }
+          0%,100% { opacity: .65; transform: scale(.95); }
+          50% { opacity: 1; transform: scale(1.22); }
         }
 
         .hero-network-img {
@@ -1296,19 +1267,19 @@ export default function Home() {
           max-width: 580px;
           max-height: 340px;
           object-fit: contain;
-          filter: drop-shadow(0 14px 32px rgba(59, 99, 246, 0.28));
+          filter: drop-shadow(0 14px 32px rgba(59,99,246,.28));
         }
 
         .orbit-label {
           position: absolute;
           z-index: 3;
-          font-size: 10.5px;
+          font-size: 10px;
           font-weight: 800;
-          letter-spacing: 1.2px;
+          letter-spacing: 1.1px;
           color: #b7ceff;
-          background: rgba(13, 25, 68, 0.92);
-          border: 1px solid rgba(138, 165, 255, 0.36);
-          padding: 5px 11px;
+          background: rgba(13,25,68,.92);
+          border: 1px solid rgba(138,165,255,.36);
+          padding: 6px 11px;
           border-radius: 999px;
         }
 
@@ -1317,12 +1288,12 @@ export default function Home() {
         .label-three { bottom: 10px; left: 3%; }
         .label-four { bottom: 10px; right: 3%; }
 
-        /* ECOSYSTEM */
+        /* ECOSYSTEM SECTION */
 
         .platform-section {
           max-width: 1220px;
           margin: 0 auto;
-          padding: 20px 24px 58px;
+          padding: 24px 24px 64px;
         }
 
         .section-top-bar {
@@ -1331,7 +1302,7 @@ export default function Home() {
           justify-content: space-between;
           gap: 18px;
           flex-wrap: wrap;
-          margin-bottom: 25px;
+          margin-bottom: 27px;
         }
 
         .section-bar-tag {
@@ -1339,24 +1310,24 @@ export default function Home() {
           align-items: center;
           gap: 8px;
           color: #eef3ff;
-          font-size: 14.5px;
-          font-weight: 700;
+          font-size: 14px;
+          font-weight: 750;
         }
 
         .section-bar-tag::before {
           content: "";
           width: 3px;
-          height: 16px;
+          height: 17px;
           border-radius: 999px;
-          background: linear-gradient(180deg, #5f85ff, #13c8b5);
+          background: linear-gradient(180deg,#5f85ff,#13c8b5);
         }
 
         .ecosystem-heading {
-          color: #ffffff;
-          font-size: clamp(22px, 2.8vw, 30px);
-          font-weight: 800;
-          letter-spacing: -0.5px;
-          margin: 12px 0 5px;
+          color: #fff;
+          font-size: clamp(23px,2.8vw,32px);
+          font-weight: 850;
+          letter-spacing: -.7px;
+          margin: 12px 0 6px;
         }
 
         .ecosystem-subtitle {
@@ -1368,194 +1339,289 @@ export default function Home() {
         .section-top-link {
           color: #9cb8ff;
           font-size: 12px;
-          font-weight: 600;
+          font-weight: 700;
           text-decoration: none;
           padding-bottom: 4px;
         }
 
         .section-top-link:hover {
-          color: #ffffff;
+          color: #fff;
         }
+
+        /* PREMIUM FEATURE CARDS */
 
         .module-grid {
           display: grid;
-          grid-template-columns: repeat(3, minmax(0, 1fr));
-          gap: 18px;
+          grid-template-columns: repeat(3,minmax(0,1fr));
+          gap: 19px;
+          width: 100%;
         }
 
         .module-card {
-          --module-accent: #75a5ff;
+          --module-accent: #63d8ff;
+          --module-glow: rgba(99,216,255,.18);
+
           position: relative;
+          isolation: isolate;
           min-width: 0;
-          min-height: 218px;
+          min-height: 242px;
           overflow: hidden;
-          background:
-            radial-gradient(
-              circle at 90% 10%,
-              rgba(91, 125, 255, 0.18),
-              transparent 42%
-            ),
-            linear-gradient(
-              145deg,
-              rgba(25, 45, 108, 0.94),
-              rgba(9, 20, 58, 0.98)
-            );
-          border: 1px solid rgba(145, 173, 255, 0.2);
-          border-radius: 20px;
-          padding: 22px 21px 17px;
           display: flex;
           flex-direction: column;
-          align-items: flex-start;
-          color: inherit;
+          padding: 23px;
+          color: #fff;
           text-decoration: none;
+
+          background:
+            radial-gradient(circle at 90% 5%,var(--module-glow),transparent 43%),
+            linear-gradient(145deg,#17294b 0%,#101d37 55%,#0b1428 100%);
+
+          border: 1px solid rgba(148,184,255,.16);
+          border-radius: 23px;
+
+          box-shadow:
+            0 10px 30px rgba(0,0,0,.14),
+            inset 0 1px 0 rgba(255,255,255,.035);
+
           transition:
-            transform 0.25s ease,
-            border-color 0.25s ease,
-            box-shadow 0.25s ease,
-            background 0.25s ease;
+            transform .3s ease,
+            border-color .3s ease,
+            box-shadow .3s ease;
         }
 
         .module-card::before {
           content: "";
           position: absolute;
-          width: 150px;
-          height: 150px;
-          right: -65px;
-          top: -75px;
+          z-index: -1;
+          width: 190px;
+          height: 190px;
+          top: -95px;
+          right: -75px;
           border-radius: 50%;
           background: var(--module-accent);
-          opacity: 0.08;
-          filter: blur(28px);
-          transition: opacity 0.25s ease;
+          opacity: .13;
+          filter: blur(40px);
+          transition: opacity .3s ease;
+        }
+
+        .module-card::after {
+          content: "";
+          position: absolute;
+          z-index: -1;
+          width: 140px;
+          height: 140px;
+          bottom: -80px;
+          right: -55px;
+          border-radius: 50%;
+          background: var(--module-accent);
+          opacity: .07;
+          filter: blur(35px);
           pointer-events: none;
         }
 
         .module-card:hover {
-          transform: translateY(-6px);
+          transform: translateY(-7px);
           border-color: var(--module-accent);
-          box-shadow: 0 16px 34px rgba(38, 88, 200, 0.2);
+          box-shadow:
+            0 18px 42px var(--module-glow),
+            0 5px 18px rgba(0,0,0,.2);
         }
 
         .module-card:hover::before {
-          opacity: 0.2;
+          opacity: .24;
         }
 
-        .module-card-chat { --module-accent: #5ed9ff; }
-        .module-card-video { --module-accent: #9b91ff; }
-        .module-card-hub { --module-accent: #6fe4cf; }
-        .module-card-feed { --module-accent: #70aaff; }
-        .module-card-circle { --module-accent: #ff9bc7; }
-        .module-card-market { --module-accent: #ffc879; }
+        .module-card-chat {
+          --module-accent: #43dcff;
+          --module-glow: rgba(67,220,255,.2);
+        }
+
+        .module-card-video {
+          --module-accent: #b69aff;
+          --module-glow: rgba(182,154,255,.2);
+        }
+
+        .module-card-hub {
+          --module-accent: #54e5c0;
+          --module-glow: rgba(84,229,192,.2);
+        }
+
+        .module-card-feed {
+          --module-accent: #77aaff;
+          --module-glow: rgba(119,170,255,.2);
+        }
+
+        .module-card-circle {
+          --module-accent: #ff9bc9;
+          --module-glow: rgba(255,155,201,.2);
+        }
+
+        .module-card-market {
+          --module-accent: #ffc878;
+          --module-glow: rgba(255,200,120,.2);
+        }
 
         .module-card-top {
-          width: 100%;
+          position: relative;
           display: flex;
           align-items: center;
           justify-content: space-between;
-          margin-bottom: 17px;
+          min-height: 65px;
+          margin-bottom: 22px;
         }
 
         .module-icon-badge {
-          width: 58px;
-          height: 58px;
-          border-radius: 17px;
+          position: relative;
+          z-index: 2;
+          width: 59px;
+          height: 59px;
+          flex-shrink: 0;
           display: grid;
           place-items: center;
           color: var(--module-accent);
+
           background: linear-gradient(
             145deg,
-            rgba(255, 255, 255, 0.13),
-            rgba(255, 255, 255, 0.035)
+            rgba(255,255,255,.18),
+            rgba(255,255,255,.035)
           );
-          border: 1px solid rgba(255, 255, 255, 0.14);
+
+          border: 1px solid rgba(255,255,255,.2);
+          border-radius: 19px;
+
           box-shadow:
-            0 8px 20px rgba(0, 0, 0, 0.16),
-            inset 0 1px 0 rgba(255, 255, 255, 0.1);
-          transition: transform 0.25s ease;
+            0 8px 24px var(--module-glow),
+            inset 0 1px 0 rgba(255,255,255,.15);
+
+          transition: transform .3s ease, box-shadow .3s ease;
+        }
+
+        .module-icon-badge svg {
+          width: 29px;
+          height: 29px;
+          stroke-width: 1.8;
+          filter: drop-shadow(0 0 6px var(--module-glow));
         }
 
         .module-card:hover .module-icon-badge {
-          transform: translateY(-3px) scale(1.04);
+          transform: translateY(-3px) rotate(-5deg) scale(1.08);
+          box-shadow:
+            0 12px 28px var(--module-glow),
+            inset 0 1px 0 rgba(255,255,255,.2);
         }
 
-        .module-index {
-          color: rgba(180, 201, 255, 0.48);
-          font-size: 12px;
+        .module-icon-decoration {
+          position: absolute;
+          right: 5px;
+          top: -12px;
+          color: var(--module-accent);
+          opacity: .11;
+          pointer-events: none;
+        }
+
+        .module-icon-decoration svg {
+          width: 82px;
+          height: 82px;
+          stroke-width: 1.15;
+        }
+
+        .module-card-tag {
+          position: relative;
+          z-index: 2;
+          display: flex;
+          align-items: center;
+          gap: 7px;
+          padding: 7px 10px;
+          color: #aebed9;
+          background: rgba(255,255,255,.045);
+          border: 1px solid rgba(255,255,255,.09);
+          border-radius: 30px;
+          font-size: 8px;
           font-weight: 800;
           letter-spacing: 1px;
         }
 
+        .module-tag-dot {
+          width: 6px;
+          height: 6px;
+          flex-shrink: 0;
+          background: var(--module-accent);
+          border-radius: 50%;
+          box-shadow: 0 0 9px var(--module-accent);
+        }
+
+        .module-card-content {
+          position: relative;
+          z-index: 2;
+        }
+
         .module-label {
+          display: block;
+          margin-bottom: 8px;
           color: var(--module-accent);
           font-size: 9px;
           font-weight: 800;
-          letter-spacing: 1.3px;
+          letter-spacing: 1.35px;
           text-transform: uppercase;
-          margin-bottom: 7px;
         }
 
         .module-card h3 {
-          position: relative;
-          margin: 0 0 7px;
-          font-size: 17px;
+          margin: 0 0 9px;
+          color: #fff;
+          font-size: 19px;
           font-weight: 800;
-          color: #ffffff;
+          line-height: 1.3;
           overflow-wrap: anywhere;
         }
 
         .module-card p {
-          position: relative;
           margin: 0;
-          color: #a9bce2;
+          color: #b4c3dc;
           font-size: 12px;
-          line-height: 1.55;
+          line-height: 1.7;
         }
 
         .module-card-footer {
-          width: 100%;
+          position: relative;
+          z-index: 2;
           display: flex;
           align-items: center;
           justify-content: space-between;
+          width: 100%;
           margin-top: auto;
-          padding-top: 18px;
-          color: #a8c2ff;
+          padding-top: 22px;
+          color: var(--module-accent);
           font-size: 11px;
-          font-weight: 700;
+          font-weight: 750;
         }
 
         .module-arrow {
-          width: 27px;
-          height: 27px;
+          width: 32px;
+          height: 32px;
           display: grid;
           place-items: center;
+          color: var(--module-accent);
+          background: var(--module-glow);
+          border: 1px solid rgba(255,255,255,.1);
           border-radius: 50%;
-          background: rgba(119, 153, 255, 0.13);
-          color: #c4d7ff;
-          font-size: 15px;
-          transition:
-            transform 0.25s ease,
-            background 0.25s ease;
+          font-size: 17px;
+          transition: transform .3s ease, background .3s ease;
         }
 
         .module-card:hover .module-arrow {
-          transform: translate(3px, -3px);
-          background: rgba(119, 153, 255, 0.28);
+          transform: translate(3px,-3px);
+          background: var(--module-glow);
         }
 
         /* LATEST POSTS */
 
         .home-posts-section {
           position: relative;
-          background: linear-gradient(
-            180deg,
-            #eef2fb 0%,
-            #e8eefb 62%,
-            #dfe7f8 100%
-          );
+          background: linear-gradient(180deg,#eef2fb 0%,#e8eefb 62%,#dfe7f8 100%);
           color: #131c36;
-          padding: 44px 24px 42px;
+          padding: 48px 24px 44px;
           border-radius: 26px 26px 0 0;
-          box-shadow: 0 -16px 40px rgba(4, 9, 28, 0.35);
+          box-shadow: 0 -16px 40px rgba(4,9,28,.35);
         }
 
         .home-posts-inner {
@@ -1569,7 +1635,7 @@ export default function Home() {
           align-items: flex-start;
           gap: 20px;
           flex-wrap: wrap;
-          margin-bottom: 22px;
+          margin-bottom: 24px;
         }
 
         .home-posts-heading-copy {
@@ -1578,19 +1644,19 @@ export default function Home() {
 
         .home-posts-kicker {
           color: #4b5ce6;
-          font-size: 10.5px;
-          font-weight: 800;
+          font-size: 10px;
+          font-weight: 850;
           letter-spacing: 1.5px;
           display: inline-block;
         }
 
         .home-posts-header h2 {
           color: #0e1733;
-          font-size: clamp(28px, 3.4vw, 38px);
-          font-weight: 800;
-          letter-spacing: -0.7px;
+          font-size: clamp(28px,3.4vw,39px);
+          font-weight: 850;
+          letter-spacing: -.8px;
           line-height: 1.15;
-          margin: 6px 0;
+          margin: 7px 0;
         }
 
         .home-posts-header h2 span {
@@ -1599,8 +1665,8 @@ export default function Home() {
 
         .home-posts-header p {
           color: #526080;
-          font-size: 13.5px;
-          line-height: 1.65;
+          font-size: 13px;
+          line-height: 1.7;
           margin: 0;
         }
 
@@ -1609,26 +1675,26 @@ export default function Home() {
           align-items: center;
           gap: 8px;
           color: #1a264a;
-          font-size: 12.5px;
-          font-weight: 700;
+          font-size: 12px;
+          font-weight: 750;
           text-decoration: none;
-          padding: 9px 15px;
-          background: #ffffff;
+          padding: 10px 15px;
+          background: #fff;
           border: 1px solid #cfd8ee;
-          border-radius: 10px;
+          border-radius: 11px;
           white-space: nowrap;
-          box-shadow: 0 4px 12px rgba(18, 30, 74, 0.06);
-          transition: transform 0.2s ease, border-color 0.2s ease;
+          box-shadow: 0 4px 12px rgba(18,30,74,.06);
+          transition: transform .2s ease, border-color .2s ease;
         }
 
         .view-all-link:hover {
           border-color: #4f63ff;
-          transform: translateY(-1px);
+          transform: translateY(-2px);
         }
 
         .hub-bento-grid {
           display: grid;
-          grid-template-columns: minmax(0, 1.05fr) minmax(0, 1.15fr) minmax(0, 1fr);
+          grid-template-columns: minmax(0,1.05fr) minmax(0,1.15fr) minmax(0,1fr);
           gap: 18px;
           align-items: start;
         }
@@ -1640,7 +1706,7 @@ export default function Home() {
           overflow: hidden;
           background: #0d1a40;
           border: 1px solid #d2dcf0;
-          box-shadow: 0 12px 28px rgba(17, 29, 69, 0.12);
+          box-shadow: 0 12px 28px rgba(17,29,69,.12);
           display: flex;
           flex-direction: column;
           justify-content: flex-end;
@@ -1659,9 +1725,9 @@ export default function Home() {
           inset: 0;
           background: linear-gradient(
             180deg,
-            rgba(8, 16, 44, 0.25) 0%,
-            rgba(8, 16, 44, 0.72) 55%,
-            rgba(7, 13, 36, 0.94) 100%
+            rgba(8,16,44,.25) 0%,
+            rgba(8,16,44,.72) 55%,
+            rgba(7,13,36,.94) 100%
           );
         }
 
@@ -1669,18 +1735,18 @@ export default function Home() {
           position: relative;
           z-index: 2;
           padding: 20px;
-          color: #ffffff;
+          color: #fff;
         }
 
         .hub-featured-pill {
           display: inline-flex;
           align-items: center;
           gap: 5px;
-          background: rgba(114, 92, 255, 0.92);
-          color: #ffffff;
+          background: rgba(114,92,255,.92);
+          color: #fff;
           font-size: 11px;
-          font-weight: 700;
-          padding: 4px 10px;
+          font-weight: 750;
+          padding: 5px 10px;
           border-radius: 999px;
           margin-bottom: 12px;
         }
@@ -1688,16 +1754,16 @@ export default function Home() {
         .hub-featured-content h3 {
           margin: 0 0 8px;
           font-size: 22px;
-          font-weight: 800;
+          font-weight: 850;
           line-height: 1.25;
-          color: #ffffff;
+          color: #fff;
           overflow-wrap: anywhere;
         }
 
         .hub-featured-content p {
           margin: 0 0 14px;
-          font-size: 12.5px;
-          line-height: 1.55;
+          font-size: 12px;
+          line-height: 1.6;
           color: #d6e0f7;
           display: -webkit-box;
           -webkit-line-clamp: 2;
@@ -1710,29 +1776,29 @@ export default function Home() {
           align-items: center;
           gap: 7px;
           font-size: 12px;
-          font-weight: 700;
+          font-weight: 750;
           color: #eef3ff;
         }
 
         .hub-mini-mark {
-          width: 20px;
-          height: 20px;
+          width: 21px;
+          height: 21px;
           border-radius: 6px;
-          background: linear-gradient(135deg, #4b6bff, #13c8b5);
+          background: linear-gradient(135deg,#4b6bff,#13c8b5);
           color: #fff;
           font-size: 11px;
-          font-weight: 800;
+          font-weight: 850;
           display: grid;
           place-items: center;
         }
 
         .hub-spotlight-card {
           min-width: 0;
-          background: #ffffff;
+          background: #fff;
           border: 1px solid #d8e1f3;
           border-radius: 18px;
           padding: 18px;
-          box-shadow: 0 10px 24px rgba(17, 29, 69, 0.07);
+          box-shadow: 0 10px 24px rgba(17,29,69,.07);
           color: #15203d;
         }
 
@@ -1757,7 +1823,7 @@ export default function Home() {
         .home-company-avatar {
           width: 38px;
           height: 38px;
-          border-radius: 999px;
+          border-radius: 50%;
           object-fit: cover;
           flex-shrink: 0;
         }
@@ -1765,7 +1831,7 @@ export default function Home() {
         .home-company-avatar {
           display: grid;
           place-items: center;
-          background: linear-gradient(135deg, #1b2f6e, #4f63ff);
+          background: linear-gradient(135deg,#1b2f6e,#4f63ff);
           color: #fff;
           font-size: 14px;
           font-weight: 800;
@@ -1777,7 +1843,7 @@ export default function Home() {
           gap: 4px;
           color: #111b38;
           font-size: 13px;
-          font-weight: 700;
+          font-weight: 750;
         }
 
         .verified-check {
@@ -1785,7 +1851,7 @@ export default function Home() {
           place-items: center;
           width: 15px;
           height: 15px;
-          border-radius: 999px;
+          border-radius: 50%;
           background: #3b82f6;
           color: #fff;
           font-size: 9px;
@@ -1802,10 +1868,10 @@ export default function Home() {
           background: #eef2ff;
           color: #3b5bdb;
           border: 1px solid #d4ddff;
-          padding: 4px 10px;
+          padding: 5px 10px;
           border-radius: 8px;
-          font-size: 11px;
-          font-weight: 700;
+          font-size: 10px;
+          font-weight: 750;
         }
 
         .home-post-body {
@@ -1815,8 +1881,8 @@ export default function Home() {
         .home-post-body h3 {
           margin: 0 0 8px;
           font-size: 17px;
-          font-weight: 800;
-          line-height: 1.38;
+          font-weight: 850;
+          line-height: 1.4;
           color: #101935;
           overflow-wrap: anywhere;
         }
@@ -1824,8 +1890,8 @@ export default function Home() {
         .home-post-body p {
           margin: 0;
           color: #4d5b7a;
-          font-size: 12.5px;
-          line-height: 1.65;
+          font-size: 12px;
+          line-height: 1.7;
           white-space: pre-wrap;
           overflow-wrap: anywhere;
         }
@@ -1850,11 +1916,11 @@ export default function Home() {
           align-items: center;
           justify-content: space-between;
           gap: 10px;
-          padding: 8px 12px;
+          padding: 9px 12px;
           background: #14224a;
           color: #eef3ff;
-          font-size: 11.5px;
-          font-weight: 600;
+          font-size: 11px;
+          font-weight: 650;
         }
 
         .home-video-caption {
@@ -1865,7 +1931,7 @@ export default function Home() {
           color: #8ab4ff;
           text-decoration: none;
           font-size: 11px;
-          font-weight: 700;
+          font-weight: 750;
           flex-shrink: 0;
         }
 
@@ -1880,7 +1946,7 @@ export default function Home() {
         }
 
         .home-images-grid.multi {
-          grid-template-columns: repeat(2, minmax(0, 1fr));
+          grid-template-columns: repeat(2,minmax(0,1fr));
         }
 
         .home-image-card {
@@ -1903,7 +1969,7 @@ export default function Home() {
           align-items: center;
           justify-content: space-between;
           gap: 8px;
-          padding: 6px 10px;
+          padding: 7px 10px;
           background: #f8faff;
           color: #263457;
           border-top: 1px solid #e4eaf7;
@@ -1917,10 +1983,10 @@ export default function Home() {
 
         .home-image-comment-btn {
           border: 1px solid #cfd8ee;
-          background: #ffffff;
+          background: #fff;
           color: #1b284d;
-          border-radius: 6px;
-          padding: 3px 8px;
+          border-radius: 7px;
+          padding: 4px 8px;
           font-size: 12px;
           cursor: pointer;
           flex-shrink: 0;
@@ -1941,14 +2007,14 @@ export default function Home() {
           display: flex;
           align-items: center;
           gap: 12px;
-          background: #ffffff;
+          background: #fff;
           border: 1px solid #d8e1f3;
           border-radius: 14px;
           padding: 10px 12px;
           text-decoration: none;
           color: #131d38;
-          box-shadow: 0 6px 18px rgba(17, 29, 69, 0.05);
-          transition: transform 0.2s ease, border-color 0.2s ease;
+          box-shadow: 0 6px 18px rgba(17,29,69,.05);
+          transition: transform .2s ease, border-color .2s ease;
         }
 
         .hub-side-item:hover {
@@ -1973,8 +2039,8 @@ export default function Home() {
         .hub-side-body h4 {
           margin: 0 0 6px;
           font-size: 13px;
-          font-weight: 700;
-          line-height: 1.35;
+          font-weight: 750;
+          line-height: 1.4;
           color: #121c38;
           display: -webkit-box;
           -webkit-line-clamp: 2;
@@ -1990,15 +2056,15 @@ export default function Home() {
         }
 
         .hub-side-time {
-          font-size: 10.5px;
+          font-size: 10px;
           color: #687694;
-          font-weight: 600;
+          font-weight: 650;
         }
 
         .hub-side-tag {
           font-size: 10px;
-          font-weight: 700;
-          padding: 2px 8px;
+          font-weight: 750;
+          padding: 3px 8px;
           border-radius: 6px;
           background: #e9f7ef;
           color: #1f7a4c;
@@ -2006,24 +2072,24 @@ export default function Home() {
 
         .hub-side-chevron {
           color: #8a97b5;
-          font-size: 18px;
+          font-size: 19px;
           font-weight: 700;
           flex-shrink: 0;
         }
 
         .join-cta-banner {
-          margin-top: 24px;
-          background: linear-gradient(110deg, #1b2d7a, #3c349c 60%, #1c3d82);
-          border: 1px solid rgba(138, 165, 255, 0.35);
+          margin-top: 25px;
+          background: linear-gradient(110deg,#1b2d7a,#3c349c 60%,#1c3d82);
+          border: 1px solid rgba(138,165,255,.35);
           border-radius: 18px;
-          padding: 20px 26px;
+          padding: 21px 26px;
           display: flex;
           align-items: center;
           justify-content: space-between;
           gap: 16px;
           flex-wrap: wrap;
-          color: #ffffff;
-          box-shadow: 0 12px 28px rgba(14, 24, 66, 0.16);
+          color: #fff;
+          box-shadow: 0 12px 28px rgba(14,24,66,.16);
         }
 
         .join-cta-left {
@@ -2033,10 +2099,10 @@ export default function Home() {
         }
 
         .join-cta-icon {
-          width: 44px;
-          height: 44px;
-          border-radius: 12px;
-          background: rgba(255, 255, 255, 0.14);
+          width: 46px;
+          height: 46px;
+          border-radius: 13px;
+          background: rgba(255,255,255,.14);
           display: grid;
           place-items: center;
           font-size: 20px;
@@ -2044,31 +2110,36 @@ export default function Home() {
         }
 
         .join-cta-banner h3 {
-          margin: 0 0 3px;
+          margin: 0 0 4px;
           font-size: 18px;
-          font-weight: 800;
-          color: #ffffff;
+          font-weight: 850;
+          color: #fff;
         }
 
         .join-cta-banner p {
           margin: 0;
-          font-size: 12.5px;
+          font-size: 12px;
           color: #cdd8f8;
         }
 
         .join-cta-btn {
-          background: linear-gradient(110deg, #5677ff, #7c58ff);
-          color: #ffffff;
+          background: linear-gradient(110deg,#5677ff,#7c58ff);
+          color: #fff;
           text-decoration: none;
-          font-size: 13px;
-          font-weight: 700;
-          padding: 10px 18px;
+          font-size: 12px;
+          font-weight: 750;
+          padding: 11px 18px;
           border-radius: 10px;
           white-space: nowrap;
+          transition: transform .2s ease;
+        }
+
+        .join-cta-btn:hover {
+          transform: translateY(-2px);
         }
 
         .home-posts-empty {
-          background: #ffffff;
+          background: #fff;
           border: 1px solid #d8e1f3;
           border-radius: 16px;
           padding: 38px 24px;
@@ -2096,10 +2167,10 @@ export default function Home() {
           width: 28px;
           height: 28px;
           margin: 0 auto 12px;
-          border: 3px solid rgba(79, 99, 255, 0.2);
+          border: 3px solid rgba(79,99,255,.2);
           border-top-color: #4f63ff;
           border-radius: 50%;
-          animation: loadingSpin 0.8s linear infinite;
+          animation: loadingSpin .8s linear infinite;
         }
 
         @keyframes loadingSpin {
@@ -2108,42 +2179,39 @@ export default function Home() {
 
         .footer {
           text-align: center;
-          padding: 28px 20px;
+          padding: 30px 20px;
           background: #050a20;
           color: #96a8d0;
-          border-top: 1px solid rgba(138, 165, 255, 0.14);
+          border-top: 1px solid rgba(138,165,255,.14);
         }
 
         .footer-logo {
           color: #fff;
-          font-size: 22px;
-          font-weight: 800;
-          letter-spacing: 0.4px;
-        }
-
-        .footer-logo span {
-          color: #8ab4ff;
+          font-size: 23px;
+          font-weight: 850;
+          letter-spacing: .4px;
         }
 
         .footer p {
-          margin: 6px 0 4px;
-          font-size: 13.5px;
+          margin: 7px 0 5px;
+          font-size: 13px;
           color: #d9e4ff;
         }
 
         .footer small {
-          font-size: 11.5px;
+          font-size: 11px;
         }
 
         /* RESPONSIVE */
 
         @media (max-width: 1024px) {
-          .module-grid {
-            grid-template-columns: repeat(3, minmax(0, 1fr));
-          }
-
           .hub-bento-grid {
             grid-template-columns: 1fr;
+          }
+
+          .hub-side-stack {
+            display: grid;
+            grid-template-columns: repeat(2,minmax(0,1fr));
           }
         }
 
@@ -2155,24 +2223,48 @@ export default function Home() {
 
           .hero {
             grid-template-columns: 1fr;
-            padding-top: 34px;
+            padding-top: 36px;
+          }
+
+          .hero-content {
+            text-align: center;
+          }
+
+          .hero-content > p {
+            margin-left: auto;
+            margin-right: auto;
+          }
+
+          .hero-actions,
+          .hero-stats-strip {
+            justify-content: center;
+          }
+
+          .hero-visual {
+            min-height: 340px;
           }
         }
 
         @media (max-width: 600px) {
           .module-grid {
-            grid-template-columns: repeat(2, minmax(0, 1fr));
+            grid-template-columns: repeat(2,minmax(0,1fr));
             gap: 12px;
           }
 
           .module-card {
-            min-height: 205px;
-            padding: 17px 13px 14px;
+            min-height: 225px;
+            padding: 16px;
+            border-radius: 18px;
+          }
+
+          .module-card-top {
+            min-height: 52px;
+            margin-bottom: 17px;
           }
 
           .module-icon-badge {
-            width: 50px;
-            height: 50px;
+            width: 49px;
+            height: 49px;
             border-radius: 15px;
           }
 
@@ -2181,16 +2273,38 @@ export default function Home() {
             height: 25px;
           }
 
+          .module-icon-decoration svg {
+            width: 60px;
+            height: 60px;
+          }
+
+          .module-card-tag {
+            padding: 6px 7px;
+            font-size: 7px;
+            letter-spacing: .5px;
+          }
+
+          .module-label {
+            font-size: 8px;
+            letter-spacing: .8px;
+          }
+
           .module-card h3 {
-            font-size: 14px;
+            font-size: 15px;
           }
 
           .module-card p {
             font-size: 11px;
           }
 
-          .module-label {
-            font-size: 8px;
+          .module-card-footer {
+            padding-top: 17px;
+            font-size: 10px;
+          }
+
+          .module-arrow {
+            width: 28px;
+            height: 28px;
           }
         }
 
@@ -2206,7 +2320,7 @@ export default function Home() {
           }
 
           .navbar nav a {
-            font-size: 12px;
+            font-size: 11px;
           }
 
           .nav-right-actions {
@@ -2214,8 +2328,30 @@ export default function Home() {
             justify-content: center;
           }
 
+          .hero {
+            padding: 32px 17px 30px;
+          }
+
+          .hero h1 {
+            font-size: 39px;
+          }
+
+          .hero p {
+            font-size: 13px;
+          }
+
           .hero-visual {
             min-height: 265px;
+          }
+
+          .hero-ambient-glow {
+            width: 280px;
+            height: 210px;
+          }
+
+          .orbit-label {
+            font-size: 8px;
+            padding: 5px 8px;
           }
 
           .platform-section {
@@ -2226,23 +2362,59 @@ export default function Home() {
             align-items: flex-start;
           }
 
+          .ecosystem-heading {
+            font-size: 24px;
+          }
+
           .home-posts-section {
-            padding: 36px 14px 36px;
+            padding: 36px 14px;
             border-radius: 20px 20px 0 0;
           }
 
+          .home-posts-header h2 {
+            font-size: 28px;
+          }
+
+          .hub-side-stack {
+            grid-template-columns: 1fr;
+          }
+
+          .hub-featured-card {
+            min-height: 300px;
+          }
+
+          .hub-spotlight-card {
+            padding: 14px;
+          }
+
           .home-images-grid.multi {
-            grid-template-columns: repeat(2, minmax(0, 1fr));
+            grid-template-columns: repeat(2,minmax(0,1fr));
           }
 
           .join-cta-banner {
             padding: 18px 16px;
           }
+
+          .join-cta-left {
+            align-items: flex-start;
+          }
         }
 
-        @media (max-width: 360px) {
+        @media (max-width: 380px) {
           .module-grid {
             grid-template-columns: 1fr;
+          }
+
+          .module-card {
+            min-height: 205px;
+          }
+
+          .hero-stats-strip {
+            gap: 18px;
+          }
+
+          .hero-stat-item strong {
+            font-size: 17px;
           }
         }
 
@@ -2250,9 +2422,9 @@ export default function Home() {
           .home-page *,
           .home-page *::before,
           .home-page *::after {
-            animation-duration: 0.01ms !important;
+            animation-duration: .01ms !important;
             animation-iteration-count: 1 !important;
-            transition-duration: 0.01ms !important;
+            transition-duration: .01ms !important;
           }
         }
       `}</style>
