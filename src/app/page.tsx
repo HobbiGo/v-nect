@@ -291,11 +291,73 @@ export default function Home() {
 
         <div className="hero-visual">
           <div className="hero-ambient-glow" />
+
+          <svg
+            className="hero-connector-svg"
+            viewBox="0 0 600 400"
+            preserveAspectRatio="none"
+            aria-hidden="true"
+          >
+            <defs>
+              <linearGradient id="voinBeamGrad" x1="0%" y1="0%" x2="100%" y2="100%">
+                <stop offset="0%" stopColor="#347cf0" stopOpacity="0.85" />
+                <stop offset="100%" stopColor="#13c8b5" stopOpacity="0.95" />
+              </linearGradient>
+            </defs>
+
+            {/* Garis dasar tipis */}
+            <line x1="68" y1="42" x2="255" y2="165" className="connector-base" />
+            <line x1="532" y1="42" x2="345" y2="165" className="connector-base" />
+            <line x1="78" y1="358" x2="258" y2="236" className="connector-base" />
+            <line x1="532" y1="358" x2="342" y2="236" className="connector-base" />
+
+            {/* Garis sinyal bergerak */}
+            <line
+              x1="68"
+              y1="42"
+              x2="255"
+              y2="165"
+              stroke="url(#voinBeamGrad)"
+              className="connector-pulse pulse-one"
+            />
+            <line
+              x1="532"
+              y1="42"
+              x2="345"
+              y2="165"
+              stroke="url(#voinBeamGrad)"
+              className="connector-pulse pulse-two"
+            />
+            <line
+              x1="78"
+              y1="358"
+              x2="258"
+              y2="236"
+              stroke="url(#voinBeamGrad)"
+              className="connector-pulse pulse-three"
+            />
+            <line
+              x1="532"
+              y1="358"
+              x2="342"
+              y2="236"
+              stroke="url(#voinBeamGrad)"
+              className="connector-pulse pulse-four"
+            />
+
+            {/* Titik simpul di dekat bola jaringan */}
+            <circle cx="255" cy="165" r="4" className="connector-node" />
+            <circle cx="345" cy="165" r="4" className="connector-node" />
+            <circle cx="258" cy="236" r="4" className="connector-node" />
+            <circle cx="342" cy="236" r="4" className="connector-node" />
+          </svg>
+
           <img
             src={HERO_NETWORK_IMG_SRC}
             alt="VOINNECT Global Business Network"
             className="hero-network-img"
           />
+
           <div className="orbit-label label-one">BUSINESS</div>
           <div className="orbit-label label-two">CONNECT</div>
           <div className="orbit-label label-three">COMMUNITY</div>
@@ -704,6 +766,69 @@ export default function Home() {
           z-index: 1;
         }
 
+        .hero-connector-svg {
+          position: absolute;
+          inset: 0;
+          width: 100%;
+          height: 100%;
+          z-index: 2;
+          pointer-events: none;
+          overflow: visible;
+        }
+
+        .connector-base {
+          stroke: rgba(126, 232, 220, 0.2);
+          stroke-width: 1.4;
+          stroke-linecap: round;
+        }
+
+        .connector-pulse {
+          stroke-width: 2.2;
+          stroke-linecap: round;
+          stroke-dasharray: 10 14;
+          filter: drop-shadow(0 0 6px rgba(19, 200, 181, 0.55));
+          animation: voinFlowDash 2.2s linear infinite;
+        }
+
+        .pulse-two {
+          animation-delay: -0.55s;
+        }
+
+        .pulse-three {
+          animation-delay: -1.1s;
+        }
+
+        .pulse-four {
+          animation-delay: -1.65s;
+        }
+
+        .connector-node {
+          fill: #7ee8dc;
+          filter: drop-shadow(0 0 7px rgba(19, 200, 181, 0.85));
+          animation: voinNodePulse 2.4s ease-in-out infinite;
+        }
+
+        @keyframes voinFlowDash {
+          from {
+            stroke-dashoffset: 0;
+          }
+          to {
+            stroke-dashoffset: -48;
+          }
+        }
+
+        @keyframes voinNodePulse {
+          0%,
+          100% {
+            opacity: 0.65;
+            transform: scale(0.95);
+          }
+          50% {
+            opacity: 1;
+            transform: scale(1.22);
+          }
+        }
+
         .hero-network-img {
           position: relative;
           z-index: 2;
@@ -723,8 +848,9 @@ export default function Home() {
           font-weight: 800;
           letter-spacing: 1.4px;
           color: #7ee8dc;
-          background: rgba(13, 33, 58, 0.9);
-          border: 1px solid rgba(126, 232, 220, 0.28);
+          background: rgba(13, 33, 58, 0.94);
+          border: 1px solid rgba(126, 232, 220, 0.35);
+          box-shadow: 0 0 14px rgba(19, 200, 181, 0.16);
           padding: 5px 10px;
           border-radius: 999px;
         }
