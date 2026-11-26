@@ -40,6 +40,17 @@ type HubIdentityNote = {
   focusAreas: string;
 };
 
+type WorkspaceCardItem = {
+  id: string;
+  badge: string;
+  title: string;
+  description: string;
+  ctaLabel: string;
+  href?: string;
+  scrollTargetId?: string;
+  accent: string;
+};
+
 const HUB_NOTE_STORAGE_KEY = "v-nect_v_hub_identity_v1";
 const FOLLOWS_STORAGE_KEY = "v-nect_v_hub_follows_v1";
 
@@ -51,7 +62,7 @@ const DEFAULT_PERSONAL_PROFILES: FollowEntity[] = [
     entityType: "personal",
     subtitle: "Co-Founder & Product Lead · Personal Profile",
     destinationHref: "/v-circle",
-    destinationLabel: "Connect in Circle →",
+    destinationLabel: "Connect in Circle ->",
   },
   {
     id: "personal-james",
@@ -60,7 +71,7 @@ const DEFAULT_PERSONAL_PROFILES: FollowEntity[] = [
     entityType: "personal",
     subtitle: "Head of Strategic Partnerships · Personal Profile",
     destinationHref: "/v-circle",
-    destinationLabel: "Connect in Circle →",
+    destinationLabel: "Connect in Circle ->",
   },
   {
     id: "personal-noah",
@@ -69,7 +80,90 @@ const DEFAULT_PERSONAL_PROFILES: FollowEntity[] = [
     entityType: "personal",
     subtitle: "Full-Stack Platform Engineer · Personal Profile",
     destinationHref: "/v-circle",
-    destinationLabel: "Connect in Circle →",
+    destinationLabel: "Connect in Circle ->",
+  },
+];
+
+const WORKSPACE_CARDS: WorkspaceCardItem[] = [
+  {
+    id: "ws-companies",
+    badge: "05 · NETWORK",
+    title: "Explore Companies",
+    description:
+      "Discover active businesses, compare industries, and reach out to partner companies in v-circle.",
+    ctaLabel: "Check now",
+    href: "/v-circle",
+    accent: "linear-gradient(135deg, #12355b, #1a6d7c)",
+  },
+  {
+    id: "ws-partners",
+    badge: "05 · CONNECTIONS",
+    title: "Find Partners & Leads",
+    description:
+      "Connect with founders, decision-makers, and regional collaborators across the v-nect network.",
+    ctaLabel: "Find now",
+    href: "/v-circle",
+    accent: "linear-gradient(135deg, #1b2c59, #2b5876)",
+  },
+  {
+    id: "ws-dataroom",
+    badge: "03 · WORKSPACE",
+    title: "My Hub & Positioning",
+    description:
+      "Manage your hub headline, positioning summary, core focus areas, and recent session activity.",
+    ctaLabel: "Get In",
+    scrollTargetId: "hub-positioning-section",
+    accent: "linear-gradient(135deg, #103b49, #197278)",
+  },
+  {
+    id: "ws-market",
+    badge: "06 · COMMERCE",
+    title: "Market & Suppliers",
+    description:
+      "Browse products, services, and verified suppliers, inspect media, comment, and request info.",
+    ctaLabel: "Open Market",
+    href: "/v-market",
+    accent: "linear-gradient(135deg, #18365e, #2563eb)",
+  },
+  {
+    id: "ws-launch",
+    badge: "04 · BUSINESS FEED",
+    title: "Publish Updates & Launches",
+    description:
+      "Share product launches, promo videos, and company updates directly to the business feed.",
+    ctaLabel: "Create Post",
+    href: "/business-feed",
+    accent: "linear-gradient(135deg, #114357, #13bcae)",
+  },
+  {
+    id: "ws-company",
+    badge: "COMPANY PROFILE",
+    title: "Manage Company Profile",
+    description:
+      "Configure company identity, linked workspace mode, and active business details.",
+    ctaLabel: "Manage Now",
+    href: "/company",
+    accent: "linear-gradient(135deg, #1e293b, #0f766e)",
+  },
+  {
+    id: "ws-activity",
+    badge: "LIVE TIMELINE",
+    title: "Business & Feed Activity",
+    description:
+      "Track published business posts, follow updates, and recent actions in one timeline.",
+    ctaLabel: "View Activity",
+    scrollTargetId: "hub-activity-section",
+    accent: "linear-gradient(135deg, #16324f, #1d4ed8)",
+  },
+  {
+    id: "ws-outreach",
+    badge: "FOLLOW & CONNECT",
+    title: "Client & Profile Outreach",
+    description:
+      "Follow personal profiles or companies and jump straight into their connected workspace.",
+    ctaLabel: "Start Outreach",
+    scrollTargetId: "hub-follow-section",
+    accent: "linear-gradient(135deg, #0f2942, #0d9488)",
   },
 ];
 
@@ -87,6 +181,7 @@ export default function VHubPage() {
   const [dbSyncActive, setDbSyncActive] = useState(false);
   const [savingIdentity, setSavingIdentity] = useState(false);
 
+  const [platformSearch, setPlatformSearch] = useState("");
   const [followedIds, setFollowedIds] = useState<string[]>(["personal-sophia"]);
   const [followFilter, setFollowFilter] = useState<"all" | "company" | "personal">("all");
   const [activityLog, setActivityLog] = useState<string[]>([
@@ -134,6 +229,13 @@ export default function VHubPage() {
       minute: "2-digit",
     });
     setActivityLog((prev) => [`[${timeStr}] ${text}`, ...prev.slice(0, 7)]);
+  }
+
+  function scrollToSection(sectionId: string) {
+    const el = document.getElementById(sectionId);
+    if (el) {
+      el.scrollIntoView({ behavior: "smooth", block: "start" });
+    }
   }
 
   async function loadUserIdentityFromDb(uid: string) {
@@ -312,7 +414,7 @@ export default function VHubPage() {
         pushActivity(`Memperbarui headline v-hub: "${identityNote.headline.trim()}"`);
       } else {
         setSavedNotice(
-          "Tersimpan secara lokal — jalankan SQL tabel v_hub_identities di Supabase agar tersimpan di DB."
+          "Tersimpan secara lokal — pastikan tabel v_hub_identities sudah aktif di Supabase."
         );
         pushActivity("Menyimpan ringkasan v-hub secara lokal.");
       }
@@ -324,6 +426,16 @@ export default function VHubPage() {
     pushActivity("Menyimpan ringkasan v-hub secara lokal.");
   }
 
+  const profileCompletion = useMemo(() => {
+    let score = 20;
+    if (currentUserId) score += 20;
+    if (identityNote.headline.trim().length > 3) score += 20;
+    if (identityNote.summary.trim().length > 10) score += 20;
+    if (identityNote.focusAreas.trim().length > 3) score += 10;
+    if (activeCompany) score += 10;
+    return Math.min(100, score);
+  }, [currentUserId, identityNote, activeCompany]);
+
   const followableEntities = useMemo<FollowEntity[]>(() => {
     const companyEntities: FollowEntity[] = allCompanies.map((c) => ({
       id: `company-${c.id}`,
@@ -332,16 +444,37 @@ export default function VHubPage() {
       entityType: "company",
       subtitle: `${c.industry || "Company"} · ${c.location || "v-nect Business"}`,
       destinationHref: "/business-feed",
-      destinationLabel: "Masuk ke Feed →",
+      destinationLabel: "Masuk ke Feed ->",
     }));
 
     return [...companyEntities, ...DEFAULT_PERSONAL_PROFILES];
   }, [allCompanies]);
 
   const filteredFollowables = useMemo(() => {
-    if (followFilter === "all") return followableEntities;
-    return followableEntities.filter((item) => item.entityType === followFilter);
-  }, [followableEntities, followFilter]);
+    const q = platformSearch.trim().toLowerCase();
+    return followableEntities.filter((item) => {
+      if (followFilter !== "all" && item.entityType !== followFilter) {
+        return false;
+      }
+      if (!q) return true;
+      return (
+        item.name.toLowerCase().includes(q) ||
+        item.handle.toLowerCase().includes(q) ||
+        item.subtitle.toLowerCase().includes(q)
+      );
+    });
+  }, [followableEntities, followFilter, platformSearch]);
+
+  const filteredWorkspaceCards = useMemo(() => {
+    const q = platformSearch.trim().toLowerCase();
+    if (!q) return WORKSPACE_CARDS;
+    return WORKSPACE_CARDS.filter(
+      (c) =>
+        c.title.toLowerCase().includes(q) ||
+        c.description.toLowerCase().includes(q) ||
+        c.badge.toLowerCase().includes(q)
+    );
+  }, [platformSearch]);
 
   async function toggleFollowEntity(entity: FollowEntity) {
     const isFollowing = followedIds.includes(entity.id);
@@ -358,7 +491,9 @@ export default function VHubPage() {
 
     if (isFollowing) {
       setSavedNotice(`Berhenti mengikuti ${entity.name}.`);
-      pushActivity(`Unfollow ${entity.entityType === "company" ? "company" : "profil"} ${entity.name}.`);
+      pushActivity(
+        `Unfollow ${entity.entityType === "company" ? "company" : "profil"} ${entity.name}.`
+      );
       if (currentUserId) {
         await supabase
           .from("v_follows")
@@ -370,7 +505,9 @@ export default function VHubPage() {
     }
 
     setSavedNotice(`Sekarang mengikuti ${entity.name}.`);
-    pushActivity(`Follow ${entity.entityType === "company" ? "company" : "profil"} ${entity.name}.`);
+    pushActivity(
+      `Follow ${entity.entityType === "company" ? "company" : "profil"} ${entity.name}.`
+    );
     if (currentUserId) {
       await supabase.from("v_follows").upsert(
         {
@@ -390,7 +527,7 @@ export default function VHubPage() {
         <div className="hub-nav-left">
           <Link href="/" className="hub-brand">
             v<span>-nect</span>
-            <small>V-HUB IDENTITY</small>
+            <small>V-HUB WORKSPACE</small>
           </Link>
 
           <nav className="hub-nav-links">
@@ -402,6 +539,14 @@ export default function VHubPage() {
         </div>
 
         <div className="hub-nav-right">
+          <input
+            type="search"
+            value={platformSearch}
+            onChange={(e) => setPlatformSearch(e.target.value)}
+            placeholder="Platform Search (workspace, company, profile)..."
+            className="hub-search-box"
+          />
+
           {currentUserName ? (
             <>
               <span className="hub-user-pill">● {currentUserName}</span>
@@ -422,24 +567,29 @@ export default function VHubPage() {
       </header>
 
       <section className="hub-container">
-        <div className="hub-hero">
+        <div className="hub-welcome-bar">
           <div>
-            <span className="hub-eyebrow">MODULE 03 · IDENTITY &amp; WORKSPACE HUB</span>
+            <span className="hub-eyebrow">MODULE 03 · CENTRAL WORKSPACE DASHBOARD</span>
             <h1>
-              v-<span>hub.</span>
+              Hello {currentUserName || "Zefyron"}, <span>v-hub.</span>
             </h1>
             <p>
-              Build and manage your personal and company identity, follow profiles or companies, monitor activity, and jump straight into client workspaces.
+              Complete your profile to connect better with your network and jump straight into key client &amp; business modules.
             </p>
           </div>
 
-          <div className="hub-hero-actions">
-            <Link href="/company" className="hub-btn-primary">
-              Manage Company →
-            </Link>
-            <Link href="/business-feed" className="hub-btn-secondary">
-              Open Business Feed
-            </Link>
+          <div className="hub-completion-box">
+            <div className="hub-completion-top">
+              <span>Profile</span>
+              <strong>{profileCompletion}%</strong>
+              <small>completed</small>
+            </div>
+            <div className="hub-progress-track">
+              <div
+                className="hub-progress-fill"
+                style={{ width: `${profileCompletion}%` }}
+              />
+            </div>
           </div>
         </div>
 
@@ -452,7 +602,50 @@ export default function VHubPage() {
           </div>
         )}
 
-        <div className="hub-grid">
+        <section className="hub-section">
+          <div className="hub-section-head">
+            <div>
+              <span className="hub-eyebrow">QUICK WORKSPACE ACTIONS</span>
+              <h2>Connect to Key Modules &amp; Client Spaces</h2>
+            </div>
+          </div>
+
+          <div className="hub-ws-grid">
+            {filteredWorkspaceCards.map((card) => (
+              <article className="hub-ws-card" key={card.id}>
+                <div
+                  className="hub-ws-thumb"
+                  style={{ background: card.accent }}
+                >
+                  <span className="hub-ws-badge">{card.badge}</span>
+                </div>
+                <div className="hub-ws-body">
+                  <h3>{card.title}</h3>
+                  <p>{card.description}</p>
+                  <div className="hub-ws-foot">
+                    {card.href ? (
+                      <Link href={card.href} className="hub-btn-primary">
+                        {card.ctaLabel}
+                      </Link>
+                    ) : (
+                      <button
+                        type="button"
+                        className="hub-btn-primary"
+                        onClick={() =>
+                          card.scrollTargetId && scrollToSection(card.scrollTargetId)
+                        }
+                      >
+                        {card.ctaLabel}
+                      </button>
+                    )}
+                  </div>
+                </div>
+              </article>
+            ))}
+          </div>
+        </section>
+
+        <div id="hub-positioning-section" className="hub-grid">
           <div className="hub-card">
             <span className="hub-eyebrow">ACTIVE IDENTITY</span>
             <h2>Account &amp; Profile Status</h2>
@@ -554,7 +747,7 @@ export default function VHubPage() {
           </div>
         </div>
 
-        <section className="hub-section">
+        <section id="hub-follow-section" className="hub-section">
           <div className="hub-section-head">
             <div>
               <span className="hub-eyebrow">PERSONAL &amp; COMPANY FOLLOW DIRECTORY</span>
@@ -617,14 +810,14 @@ export default function VHubPage() {
           </div>
         </section>
 
-        <section className="hub-section">
+        <section id="hub-activity-section" className="hub-section">
           <div className="hub-section-head">
             <div>
               <span className="hub-eyebrow">LIVE ACTIVITY &amp; FEED UPDATES</span>
               <h2>Recent Ecosystem Activity</h2>
             </div>
             <Link href="/business-feed" className="hub-connect-link">
-              Lihat Semua Post di Feed →
+              Lihat Semua Post di Feed -&gt;
             </Link>
           </div>
 
@@ -661,35 +854,6 @@ export default function VHubPage() {
             </div>
           </div>
         </section>
-
-        <section className="hub-section">
-          <div className="hub-section-head">
-            <div>
-              <span className="hub-eyebrow">ECOSYSTEM SHORTCUTS</span>
-              <h2>Connected Modules</h2>
-            </div>
-          </div>
-
-          <div className="hub-shortcuts-grid">
-            <Link href="/business-feed" className="hub-shortcut-card">
-              <span>04 · FEED</span>
-              <h3>v-business feed</h3>
-              <p>Publish updates, multi-image posts, and video clips.</p>
-            </Link>
-
-            <Link href="/v-circle" className="hub-shortcut-card">
-              <span>05 · NETWORK</span>
-              <h3>v-circle</h3>
-              <p>Grow professional connections and join curated circles.</p>
-            </Link>
-
-            <Link href="/v-market" className="hub-shortcut-card">
-              <span>06 · COMMERCE</span>
-              <h3>v-market</h3>
-              <p>Explore products, services, and verified suppliers.</p>
-            </Link>
-          </div>
-        </section>
       </section>
 
       <footer className="hub-footer">
@@ -717,7 +881,7 @@ export default function VHubPage() {
 
         .hub-navbar {
           min-height: 74px;
-          padding: 12px 7%;
+          padding: 12px 6%;
           background: #07111f;
           border-bottom: 1px solid rgba(255, 255, 255, 0.08);
           display: flex;
@@ -731,7 +895,7 @@ export default function VHubPage() {
         .hub-nav-right {
           display: flex;
           align-items: center;
-          gap: 18px;
+          gap: 14px;
           flex-wrap: wrap;
         }
 
@@ -746,7 +910,7 @@ export default function VHubPage() {
         }
 
         .hub-brand span,
-        .hub-hero h1 span {
+        .hub-welcome-bar h1 span {
           color: #13c8b5;
         }
 
@@ -760,19 +924,31 @@ export default function VHubPage() {
         .hub-nav-links {
           display: flex;
           align-items: center;
-          gap: 16px;
+          gap: 14px;
           flex-wrap: wrap;
         }
 
         .hub-nav-links a {
           color: #d2deed;
           text-decoration: none;
-          font-size: 14px;
+          font-size: 13px;
           font-weight: 600;
         }
 
         .hub-nav-links a:hover {
           color: #13c8b5;
+        }
+
+        .hub-search-box {
+          width: 240px;
+          max-width: 100%;
+          padding: 7px 12px;
+          border-radius: 9px;
+          border: 1px solid rgba(255, 255, 255, 0.16);
+          background: #0d1e34;
+          color: #ffffff;
+          font-size: 12px;
+          outline: none;
         }
 
         .hub-user-pill {
@@ -789,28 +965,28 @@ export default function VHubPage() {
           background: rgba(255, 255, 255, 0.06);
           border: 1px solid rgba(255, 255, 255, 0.22);
           color: #eef4fb;
-          padding: 8px 14px;
+          padding: 7px 13px;
           border-radius: 9px;
-          font-size: 13px;
+          font-size: 12px;
           font-weight: 700;
           cursor: pointer;
         }
 
         .hub-container {
-          max-width: 1200px;
+          max-width: 1220px;
           margin: 0 auto;
-          padding: 32px 24px 72px;
+          padding: 28px 24px 72px;
         }
 
-        .hub-hero {
+        .hub-welcome-bar {
           background: linear-gradient(125deg, #102b4d, #134a66);
           border: 1px solid rgba(126, 232, 220, 0.2);
           border-radius: 18px;
-          padding: 34px 32px;
+          padding: 28px 30px;
           display: flex;
           justify-content: space-between;
           align-items: center;
-          gap: 20px;
+          gap: 24px;
           flex-wrap: wrap;
         }
 
@@ -822,64 +998,61 @@ export default function VHubPage() {
           letter-spacing: 1.5px;
         }
 
-        .hub-hero h1 {
-          margin: 8px 0;
-          font-size: 42px;
+        .hub-welcome-bar h1 {
+          margin: 6px 0;
+          font-size: 36px;
           font-weight: 800;
         }
 
-        .hub-hero p {
+        .hub-welcome-bar p {
           margin: 0;
           color: #d2e2f3;
-          font-size: 15px;
-          line-height: 1.65;
-          max-width: 580px;
+          font-size: 14px;
+          line-height: 1.6;
+          max-width: 620px;
         }
 
-        .hub-hero-actions {
+        .hub-completion-box {
+          min-width: 190px;
+          background: rgba(7, 17, 31, 0.55);
+          border: 1px solid rgba(126, 232, 220, 0.22);
+          border-radius: 12px;
+          padding: 14px 16px;
+        }
+
+        .hub-completion-top {
           display: flex;
-          gap: 10px;
-          flex-wrap: wrap;
+          align-items: baseline;
+          gap: 6px;
+          margin-bottom: 8px;
         }
 
-        .hub-btn-primary {
-          display: inline-flex;
-          align-items: center;
-          justify-content: center;
-          border: none;
-          background: linear-gradient(110deg, #347cf0, #13bcae);
-          color: #ffffff;
-          padding: 9px 15px;
-          border-radius: 9px;
+        .hub-completion-top span {
           font-size: 12px;
-          font-weight: 700;
-          text-decoration: none;
-          cursor: pointer;
+          color: #b7c8dd;
         }
 
-        .hub-btn-secondary {
-          display: inline-flex;
-          align-items: center;
-          justify-content: center;
-          border: 1px solid rgba(255, 255, 255, 0.22);
-          background: rgba(255, 255, 255, 0.06);
-          color: #ffffff;
-          padding: 10px 16px;
-          border-radius: 9px;
-          font-size: 13px;
-          font-weight: 700;
-          text-decoration: none;
-        }
-
-        .hub-btn-following {
-          border: 1px solid rgba(19, 200, 181, 0.45);
-          background: rgba(19, 200, 181, 0.16);
+        .hub-completion-top strong {
+          font-size: 24px;
           color: #7ee8dc;
-          padding: 9px 14px;
-          border-radius: 9px;
-          font-size: 12px;
-          font-weight: 700;
-          cursor: pointer;
+        }
+
+        .hub-completion-top small {
+          font-size: 11px;
+          color: #9cb2cc;
+        }
+
+        .hub-progress-track {
+          height: 7px;
+          border-radius: 999px;
+          background: rgba(255, 255, 255, 0.12);
+          overflow: hidden;
+        }
+
+        .hub-progress-fill {
+          height: 100%;
+          background: linear-gradient(90deg, #347cf0, #13c8b5);
+          border-radius: 999px;
         }
 
         .hub-banner {
@@ -902,15 +1075,98 @@ export default function VHubPage() {
           cursor: pointer;
         }
 
+        .hub-ws-grid {
+          display: grid;
+          grid-template-columns: repeat(4, minmax(0, 1fr));
+          gap: 16px;
+        }
+
+        .hub-ws-card {
+          background: #0d1e34;
+          border: 1px solid rgba(255, 255, 255, 0.09);
+          border-radius: 14px;
+          overflow: hidden;
+          display: flex;
+          flex-direction: column;
+        }
+
+        .hub-ws-thumb {
+          height: 92px;
+          padding: 12px 14px;
+          display: flex;
+          align-items: flex-start;
+          justify-content: space-between;
+        }
+
+        .hub-ws-badge {
+          font-size: 10px;
+          font-weight: 800;
+          letter-spacing: 1px;
+          padding: 4px 9px;
+          border-radius: 999px;
+          background: rgba(7, 17, 31, 0.65);
+          color: #e6f4ff;
+        }
+
+        .hub-ws-body {
+          padding: 16px;
+          display: flex;
+          flex-direction: column;
+          flex: 1;
+        }
+
+        .hub-ws-body h3 {
+          margin: 0 0 6px;
+          font-size: 16px;
+          font-weight: 700;
+          color: #ffffff;
+        }
+
+        .hub-ws-body p {
+          margin: 0 0 14px;
+          font-size: 12px;
+          color: #b4c5da;
+          line-height: 1.55;
+        }
+
+        .hub-ws-foot {
+          margin-top: auto;
+        }
+
+        .hub-btn-primary {
+          display: inline-flex;
+          align-items: center;
+          justify-content: center;
+          border: none;
+          background: linear-gradient(110deg, #347cf0, #13bcae);
+          color: #ffffff;
+          padding: 8px 14px;
+          border-radius: 8px;
+          font-size: 12px;
+          font-weight: 700;
+          text-decoration: none;
+          cursor: pointer;
+        }
+
+        .hub-btn-following {
+          border: 1px solid rgba(19, 200, 181, 0.45);
+          background: rgba(19, 200, 181, 0.16);
+          color: #7ee8dc;
+          padding: 8px 14px;
+          border-radius: 8px;
+          font-size: 12px;
+          font-weight: 700;
+          cursor: pointer;
+        }
+
         .hub-grid {
-          margin-top: 20px;
+          margin-top: 28px;
           display: grid;
           grid-template-columns: repeat(2, minmax(0, 1fr));
           gap: 18px;
         }
 
         .hub-card,
-        .hub-shortcut-card,
         .hub-follow-card {
           background: #0d1e34;
           border: 1px solid rgba(255, 255, 255, 0.09);
@@ -1011,7 +1267,7 @@ export default function VHubPage() {
         }
 
         .hub-section {
-          margin-top: 34px;
+          margin-top: 32px;
         }
 
         .hub-section-head {
@@ -1025,7 +1281,7 @@ export default function VHubPage() {
 
         .hub-section-head h2 {
           margin: 4px 0 0;
-          font-size: 24px;
+          font-size: 23px;
           font-weight: 800;
         }
 
@@ -1124,43 +1380,6 @@ export default function VHubPage() {
           font-size: 11px;
         }
 
-        .hub-shortcuts-grid {
-          display: grid;
-          grid-template-columns: repeat(3, minmax(0, 1fr));
-          gap: 16px;
-        }
-
-        .hub-shortcut-card {
-          text-decoration: none;
-          color: inherit;
-          display: flex;
-          flex-direction: column;
-          gap: 6px;
-        }
-
-        .hub-shortcut-card:hover {
-          border-color: #13c8b5;
-        }
-
-        .hub-shortcut-card span {
-          font-size: 11px;
-          font-weight: 800;
-          color: #13c8b5;
-          letter-spacing: 1.2px;
-        }
-
-        .hub-shortcut-card h3 {
-          margin: 0;
-          font-size: 18px;
-        }
-
-        .hub-shortcut-card p {
-          margin: 0;
-          font-size: 13px;
-          color: #b4c5da;
-          line-height: 1.6;
-        }
-
         .hub-footer {
           text-align: center;
           padding: 26px 20px;
@@ -1168,6 +1387,12 @@ export default function VHubPage() {
           color: #8fa4bf;
           font-size: 12px;
           border-top: 1px solid rgba(255, 255, 255, 0.06);
+        }
+
+        @media (max-width: 1060px) {
+          .hub-ws-grid {
+            grid-template-columns: repeat(2, minmax(0, 1fr));
+          }
         }
 
         @media (max-width: 900px) {
@@ -1178,7 +1403,7 @@ export default function VHubPage() {
 
         @media (max-width: 820px) {
           .hub-grid,
-          .hub-shortcuts-grid,
+          .hub-ws-grid,
           .hub-follow-grid {
             grid-template-columns: 1fr;
           }
