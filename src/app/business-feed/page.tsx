@@ -45,6 +45,15 @@ type PreviewItem = {
   url: string;
 };
 
+type PublishedVideoClip = {
+  id: string;
+  fileName: string;
+  startSec: number;
+  endSec: number;
+  playUrl: string;
+  storageUploaded: boolean;
+};
+
 type LocalCaptionMap = Record<string, Record<string, string>>;
 
 type FocusTarget = {
@@ -204,7 +213,7 @@ export default function BusinessFeedPage() {
   const [imageFiles, setImageFiles] = useState<File[]>([]);
   const [newImageCaptions, setNewImageCaptions] = useState<string[]>([]);
   const [previewItems, setPreviewItems] = useState<PreviewItem[]>([]);
-  const [publishedVideoClips, setPublishedVideoClips] = useState<QueuedVideoItem[]>([]);
+  const [publishedVideoClips, setPublishedVideoClips] = useState<PublishedVideoClip[]>([]);
 
   useEffect(() => {
     loadFeed();
@@ -253,10 +262,57 @@ export default function BusinessFeedPage() {
     }
   }
 
-  function handlePublishVideoBatch(items: QueuedVideoItem[], maxDurationSec: number) {
-    setPublishedVideoClips((prev) => [...items, ...prev]);
+  async function handlePublishVideoBatch(items: QueuedVideoItem[], maxDurationSec: number) {
+    const uploadedClips: PublishedVideoClip[] = [];
+    let cloudSuccessCount = 0;
+
+    for (const item of items) {
+      let playUrl = item.previewUrl;
+      let storageUploaded = false;
+
+      if (userId) {
+        const cleanExt =
+          item.file.name.split(".").pop()?.toLowerCase().replace(/[^a-z0-9]/g, "") ||
+          "mp4";
+        const filePath = `video-clips/${userId}/${Date.now()}-${Math.random()
+          .toString(36)
+          .slice(2, 8)}.${cleanExt}`;
+
+        const { error: uploadErr } = await supabase.storage
+          .from(BUCKET_NAME)
+          .upload(filePath, item.file, {
+            cacheControl: "3600",
+            upsert: false,
+            contentType: item.file.type || "video/mp4",
+          });
+
+        if (!uploadErr) {
+          const { data: pub } = supabase.storage
+            .from(BUCKET_NAME)
+            .getPublicUrl(filePath);
+          if (pub?.publicUrl) {
+            playUrl = pub.publicUrl;
+            storageUploaded = true;
+            cloudSuccessCount += 1;
+          }
+        }
+      }
+
+      uploadedClips.push({
+        id: item.id,
+        fileName: item.file.name,
+        startSec: item.startSec,
+        endSec: item.endSec,
+        playUrl,
+        storageUploaded,
+      });
+    }
+
+    setPublishedVideoClips((prev) => [...uploadedClips, ...prev]);
     setSuccess(
-      `${items.length} klip video (batas max ${maxDurationSec}s) berhasil ditambahkan ke pratinjau feed.`
+      cloudSuccessCount > 0
+        ? `${items.length} klip video (max ${maxDurationSec}s) diproses (${cloudSuccessCount} tersimpan ke Storage).`
+        : `${items.length} klip video (max ${maxDurationSec}s) diproses ke daftar unggahan.`
     );
   }
 
@@ -1011,9 +1067,34 @@ export default function BusinessFeedPage() {
                 <div className="video-clips-grid">
                   {publishedVideoClips.map((clip) => (
                     <div className="video-clip-card" key={clip.id}>
-                      <video src={clip.previewUrl} controls />
+                      <video
+                        src={clip.playUrl}
+                        controls
+                        playsInline
+                        preload="metadata"
+                        onError={(e) => {
+                          e.currentTarget.style.display = "none";
+                          const box = e.currentTarget
+                            .nextElementSibling as HTMLElement | null;
+                          if (box) box.style.display = "flex";
+                        }}
+                      />
+                      <div
+                        className="video-fallback-box"
+                        style={{ display: "none" }}
+                      >
+                        <span>🎬</span>
+                        <strong>
+                          Klip {clip.endSec - clip.startSec}s Siap
+                        </strong>
+                        <small>
+                          {clip.storageUploaded
+                            ? "Tersimpan di Storage"
+                            : "Pratinjau lokal tidak didukung codec browser"}
+                        </small>
+                      </div>
                       <div className="video-clip-meta">
-                        <strong>{clip.file.name}</strong>
+                        <strong>{clip.fileName}</strong>
                         <small>
                           Durasi klip: {clip.startSec}s – {clip.endSec}s (
                           {clip.endSec - clip.startSec} detik)
@@ -1755,6 +1836,33 @@ export default function BusinessFeedPage() {
           object-fit: cover;
           display: block;
           background: #050d18;
+        }
+
+        .video-fallback-box {
+          height: 140px;
+          padding: 12px;
+          background: linear-gradient(135deg, #102b4d, #144d66);
+          color: #eef4fb;
+          display: flex;
+          flex-direction: column;
+          align-items: center;
+          justify-content: center;
+          text-align: center;
+          gap: 4px;
+        }
+
+        .video-fallback-box span {
+          font-size: 22px;
+        }
+
+        .video-fallback-box strong {
+          font-size: 13px;
+          color: #7ee8dc;
+        }
+
+        .video-fallback-box small {
+          font-size: 11px;
+          color: #cbd9ea;
         }
 
         .video-clip-meta {
