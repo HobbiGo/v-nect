@@ -28,6 +28,25 @@ type MarketComment = {
   created_at: string;
 };
 
+type InquiryRecord = {
+  id: string;
+  user_id?: string;
+  requester_name: string;
+  listing_key: string;
+  listing_name: string;
+  supplier_name: string;
+  created_at: string;
+};
+
+type ChatMessage = {
+  id: string;
+  user_id?: string;
+  listing_key: string;
+  sender_name: string;
+  message_text: string;
+  created_at: string;
+};
+
 type LaunchPostRow = {
   id: string;
   title: string;
@@ -39,7 +58,8 @@ type LaunchPostRow = {
   } | null;
 };
 
-const MARKET_INQUIRIES_STORAGE_KEY = "v-nect_v_market_inquiries_v1";
+const MARKET_INQUIRIES_STORAGE_KEY = "v-nect_v_market_inquiries_v2";
+const MARKET_CHAT_STORAGE_KEY = "v-nect_v_market_chat_v1";
 const MARKET_COMMENTS_STORAGE_KEY = "v-nect_v_market_comments_v1";
 const MARKET_CUSTOM_LISTINGS_KEY = "v-nect_v_market_custom_listings_v1";
 
@@ -131,6 +151,18 @@ const INITIAL_LISTINGS: MarketplaceListing[] = [
 
 const CATEGORIES = ["All", "Products", "Services", "Suppliers"] as const;
 
+function formatTimestamp(iso: string): string {
+  const d = new Date(iso);
+  if (Number.isNaN(d.getTime())) return iso;
+  return d.toLocaleString("id-ID", {
+    day: "2-digit",
+    month: "short",
+    year: "numeric",
+    hour: "2-digit",
+    minute: "2-digit",
+  });
+}
+
 export default function VMarketPage() {
   const supabase = createClient();
 
@@ -143,8 +175,14 @@ export default function VMarketPage() {
   const [customListings, setCustomListings] = useState<MarketplaceListing[]>([]);
   const [searchQuery, setSearchQuery] = useState("");
   const [selectedCategory, setSelectedCategory] = useState<string>("All");
-  const [requestedIds, setRequestedIds] = useState<string[]>([]);
   const [inquiryBanner, setInquiryBanner] = useState("");
+
+  // Inquiries & Chat per listing
+  const [inquiriesByListing, setInquiriesByListing] = useState<Record<string, InquiryRecord[]>>({});
+  const [chatsByListing, setChatsByListing] = useState<Record<string, ChatMessage[]>>({});
+  const [openChatForId, setOpenChatForId] = useState<string | null>(null);
+  const [chatDrafts, setChatDrafts] = useState<Record<string, string>>({});
+  const [sendingChatId, setSendingChatId] = useState<string | null>(null);
 
   // Form tambah produk / fitur oleh company
   const [showCreateForm, setShowCreateForm] = useState(false);
@@ -177,8 +215,16 @@ export default function VMarketPage() {
       const rawReq = window.localStorage.getItem(MARKET_INQUIRIES_STORAGE_KEY);
       if (rawReq) {
         const parsed = JSON.parse(rawReq);
-        if (Array.isArray(parsed)) {
-          setRequestedIds(parsed.filter((item): item is string => typeof item === "string"));
+        if (parsed && typeof parsed === "object") {
+          setInquiriesByListing(parsed as Record<string, InquiryRecord[]>);
+        }
+      }
+
+      const rawChat = window.localStorage.getItem(MARKET_CHAT_STORAGE_KEY);
+      if (rawChat) {
+        const parsedChat = JSON.parse(rawChat);
+        if (parsedChat && typeof parsedChat === "object") {
+          setChatsByListing(parsedChat as Record<string, ChatMessage[]>);
         }
       }
 
@@ -202,17 +248,41 @@ export default function VMarketPage() {
     }
   }, []);
 
-  async function loadUserInquiriesFromDb(uid: string) {
+  async function loadInquiriesFromDb() {
     const { data, error } = await supabase
       .from("v_market_inquiries")
-      .select("listing_key")
-      .eq("user_id", uid);
+      .select("id, user_id, requester_name, listing_key, listing_name, supplier_name, created_at")
+      .order("created_at", { ascending: false })
+      .limit(200);
 
     if (!error && Array.isArray(data)) {
       setDbSyncActive(true);
-      if (data.length > 0) {
-        setRequestedIds(data.map((row) => row.listing_key));
+      const grouped: Record<string, InquiryRecord[]> = {};
+      for (const row of data as InquiryRecord[]) {
+        if (!grouped[row.listing_key]) grouped[row.listing_key] = [];
+        grouped[row.listing_key].push({
+          ...row,
+          requester_name: row.requester_name || "Member",
+        });
       }
+      setInquiriesByListing((prev) => ({ ...prev, ...grouped }));
+    }
+  }
+
+  async function loadChatMessagesFromDb() {
+    const { data, error } = await supabase
+      .from("v_market_chat_messages")
+      .select("id, user_id, listing_key, sender_name, message_text, created_at")
+      .order("created_at", { ascending: true })
+      .limit(300);
+
+    if (!error && Array.isArray(data)) {
+      const grouped: Record<string, ChatMessage[]> = {};
+      for (const row of data as ChatMessage[]) {
+        if (!grouped[row.listing_key]) grouped[row.listing_key] = [];
+        grouped[row.listing_key].push(row);
+      }
+      setChatsByListing((prev) => ({ ...prev, ...grouped }));
     }
   }
 
@@ -264,7 +334,8 @@ export default function VMarketPage() {
       }
 
       setCurrentUserName(displayName);
-      await loadUserInquiriesFromDb(user.id);
+      await loadInquiriesFromDb();
+      await loadChatMessagesFromDb();
     } else {
       setCurrentUserId(null);
       setCurrentUserName(null);
@@ -441,13 +512,36 @@ export default function VMarketPage() {
   }, [allListings, searchQuery, selectedCategory]);
 
   async function handleRequestQuote(item: MarketplaceListing) {
-    const nextIds = requestedIds.includes(item.id)
-      ? requestedIds
-      : [...requestedIds, item.id];
-    setRequestedIds(nextIds);
+    const requesterLabel = currentUserName || "Guest Visitor";
+    const nowIso = new Date().toISOString();
+
+    const newRecord: InquiryRecord = {
+      id: `req-${Date.now()}`,
+      user_id: currentUserId || undefined,
+      requester_name: requesterLabel,
+      listing_key: item.id,
+      listing_name: item.name,
+      supplier_name: item.supplier,
+      created_at: nowIso,
+    };
+
+    const existingList = inquiriesByListing[item.id] || [];
+    const filteredExisting = existingList.filter(
+      (r) => r.requester_name !== requesterLabel
+    );
+    const updatedInquiries = {
+      ...inquiriesByListing,
+      [item.id]: [newRecord, ...filteredExisting],
+    };
+
+    setInquiriesByListing(updatedInquiries);
+    setOpenChatForId(item.id);
 
     try {
-      window.localStorage.setItem(MARKET_INQUIRIES_STORAGE_KEY, JSON.stringify(nextIds));
+      window.localStorage.setItem(
+        MARKET_INQUIRIES_STORAGE_KEY,
+        JSON.stringify(updatedInquiries)
+      );
     } catch {
       // Ignore storage errors
     }
@@ -456,25 +550,72 @@ export default function VMarketPage() {
       const { error } = await supabase.from("v_market_inquiries").upsert(
         {
           user_id: currentUserId,
+          requester_name: requesterLabel,
           listing_key: item.id,
           listing_name: item.name,
           supplier_name: item.supplier,
+          created_at: nowIso,
         },
         { onConflict: "user_id,listing_key" }
       );
 
       if (!error) {
-        setDbSyncActive(true);
+        await loadInquiriesFromDb();
         setInquiryBanner(
-          `Interaksi bisnis & permintaan info untuk "${item.name}" (${item.supplier}) tersimpan ke Supabase.`
+          `Request info dari ${requesterLabel} pada ${formatTimestamp(nowIso)} untuk "${item.name}" tersimpan. Silakan balas di chat.`
         );
         return;
       }
     }
 
     setInquiryBanner(
-      `Interaksi bisnis / permintaan info untuk "${item.name}" (${item.supplier}) telah dicatat.`
+      `Request info dari ${requesterLabel} (${formatTimestamp(nowIso)}) untuk "${item.name}" tercatat. Anda bisa langsung chat di panel bawah kartu.`
     );
+  }
+
+  async function handleSendChatMessage(e: React.FormEvent, item: MarketplaceListing) {
+    e.preventDefault();
+    const text = (chatDrafts[item.id] || "").trim();
+    if (!text) return;
+
+    setSendingChatId(item.id);
+    const senderLabel = currentUserName || "Partner Company";
+    const nowIso = new Date().toISOString();
+
+    const newMsg: ChatMessage = {
+      id: `chat-${Date.now()}`,
+      user_id: currentUserId || undefined,
+      listing_key: item.id,
+      sender_name: senderLabel,
+      message_text: text,
+      created_at: nowIso,
+    };
+
+    const updatedChats = {
+      ...chatsByListing,
+      [item.id]: [...(chatsByListing[item.id] || []), newMsg],
+    };
+
+    setChatsByListing(updatedChats);
+    setChatDrafts((prev) => ({ ...prev, [item.id]: "" }));
+
+    try {
+      window.localStorage.setItem(MARKET_CHAT_STORAGE_KEY, JSON.stringify(updatedChats));
+    } catch {
+      // Ignore storage errors
+    }
+
+    if (currentUserId) {
+      await supabase.from("v_market_chat_messages").insert({
+        user_id: currentUserId,
+        listing_key: item.id,
+        sender_name: senderLabel,
+        message_text: text,
+      });
+      await loadChatMessagesFromDb();
+    }
+
+    setSendingChatId(null);
   }
 
   async function handleAddComment(e: React.FormEvent, item: MarketplaceListing) {
@@ -560,12 +701,12 @@ export default function VMarketPage() {
       <section className="market-container">
         <div className="market-hero">
           <div>
-            <span className="market-eyebrow">MODULE 06 · COMPANY PRODUCTS, FEATURE PHOTOS &amp; B2B DISCUSSION</span>
+            <span className="market-eyebrow">MODULE 06 · COMPANY PRODUCTS, REQUESTS &amp; LIVE CHAT</span>
             <h1>
               v-<span>market.</span>
             </h1>
             <p>
-              Browse products and feature photos posted by companies, add your company product with feature notes, comment as another company, and initiate business inquiries.
+              Browse products and feature photos posted by companies, see who requested info and when, reply in chat, and comment on listings.
             </p>
           </div>
 
@@ -736,7 +877,10 @@ export default function VMarketPage() {
 
         <div className="market-grid">
           {filteredListings.map((item) => {
-            const requested = requestedIds.includes(item.id);
+            const itemInquiries = inquiriesByListing[item.id] || [];
+            const requested = itemInquiries.length > 0;
+            const itemChats = chatsByListing[item.id] || [];
+            const isChatOpen = openChatForId === item.id;
             const itemComments = commentsByListing[item.id] || [];
             const isCommentsOpen = openCommentsForId === item.id;
 
@@ -792,6 +936,18 @@ export default function VMarketPage() {
                   </div>
                 )}
 
+                {itemInquiries.length > 0 && (
+                  <div className="market-inquiry-info">
+                    <strong>Info Request Masuk ({itemInquiries.length}):</strong>
+                    {itemInquiries.slice(0, 3).map((inq) => (
+                      <div key={inq.id} className="market-inquiry-item">
+                        <span>Dari: <b>{inq.requester_name}</b></span>
+                        <small>{formatTimestamp(inq.created_at)}</small>
+                      </div>
+                    ))}
+                  </div>
+                )}
+
                 <div className="market-card-divider" />
 
                 <div className="market-card-foot">
@@ -819,6 +975,16 @@ export default function VMarketPage() {
                       type="button"
                       className="market-secondary-btn"
                       onClick={() =>
+                        setOpenChatForId(isChatOpen ? null : item.id)
+                      }
+                    >
+                      Chat ({itemChats.length})
+                    </button>
+
+                    <button
+                      type="button"
+                      className="market-secondary-btn"
+                      onClick={() =>
                         setOpenCommentsForId(isCommentsOpen ? null : item.id)
                       }
                     >
@@ -830,7 +996,7 @@ export default function VMarketPage() {
                       className={requested ? "market-btn-done" : "market-btn-primary"}
                       onClick={() => handleRequestQuote(item)}
                     >
-                      {requested ? "Requested ✓" : "Request Info"}
+                      {requested ? `Requested (${itemInquiries.length}) ✓` : "Request Info"}
                     </button>
                   </div>
 
@@ -840,6 +1006,67 @@ export default function VMarketPage() {
                     </Link>
                   </div>
                 </div>
+
+                {isChatOpen && (
+                  <div className="market-chat-panel">
+                    <div className="market-chat-title">
+                      Request &amp; Chat Bisnis — {item.supplier}
+                    </div>
+
+                    {itemInquiries.length > 0 && (
+                      <div className="market-chat-reqs">
+                        {itemInquiries.map((inq) => (
+                          <div key={inq.id}>
+                            Request dari <b>{inq.requester_name}</b> · {formatTimestamp(inq.created_at)}
+                          </div>
+                        ))}
+                      </div>
+                    )}
+
+                    {itemChats.length === 0 ? (
+                      <p className="market-comments-empty">
+                        Belum ada pesan chat. Kirim atau balas pesan untuk diskusi detail produk ini.
+                      </p>
+                    ) : (
+                      <ul className="market-chat-list">
+                        {itemChats.map((msg) => (
+                          <li key={msg.id}>
+                            <div className="market-chat-meta">
+                              <strong>{msg.sender_name}</strong>
+                              <small>{formatTimestamp(msg.created_at)}</small>
+                            </div>
+                            <span>{msg.message_text}</span>
+                          </li>
+                        ))}
+                      </ul>
+                    )}
+
+                    <form
+                      className="market-comment-form"
+                      onSubmit={(e) => handleSendChatMessage(e, item)}
+                    >
+                      <input
+                        type="text"
+                        value={chatDrafts[item.id] || ""}
+                        onChange={(e) =>
+                          setChatDrafts((prev) => ({
+                            ...prev,
+                            [item.id]: e.target.value,
+                          }))
+                        }
+                        placeholder="Balas atau tulis chat ke pemilik / pengirim request..."
+                        maxLength={400}
+                      />
+                      <button
+                        type="submit"
+                        className="market-btn-primary"
+                        disabled={sendingChatId === item.id}
+                      >
+                        {sendingChatId === item.id ? "..." : "Kirim Chat"}
+                      </button>
+                    </form>
+                  </div>
+                )}
 
                 {isCommentsOpen && (
                   <div className="market-comments-panel">
@@ -1338,7 +1565,7 @@ export default function VMarketPage() {
         }
 
         .market-feature-box {
-          margin-bottom: 14px;
+          margin-bottom: 12px;
           padding: 10px 12px;
           border-radius: 9px;
           background: rgba(255, 255, 255, 0.04);
@@ -1356,6 +1583,36 @@ export default function VMarketPage() {
           margin: 0;
           color: #dce8f7;
           line-height: 1.55;
+        }
+
+        .market-inquiry-info {
+          margin-bottom: 12px;
+          padding: 10px 12px;
+          border-radius: 9px;
+          background: rgba(19, 200, 181, 0.09);
+          border: 1px solid rgba(19, 200, 181, 0.28);
+          font-size: 12px;
+          display: flex;
+          flex-direction: column;
+          gap: 5px;
+        }
+
+        .market-inquiry-info strong {
+          color: #7ee8dc;
+        }
+
+        .market-inquiry-item {
+          display: flex;
+          justify-content: space-between;
+          align-items: center;
+          gap: 8px;
+          flex-wrap: wrap;
+          color: #e6f2ff;
+        }
+
+        .market-inquiry-item small {
+          color: #9cb2cc;
+          font-size: 11px;
         }
 
         .market-card-divider {
@@ -1399,6 +1656,7 @@ export default function VMarketPage() {
           text-decoration: underline;
         }
 
+        .market-chat-panel,
         .market-comments-panel {
           margin-top: 14px;
           padding-top: 14px;
@@ -1408,10 +1666,23 @@ export default function VMarketPage() {
           gap: 10px;
         }
 
+        .market-chat-title,
         .market-comments-title {
           font-size: 12px;
           font-weight: 800;
           color: #7ee8dc;
+        }
+
+        .market-chat-reqs {
+          background: rgba(52, 124, 240, 0.12);
+          border: 1px solid rgba(52, 124, 240, 0.3);
+          border-radius: 8px;
+          padding: 8px 10px;
+          font-size: 11px;
+          color: #cfe4ff;
+          display: flex;
+          flex-direction: column;
+          gap: 4px;
         }
 
         .market-comments-empty {
@@ -1420,6 +1691,7 @@ export default function VMarketPage() {
           color: #9cb2cc;
         }
 
+        .market-chat-list,
         .market-comments-list {
           list-style: none;
           margin: 0;
@@ -1429,21 +1701,36 @@ export default function VMarketPage() {
           gap: 8px;
         }
 
+        .market-chat-list li,
         .market-comments-list li {
           background: rgba(255, 255, 255, 0.04);
           border-radius: 8px;
           padding: 8px 10px;
           display: flex;
           flex-direction: column;
-          gap: 2px;
+          gap: 3px;
           font-size: 12px;
         }
 
+        .market-chat-meta {
+          display: flex;
+          justify-content: space-between;
+          align-items: center;
+          gap: 8px;
+        }
+
+        .market-chat-meta strong,
         .market-comments-list strong {
           color: #8cc0ff;
           font-size: 11px;
         }
 
+        .market-chat-meta small {
+          color: #9cb2cc;
+          font-size: 10px;
+        }
+
+        .market-chat-list span,
         .market-comments-list span {
           color: #e6effa;
           line-height: 1.5;
