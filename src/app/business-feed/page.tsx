@@ -36,6 +36,12 @@ type PreviewItem = {
 
 type LocalCaptionMap = Record<string, Record<string, string>>;
 
+type FocusTarget = {
+  postId: string;
+  imageIndex: number;
+  trigger: number;
+};
+
 const BUCKET_NAME = "business-posts";
 const MAX_IMAGES = 5;
 const MAX_IMAGE_SIZE = 5 * 1024 * 1024;
@@ -160,6 +166,7 @@ export default function BusinessFeedPage() {
   const [company, setCompany] = useState<Company | null>(null);
   const [userId, setUserId] = useState("");
   const [filter, setFilter] = useState("all");
+  const [focusTarget, setFocusTarget] = useState<FocusTarget | null>(null);
 
   const [loading, setLoading] = useState(true);
   const [submitting, setSubmitting] = useState(false);
@@ -207,6 +214,14 @@ export default function BusinessFeedPage() {
       });
     }
   }, [error, success]);
+
+  function handleFocusImageComment(postId: string, imageIndex: number) {
+    setFocusTarget((prev) => ({
+      postId,
+      imageIndex,
+      trigger: (prev?.trigger || 0) + 1,
+    }));
+  }
 
   async function loadFeed() {
     setLoading(true);
@@ -1128,6 +1143,7 @@ export default function BusinessFeedPage() {
 
                 const postImages = getPostImages(post);
                 const postImageCaptions = getPostImageCaptions(post, postImages);
+                const isFocusedPost = focusTarget?.postId === post.id;
 
                 return (
                   <article
@@ -1230,7 +1246,16 @@ export default function BusinessFeedPage() {
                                   <span className="post-image-caption">
                                     {captionText || `Image ${idx + 1}`}
                                   </span>
-                                  <span className="post-image-comment-hint">💬</span>
+                                  <button
+                                    type="button"
+                                    className="post-image-comment-btn"
+                                    onClick={() =>
+                                      handleFocusImageComment(post.id, idx)
+                                    }
+                                    title={`Comment on ${captionText || `Image ${idx + 1}`}`}
+                                  >
+                                    💬
+                                  </button>
                                 </div>
                               </div>
                             );
@@ -1247,6 +1272,10 @@ export default function BusinessFeedPage() {
                       imageLabels={postImages.map(
                         (_, idx) => postImageCaptions[idx] || `Image ${idx + 1}`
                       )}
+                      focusedImageIndex={
+                        isFocusedPost ? focusTarget.imageIndex : null
+                      }
+                      focusTrigger={isFocusedPost ? focusTarget.trigger : 0}
                     />
 
                     <div className="post-footer">
@@ -1780,9 +1809,21 @@ export default function BusinessFeedPage() {
           overflow-wrap: anywhere;
         }
 
-        .post-image-comment-hint {
+        .post-image-comment-btn {
+          border: 1px solid rgba(255, 255, 255, 0.16);
+          background: rgba(255, 255, 255, 0.08);
+          color: #ffffff;
+          border-radius: 6px;
+          padding: 3px 8px;
           font-size: 12px;
+          line-height: 1.3;
+          cursor: pointer;
           flex-shrink: 0;
+        }
+
+        .post-image-comment-btn:hover {
+          background: rgba(19, 188, 174, 0.35);
+          border-color: #13bcae;
         }
 
         .image-error {
