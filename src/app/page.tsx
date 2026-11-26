@@ -287,12 +287,15 @@ export default function Home() {
         </div>
 
         <div className="hero-visual">
-          <div className="hero-glow" />
-          <img
-            src={BRAND_LOGO_SRC}
-            alt="VOINNECT Global Ecosystem"
-            className="hero-logo-img"
-          />
+          <div className="hero-ambient-glow" />
+          <div className="hero-logo-stage">
+            <img
+              src={BRAND_LOGO_SRC}
+              alt="VOINNECT Global Ecosystem"
+              className="hero-logo-img"
+            />
+            <div className="hero-edge-fade" />
+          </div>
           <div className="orbit-label label-one">BUSINESS</div>
           <div className="orbit-label label-two">CONNECT</div>
           <div className="orbit-label label-three">COMMUNITY</div>
@@ -471,15 +474,8 @@ export default function Home() {
       </section>
 
       <footer className="footer">
-        <div className="footer-brand">
-          <img
-            src={BRAND_LOGO_SRC}
-            alt="VOINNECT logo"
-            className="footer-logo-mark"
-          />
-          <div className="logo-main">
-            VOIN<span>NECT</span>
-          </div>
+        <div className="logo-main">
+          VOIN<span>NECT</span>
         </div>
         <p>Connect Beyond Boundaries.</p>
         <small>© 2026 VOINNECT. All rights reserved.</small>
@@ -517,10 +513,10 @@ export default function Home() {
         .logo-mark {
           width: 38px;
           height: 38px;
-          border-radius: 9px;
+          border-radius: 999px;
           object-fit: cover;
-          border: 1px solid rgba(126, 232, 220, 0.3);
-          box-shadow: 0 0 14px rgba(52, 124, 240, 0.25);
+          border: 1px solid rgba(126, 232, 220, 0.35);
+          box-shadow: 0 0 14px rgba(52, 124, 240, 0.28);
         }
 
         .logo-text-wrap {
@@ -662,56 +658,70 @@ export default function Home() {
 
         .hero-visual {
           position: relative;
-          min-height: 300px;
+          min-height: 310px;
           display: grid;
           place-items: center;
-          border-radius: 22px;
-          padding: 28px 20px;
-          overflow: hidden;
-          background: radial-gradient(
-            circle at center,
-            rgba(52, 124, 240, 0.22) 0%,
-            rgba(19, 200, 181, 0.1) 42%,
-            rgba(7, 17, 31, 0) 75%
-          );
+          background: transparent;
+          padding: 28px 16px;
         }
 
-        .hero-glow {
+        .hero-ambient-glow {
           position: absolute;
-          width: 240px;
-          height: 240px;
+          width: 260px;
+          height: 260px;
           border-radius: 999px;
           background: radial-gradient(
             circle,
-            rgba(19, 200, 181, 0.24),
-            rgba(52, 124, 240, 0.14),
-            transparent 72%
+            rgba(52, 124, 240, 0.28) 0%,
+            rgba(19, 200, 181, 0.14) 48%,
+            rgba(7, 17, 31, 0) 75%
           );
-          filter: blur(10px);
+          filter: blur(14px);
           pointer-events: none;
+          z-index: 1;
         }
 
-        .hero-logo-img {
+        .hero-logo-stage {
           position: relative;
           z-index: 2;
-          width: 190px;
-          max-width: 68%;
-          max-height: 230px;
-          object-fit: cover;
-          border-radius: 20px;
-          mix-blend-mode: screen;
-          filter: contrast(1.06) saturate(1.12);
+          width: 210px;
+          height: 235px;
+          display: grid;
+          place-items: center;
+          overflow: hidden;
+          border-radius: 999px;
           -webkit-mask-image: radial-gradient(
-            ellipse at center,
-            #000 62%,
-            rgba(0, 0, 0, 0.65) 82%,
+            ellipse 76% 78% at 50% 48%,
+            #000 52%,
+            rgba(0, 0, 0, 0.55) 76%,
             transparent 100%
           );
           mask-image: radial-gradient(
-            ellipse at center,
-            #000 62%,
-            rgba(0, 0, 0, 0.65) 82%,
+            ellipse 76% 78% at 50% 48%,
+            #000 52%,
+            rgba(0, 0, 0, 0.55) 76%,
             transparent 100%
+          );
+        }
+
+        .hero-logo-img {
+          width: 100%;
+          height: 100%;
+          object-fit: cover;
+          object-position: center 36%;
+          transform: scale(1.12);
+          filter: contrast(1.05) saturate(1.12);
+        }
+
+        .hero-edge-fade {
+          position: absolute;
+          inset: 0;
+          pointer-events: none;
+          background: radial-gradient(
+            circle at 50% 48%,
+            rgba(7, 17, 31, 0) 48%,
+            rgba(7, 17, 31, 0.45) 78%,
+            #07111f 100%
           );
         }
 
@@ -722,11 +732,10 @@ export default function Home() {
           font-weight: 800;
           letter-spacing: 1.4px;
           color: #7ee8dc;
-          background: rgba(13, 33, 58, 0.88);
+          background: rgba(13, 33, 58, 0.9);
           border: 1px solid rgba(126, 232, 220, 0.28);
           padding: 5px 10px;
           border-radius: 999px;
-          backdrop-filter: blur(4px);
         }
 
         .label-one {
@@ -1048,22 +1057,6 @@ export default function Home() {
           border-top: 1px solid rgba(255, 255, 255, 0.06);
         }
 
-        .footer-brand {
-          display: inline-flex;
-          align-items: center;
-          justify-content: center;
-          gap: 10px;
-          color: #ffffff;
-        }
-
-        .footer-logo-mark {
-          width: 30px;
-          height: 30px;
-          border-radius: 8px;
-          object-fit: cover;
-          border: 1px solid rgba(126, 232, 220, 0.25);
-        }
-
         .footer p {
           margin: 8px 0 4px;
           font-size: 13px;
@@ -1102,8 +1095,9 @@ export default function Home() {
             font-size: 32px;
           }
 
-          .hero-logo-img {
-            width: 165px;
+          .hero-logo-stage {
+            width: 185px;
+            height: 205px;
           }
 
           .business-inner {
