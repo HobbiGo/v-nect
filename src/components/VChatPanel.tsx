@@ -1,6 +1,7 @@
 "use client";
 
-import { useState, type FormEvent } from "react";
+import { useEffect, useState, type FormEvent } from "react";
+import { createClient } from "@/lib/supabase";
 
 type ChatMessage = {
   id: string;
@@ -26,49 +27,157 @@ const INITIAL_MESSAGES: ChatMessage[] = [
     sender: "Sophia Lee",
     role: "Product Lead",
     time: "19:30",
-    text: "Selamat malam tim! Stories live & aturan durasi video 30–60s sudah siap diuji.",
+    text: "Selamat datang di v-chat! Masuk lewat akun agar pesan Anda tersimpan dan terdata.",
   },
   {
     id: "m-2",
     sender: "James Carter",
     role: "Growth Partner",
     time: "19:32",
-    text: "Mantap, pastikan ukuran huruf di chat dan feed tetap jelas di layar HP maupun tablet.",
+    text: "Gunakan toolbar lampiran, template bisnis, atau emoji di bawah untuk mengirim update cepat.",
   },
 ];
 
-export function VChatPanel({ currentUserName = "You" }: { currentUserName?: string }) {
+export function VChatPanel({
+  currentUserName,
+  onRequireAuth,
+}: {
+  currentUserName?: string | null;
+  onRequireAuth?: () => void;
+}) {
+  const supabase = createClient();
+
+  const [authUserId, setAuthUserId] = useState<string | null>(null);
+  const [resolvedName, setResolvedName] = useState<string>(
+    currentUserName?.trim() || "Guest"
+  );
   const [activeChannel, setActiveChannel] = useState(CHANNELS[0].id);
   const [messages, setMessages] = useState<ChatMessage[]>(INITIAL_MESSAGES);
   const [draft, setDraft] = useState("");
   const [attachedFileName, setAttachedFileName] = useState("");
   const [isLiveStatus, setIsLiveStatus] = useState(true);
+  const [statusNote, setStatusNote] = useState("");
+  const [sending, setSending] = useState(false);
 
-  function handleSend(e: FormEvent) {
+  useEffect(() => {
+    let active = true;
+    async function loadSessionUser() {
+      const {
+        data: { user },
+      } = await supabase.auth.getUser();
+      if (!active) return;
+      if (user) {
+        setAuthUserId(user.id);
+        const displayName =
+          currentUserName?.trim() ||
+          (user.user_metadata?.full_name as string | undefined)?.trim() ||
+          user.email?.split("@")[0] ||
+          "Member";
+        setResolvedName(displayName);
+      } else {
+        setAuthUserId(null);
+        setResolvedName(currentUserName?.trim() || "Guest");
+      }
+    }
+    loadSessionUser();
+    return () => {
+      active = false;
+    };
+  }, [supabase, currentUserName]);
+
+  useEffect(() => {
+    let active = true;
+    async function loadChannelMessages() {
+      const { data, error } = await supabase
+        .from("chat_messages")
+        .select("id, sender_id, sender_name, sender_role, message_text, attachment_name, created_at")
+        .eq("channel", activeChannel)
+        .order("created_at", { ascending: true })
+        .limit(50);
+
+      if (!active) return;
+      if (error || !data || data.length === 0) {
+        setMessages(INITIAL_MESSAGES);
+        return;
+      }
+
+      const mapped: ChatMessage[] = data.map((row) => ({
+        id: String(row.id),
+        sender: String(row.sender_name || "Member"),
+        role: String(row.sender_role || "Member"),
+        time: row.created_at
+          ? new Date(String(row.created_at)).toLocaleTimeString("en-GB", {
+              hour: "2-digit",
+              minute: "2-digit",
+            })
+          : "Now",
+        text: String(row.message_text || ""),
+        attachmentName: row.attachment_name ? String(row.attachment_name) : undefined,
+        isMe: Boolean(authUserId && row.sender_id === authUserId),
+      }));
+
+      setMessages(mapped);
+    }
+
+    loadChannelMessages();
+    return () => {
+      active = false;
+    };
+  }, [supabase, activeChannel, authUserId]);
+
+  async function handleSend(e: FormEvent) {
     e.preventDefault();
     const cleanText = draft.trim();
     if (!cleanText && !attachedFileName) return;
 
-    const now = new Date().toLocaleTimeString("en-GB", {
+    if (!authUserId) {
+      setStatusNote("Silakan masuk lewat akun terlebih dahulu agar chat terdata dengan akun Anda.");
+      onRequireAuth?.();
+      return;
+    }
+
+    setSending(true);
+    setStatusNote("");
+
+    const nowTime = new Date().toLocaleTimeString("en-GB", {
       hour: "2-digit",
       minute: "2-digit",
     });
+    const roleLabel = isLiveStatus ? "Live Account" : "Account Member";
+    const textBody = cleanText || "(Lampiran dikirim)";
 
-    setMessages((prev) => [
-      ...prev,
-      {
-        id: `msg-${Date.now()}`,
-        sender: currentUserName,
-        role: isLiveStatus ? "Live Member" : "Member",
-        time: now,
-        text: cleanText || "(Lampiran dikirim)",
-        attachmentName: attachedFileName || undefined,
-        isMe: true,
-      },
-    ]);
+    const optimisticMsg: ChatMessage = {
+      id: `msg-${Date.now()}`,
+      sender: resolvedName,
+      role: roleLabel,
+      time: nowTime,
+      text: textBody,
+      attachmentName: attachedFileName || undefined,
+      isMe: true,
+    };
 
+    setMessages((prev) => [...prev, optimisticMsg]);
     setDraft("");
     setAttachedFileName("");
+
+    const { error } = await supabase.from("chat_messages").insert({
+      channel: activeChannel,
+      sender_id: authUserId,
+      sender_name: resolvedName,
+      sender_role: roleLabel,
+      message_text: textBody,
+      attachment_name: optimisticMsg.attachmentName || null,
+    });
+
+    if (error) {
+      setStatusNote(
+        "Pesan tampil lokal; buat tabel 'chat_messages' di Supabase untuk menyimpan permanen."
+      );
+    } else {
+      setStatusNote(`Pesan terdata atas akun ${resolvedName}.`);
+    }
+
+    setSending(false);
   }
 
   function appendEmoji(emoji: string) {
@@ -81,6 +190,18 @@ export function VChatPanel({ currentUserName = "You" }: { currentUserName?: stri
         <div>
           <span className="vchat-tag">v-chat MODULE</span>
           <h3>v-chat · Business &amp; Team Messaging</h3>
+          <small className="vchat-account-sub">
+            Akun aktif: <strong>{resolvedName}</strong>{" "}
+            {!authUserId && (
+              <button
+                type="button"
+                className="vchat-inline-auth"
+                onClick={() => onRequireAuth?.()}
+              >
+                (Masuk / Register Akun)
+              </button>
+            )}
+          </small>
         </div>
 
         <button
@@ -106,6 +227,8 @@ export function VChatPanel({ currentUserName = "You" }: { currentUserName?: stri
         ))}
       </div>
 
+      {statusNote && <div className="vchat-note">{statusNote}</div>}
+
       <div className="vchat-feed">
         {messages.map((msg) => (
           <div
@@ -125,7 +248,6 @@ export function VChatPanel({ currentUserName = "You" }: { currentUserName?: stri
         ))}
       </div>
 
-      {/* TOOLBAR FITUR CHAT */}
       <div className="vchat-toolbar" role="toolbar" aria-label="Chat Feature Toolbar">
         <label className="vchat-tool-btn">
           📎 Lampirkan File/Media
@@ -171,7 +293,9 @@ export function VChatPanel({ currentUserName = "You" }: { currentUserName?: stri
 
       {attachedFileName && (
         <div className="vchat-pending-file">
-          <span>File siap dikirim: <strong>{attachedFileName}</strong></span>
+          <span>
+            File siap dikirim: <strong>{attachedFileName}</strong>
+          </span>
           <button type="button" onClick={() => setAttachedFileName("")}>
             Batal ✕
           </button>
@@ -183,9 +307,15 @@ export function VChatPanel({ currentUserName = "You" }: { currentUserName?: stri
           type="text"
           value={draft}
           onChange={(e) => setDraft(e.target.value)}
-          placeholder="Tulis pesan untuk tim atau partner bisnis..."
+          placeholder={
+            authUserId
+              ? "Tulis pesan untuk tim atau partner bisnis..."
+              : "Masuk lewat akun dulu untuk mengirim & mendata pesan..."
+          }
         />
-        <button type="submit">Kirim →</button>
+        <button type="submit" disabled={sending}>
+          {sending ? "Mengirim..." : "Kirim →"}
+        </button>
       </form>
 
       <style jsx>{`
@@ -204,7 +334,7 @@ export function VChatPanel({ currentUserName = "You" }: { currentUserName?: stri
         .vchat-top {
           display: flex;
           justify-content: space-between;
-          align-items: center;
+          align-items: flex-start;
           gap: 12px;
           flex-wrap: wrap;
         }
@@ -222,6 +352,24 @@ export function VChatPanel({ currentUserName = "You" }: { currentUserName?: stri
           font-size: 19px;
           font-weight: 700;
           color: #ffffff;
+        }
+
+        .vchat-account-sub {
+          display: block;
+          margin-top: 5px;
+          font-size: 12px;
+          color: #b5c6dc;
+        }
+
+        .vchat-inline-auth {
+          border: none;
+          background: transparent;
+          color: #7ee8dc;
+          font-size: 12px;
+          font-weight: 700;
+          text-decoration: underline;
+          cursor: pointer;
+          padding: 0 4px;
         }
 
         .vchat-status-btn {
@@ -272,6 +420,15 @@ export function VChatPanel({ currentUserName = "You" }: { currentUserName?: stri
         .vchat-ch small {
           font-size: 11px;
           color: #7ee8dc;
+        }
+
+        .vchat-note {
+          padding: 9px 12px;
+          border-radius: 9px;
+          background: rgba(19, 200, 181, 0.12);
+          border: 1px solid rgba(19, 200, 181, 0.3);
+          font-size: 12px;
+          color: #a8f6ec;
         }
 
         .vchat-feed {
@@ -418,6 +575,11 @@ export function VChatPanel({ currentUserName = "You" }: { currentUserName?: stri
           font-weight: 700;
           cursor: pointer;
           white-space: nowrap;
+        }
+
+        .vchat-form button:disabled {
+          opacity: 0.6;
+          cursor: not-allowed;
         }
       `}</style>
     </section>
