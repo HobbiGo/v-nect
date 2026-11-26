@@ -12,6 +12,7 @@ type Post = {
   content: string;
   post_type: string;
   image_url: string | null;
+  image_urls?: string[] | null;
   status: string;
   created_at: string;
   companies: {
@@ -26,7 +27,13 @@ type Company = {
   logo_url: string | null;
 };
 
+type PreviewItem = {
+  file: File;
+  url: string;
+};
+
 const BUCKET_NAME = "business-posts";
+const MAX_IMAGES = 5;
 const MAX_IMAGE_SIZE = 5 * 1024 * 1024;
 
 const ALLOWED_IMAGE_TYPES: Record<string, string> = {
@@ -64,6 +71,24 @@ function normalizePostTypeForDb(type: string): string {
   return type;
 }
 
+function getPostImages(post: Post): string[] {
+  const list: string[] = [];
+
+  if (Array.isArray(post.image_urls)) {
+    for (const item of post.image_urls) {
+      if (typeof item === "string" && item.trim()) {
+        list.push(item.trim());
+      }
+    }
+  }
+
+  if (list.length === 0 && post.image_url && post.image_url.trim()) {
+    list.push(post.image_url.trim());
+  }
+
+  return list.slice(0, MAX_IMAGES);
+}
+
 export default function BusinessFeedPage() {
   const supabase = createClient();
   const feedbackRef = useRef<HTMLDivElement | null>(null);
@@ -84,8 +109,8 @@ export default function BusinessFeedPage() {
   const [content, setContent] = useState("");
   const [postType, setPostType] = useState("announcement");
 
-  const [imageFile, setImageFile] = useState<File | null>(null);
-  const [previewUrl, setPreviewUrl] = useState("");
+  const [imageFiles, setImageFiles] = useState<File[]>([]);
+  const [previewItems, setPreviewItems] = useState<PreviewItem[]>([]);
 
   useEffect(() => {
     loadFeed();
@@ -93,16 +118,19 @@ export default function BusinessFeedPage() {
   }, []);
 
   useEffect(() => {
-    if (!imageFile) {
-      setPreviewUrl("");
-      return;
-    }
+    const generated = imageFiles.map((file) => ({
+      file,
+      url: URL.createObjectURL(file),
+    }));
 
-    const objectUrl = URL.createObjectURL(imageFile);
-    setPreviewUrl(objectUrl);
+    setPreviewItems(generated);
 
-    return () => URL.revokeObjectURL(objectUrl);
-  }, [imageFile]);
+    return () => {
+      for (const item of generated) {
+        URL.revokeObjectURL(item.url);
+      }
+    };
+  }, [imageFiles]);
 
   useEffect(() => {
     if (error || success) {
@@ -194,6 +222,7 @@ export default function BusinessFeedPage() {
           content,
           post_type,
           image_url,
+          image_urls,
           status,
           created_at,
           companies (
@@ -226,7 +255,7 @@ export default function BusinessFeedPage() {
     setTitle("");
     setContent("");
     setPostType("announcement");
-    setImageFile(null);
+    setImageFiles([]);
     setShowComposer(false);
   }
 
@@ -258,7 +287,7 @@ export default function BusinessFeedPage() {
     }
 
     if (file.size > MAX_IMAGE_SIZE) {
-      return "Ukuran gambar maksimal 5 MB.";
+      return "Ukuran gambar maksimal 5 MB per file.";
     }
 
     if (!getSupportedImageType(file)) {
@@ -268,23 +297,50 @@ export default function BusinessFeedPage() {
     return null;
   }
 
-  function handleImageChange(file: File | null) {
+  function handleImagesChange(filesList: FileList | null) {
     setError("");
 
-    if (!file) {
-      setImageFile(null);
+    if (!filesList || filesList.length === 0) {
       return;
     }
 
-    const validationError = validateImage(file);
+    const incoming = Array.from(filesList);
+    const remainingSlots = MAX_IMAGES - imageFiles.length;
 
-    if (validationError) {
-      setImageFile(null);
-      setError(validationError);
+    if (remainingSlots <= 0) {
+      setError(`Maksimal ${MAX_IMAGES} gambar per post.`);
       return;
     }
 
-    setImageFile(file);
+    let warning = "";
+    const candidates = incoming.slice(0, remainingSlots);
+
+    if (incoming.length > remainingSlots) {
+      warning = `Maksimal ${MAX_IMAGES} gambar per post. Kelebihan gambar tidak ditambahkan.`;
+    }
+
+    const validNewFiles: File[] = [];
+
+    for (const file of candidates) {
+      const validationError = validateImage(file);
+      if (validationError) {
+        setError(validationError);
+        return;
+      }
+      validNewFiles.push(file);
+    }
+
+    setImageFiles((prev) => [...prev, ...validNewFiles]);
+    if (warning) {
+      setError(warning);
+    }
+  }
+
+  function removeSelectedImage(indexToRemove: number) {
+    setError("");
+    setImageFiles((prev) =>
+      prev.filter((_, idx) => idx !== indexToRemove)
+    );
   }
 
   async function handleSubmit(event: FormEvent<HTMLFormElement>) {
@@ -310,9 +366,13 @@ export default function BusinessFeedPage() {
       return;
     }
 
-    if (imageFile) {
-      const validationError = validateImage(imageFile);
+    if (imageFiles.length > MAX_IMAGES) {
+      setError(`Maksimal ${MAX_IMAGES} gambar per post.`);
+      return;
+    }
 
+    for (const file of imageFiles) {
+      const validationError = validateImage(file);
       if (validationError) {
         setError(validationError);
         return;
@@ -345,8 +405,8 @@ export default function BusinessFeedPage() {
         normalizePostTypeForDb(postType)
       );
 
-      if (imageFile) {
-        formData.append("image", imageFile);
+      for (const file of imageFiles) {
+        formData.append("images", file);
       }
 
       const { data, error: functionError } =
@@ -441,14 +501,16 @@ export default function BusinessFeedPage() {
     }
   }
 
-  async function removeStoredImage(publicUrl: string | null) {
-    const path = getStoragePath(publicUrl);
+  async function removeStoredImages(urls: string[]) {
+    const paths = urls
+      .map((url) => getStoragePath(url))
+      .filter((p): p is string => Boolean(p));
 
-    if (!path) return;
+    if (paths.length === 0) return;
 
     const { error: storageError } = await supabase.storage
       .from(BUCKET_NAME)
-      .remove([path]);
+      .remove(paths);
 
     if (storageError) {
       console.error(
@@ -480,6 +542,8 @@ export default function BusinessFeedPage() {
     setError("");
     setSuccess("");
 
+    const imagesToDelete = getPostImages(post);
+
     const { error: deleteError } = await supabase
       .from("business_posts")
       .delete()
@@ -492,7 +556,7 @@ export default function BusinessFeedPage() {
       return;
     }
 
-    await removeStoredImage(post.image_url);
+    await removeStoredImages(imagesToDelete);
 
     setPosts((current) =>
       current.filter((item) => item.id !== post.id)
@@ -620,7 +684,7 @@ export default function BusinessFeedPage() {
                         setTitle("");
                         setContent("");
                         setPostType("announcement");
-                        setImageFile(null);
+                        setImageFiles([]);
                         setShowComposer(true);
                         setError("");
                         setSuccess("");
@@ -730,49 +794,56 @@ export default function BusinessFeedPage() {
                     required
                   />
 
-                  <label>Upload Image</label>
+                  <label>
+                    Upload Images ({imageFiles.length}/{MAX_IMAGES})
+                  </label>
 
                   <div className="upload-area">
                     <input
                       type="file"
+                      multiple
                       accept=".jpg,.jpeg,.png,.webp,image/jpeg,image/png,image/webp"
                       onChange={(e) => {
-                        handleImageChange(
-                          e.target.files?.[0] || null
-                        );
-
+                        handleImagesChange(e.target.files);
                         e.currentTarget.value = "";
                       }}
                     />
 
                     <small>
-                      JPG, PNG, or WebP · Maximum size 5 MB
+                      JPG, PNG, or WebP · Max {MAX_IMAGES} images · Max 5 MB each
                     </small>
                   </div>
 
-                  {previewUrl && (
+                  {previewItems.length > 0 && (
                     <div className="image-preview">
-                      <span>IMAGE PREVIEW</span>
+                      <span>
+                        SELECTED IMAGES ({previewItems.length}/{MAX_IMAGES})
+                      </span>
 
-                      <img
-                        src={previewUrl}
-                        alt="Selected image preview"
-                      />
-
-                      <button
-                        type="button"
-                        className="remove-image-button"
-                        onClick={() => setImageFile(null)}
-                      >
-                        Remove Image
-                      </button>
+                      <div className="preview-grid">
+                        {previewItems.map((item, index) => (
+                          <div className="preview-card" key={item.url}>
+                            <img
+                              src={item.url}
+                              alt={`Selected image ${index + 1}`}
+                            />
+                            <button
+                              type="button"
+                              className="remove-image-button"
+                              onClick={() => removeSelectedImage(index)}
+                            >
+                              Remove
+                            </button>
+                          </div>
+                        ))}
+                      </div>
                     </div>
                   )}
 
                   <div className="moderation-note">
                     <strong>AI Content Moderation</strong>
                     <p>
-                      Your text and uploaded image will be
+                      Your text and uploaded images will be
                       checked before the post is published.
                     </p>
                   </div>
@@ -838,6 +909,8 @@ export default function BusinessFeedPage() {
                   post.author_id === userId &&
                   company?.id === post.company_id;
 
+                const postImages = getPostImages(post);
+
                 return (
                   <article
                     className="post-card"
@@ -881,41 +954,59 @@ export default function BusinessFeedPage() {
                       <h3>{post.title}</h3>
                       <p>{post.content}</p>
 
-                      {post.image_url && (
-                        <div className="post-image-container">
-                          <img
-                            className="post-image"
-                            src={post.image_url}
-                            alt={post.title}
-                            loading="lazy"
-                            decoding="async"
-                            onError={(e) => {
-                              console.error(
-                                "Business Feed image failed:",
-                                post.image_url
-                              );
+                      {postImages.length > 0 && (
+                        <div
+                          className={
+                            postImages.length === 1
+                              ? "post-images-grid single"
+                              : "post-images-grid multi"
+                          }
+                        >
+                          {postImages.map((imgUrl, idx) => (
+                            <div
+                              className="post-image-container"
+                              key={`${post.id}-img-${idx}`}
+                            >
+                              <img
+                                className="post-image"
+                                src={imgUrl}
+                                alt={`${post.title} (${idx + 1})`}
+                                loading="lazy"
+                                decoding="async"
+                                onError={(e) => {
+                                  console.error(
+                                    "Business Feed image failed:",
+                                    imgUrl
+                                  );
 
-                              e.currentTarget.style.display =
-                                "none";
+                                  e.currentTarget.style.display =
+                                    "none";
 
-                              const fallback =
-                                e.currentTarget
-                                  .nextElementSibling as
-                                  | HTMLElement
-                                  | null;
+                                  const fallback =
+                                    e.currentTarget
+                                      .nextElementSibling as
+                                      | HTMLElement
+                                      | null;
 
-                              if (fallback) {
-                                fallback.style.display =
-                                  "block";
-                              }
-                            }}
-                          />
+                                  if (fallback) {
+                                    fallback.style.display =
+                                      "block";
+                                  }
+                                }}
+                              />
 
-                          <div className="image-error">
-                            Image could not be displayed.
-                            Please check the image format or
-                            upload a new JPG, PNG, or WebP image.
-                          </div>
+                              <div className="image-error">
+                                Image could not be displayed.{" "}
+                                <a
+                                  href={imgUrl}
+                                  target="_blank"
+                                  rel="noreferrer"
+                                >
+                                  Open image
+                                </a>
+                              </div>
+                            </div>
+                          ))}
                         </div>
                       )}
                     </div>
@@ -1284,26 +1375,38 @@ export default function BusinessFeedPage() {
           margin-bottom: 10px;
         }
 
-        .image-preview img {
+        .preview-grid {
+          display: grid;
+          grid-template-columns: repeat(auto-fill, minmax(135px, 1fr));
+          gap: 10px;
+        }
+
+        .preview-card {
+          border: 1px solid #e4eaf2;
+          border-radius: 8px;
+          padding: 8px;
+          background: white;
+        }
+
+        .preview-card img {
           display: block;
           width: 100%;
-          height: auto;
-          max-height: 300px;
-          object-fit: contain;
-          object-position: center;
-          border-radius: 8px;
+          height: 110px;
+          object-fit: cover;
+          border-radius: 6px;
           background: #edf1f6;
         }
 
         .remove-image-button {
           display: block;
-          margin-top: 10px;
+          margin-top: 8px;
           border: none;
           background: transparent;
           color: #d95353;
           font-size: 11px;
           font-weight: 700;
           cursor: pointer;
+          padding: 0;
         }
 
         .moderation-note {
@@ -1370,9 +1473,22 @@ export default function BusinessFeedPage() {
           overflow-wrap: anywhere;
         }
 
+        .post-images-grid {
+          margin-top: 18px;
+          display: grid;
+          gap: 10px;
+        }
+
+        .post-images-grid.single {
+          grid-template-columns: 1fr;
+        }
+
+        .post-images-grid.multi {
+          grid-template-columns: repeat(2, minmax(0, 1fr));
+        }
+
         .post-image-container {
           width: 100%;
-          margin-top: 18px;
           overflow: hidden;
           border-radius: 11px;
           background: #edf1f6;
@@ -1388,6 +1504,12 @@ export default function BusinessFeedPage() {
           border-radius: 11px;
         }
 
+        .post-images-grid.multi .post-image {
+          height: 240px;
+          max-height: 240px;
+          object-fit: cover;
+        }
+
         .image-error {
           display: none;
           padding: 30px 15px;
@@ -1395,6 +1517,11 @@ export default function BusinessFeedPage() {
           color: #bd3d3d;
           font-size: 12px;
           line-height: 1.6;
+        }
+
+        .image-error a {
+          color: #2874db;
+          font-weight: 700;
         }
 
         .post-footer {
@@ -1572,6 +1699,10 @@ export default function BusinessFeedPage() {
 
           .post-body h3 {
             font-size: 17px;
+          }
+
+          .post-images-grid.multi {
+            grid-template-columns: 1fr;
           }
 
           .post-image {
