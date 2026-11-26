@@ -101,6 +101,33 @@ function extractVideoUrlFromPost(post: HomePost): string | null {
   return null;
 }
 
+function extractVideoCaptionFromPost(post: HomePost): string {
+  const text = post.content || "";
+  const match = text.match(/\[VideoCaption:\s*([^\]]+)\]/i);
+  return match && match[1] ? match[1].trim() : "";
+}
+
+function cleanPostContentForDisplay(post: HomePost): string {
+  const raw = post.content || "";
+  return raw
+    .replace(/\[VideoCaption:\s*[^\]]*\]/gi, "")
+    .replace(/^\s*Link Video:\s*https?:\/\/\S+\s*$/gim, "")
+    .replace(/\n{3,}/g, "\n\n")
+    .trim();
+}
+
+function formatCleanPostTitle(title: string): string {
+  const trimmed = (title || "").trim();
+  const withoutPrefix = trimmed.replace(/^Video:\s*/i, "");
+  const withoutExt = withoutPrefix.replace(
+    /\.(mp4|webm|mov|m4v|avi|mkv)$/i,
+    ""
+  );
+  const spaced = withoutExt.replace(/[_-]+/g, " ").replace(/\s+/g, " ").trim();
+  if (!spaced) return trimmed;
+  return spaced.charAt(0).toUpperCase() + spaced.slice(1);
+}
+
 function getPostImages(post: HomePost): string[] {
   const list: string[] = [];
 
@@ -511,6 +538,9 @@ export default function Home() {
                 const postImages = getPostImages(post);
                 const postImageCaptions = getPostImageCaptions(post, postImages);
                 const videoUrl = extractVideoUrlFromPost(post);
+                const videoCaption = extractVideoCaptionFromPost(post);
+                const displayContent = cleanPostContentForDisplay(post);
+                const displayTitle = formatCleanPostTitle(post.title);
                 const isFocusedPost = focusTarget?.postId === post.id;
 
                 return (
@@ -543,8 +573,8 @@ export default function Home() {
                     </div>
 
                     <div className="home-post-body">
-                      <h3>{post.title}</h3>
-                      <p>{post.content}</p>
+                      <h3>{displayTitle}</h3>
+                      {displayContent && <p>{displayContent}</p>}
 
                       {videoUrl && (
                         <div className="home-video-box">
@@ -556,7 +586,9 @@ export default function Home() {
                             className="home-video-player"
                           />
                           <div className="home-video-footer">
-                            <span>🎬 Video Clip</span>
+                            <span className="home-video-caption">
+                              {videoCaption || "🎬 Video Clip"}
+                            </span>
                             <a
                               href={videoUrl}
                               target="_blank"
@@ -585,7 +617,7 @@ export default function Home() {
                               >
                                 <img
                                   src={imgUrl}
-                                  alt={`${post.title} (${idx + 1})`}
+                                  alt={`${displayTitle} (${idx + 1})`}
                                   loading="lazy"
                                 />
                                 <div className="home-image-bar">
@@ -1271,17 +1303,25 @@ export default function Home() {
           display: flex;
           align-items: center;
           justify-content: space-between;
-          gap: 10px;
-          padding: 9px 14px;
+          gap: 12px;
+          padding: 10px 14px;
           background: #10243d;
           color: #e6eef8;
-          font-size: 12px;
-          font-weight: 700;
+          font-size: 13px;
+          font-weight: 600;
+        }
+
+        .home-video-caption {
+          line-height: 1.45;
+          overflow-wrap: anywhere;
         }
 
         .home-video-footer a {
           color: #7ee8dc;
           text-decoration: none;
+          font-size: 12px;
+          font-weight: 700;
+          flex-shrink: 0;
         }
 
         .home-video-footer a:hover {
