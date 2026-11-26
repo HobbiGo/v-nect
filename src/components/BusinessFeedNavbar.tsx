@@ -18,7 +18,7 @@ export function BusinessFeedNavbar({ activePath = "/business-feed" }: BusinessFe
               className="bf-brand-logo"
             />
             <span className="bf-brand-name">
-              VOIN<span>NECT</span>
+              v<span>-nect</span>
             </span>
           </Link>
 
