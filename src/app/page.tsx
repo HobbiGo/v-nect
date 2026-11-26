@@ -33,7 +33,7 @@ type FocusTarget = {
 
 const MAX_IMAGES = 5;
 const LOCAL_CAPTIONS_STORAGE_KEY = "v-nect_business_post_image_captions_v1";
-const BRAND_LOGO_SRC = "/images/v-nect-logo.jpg";
+const BRAND_LOGO_SRC = "/images/V-NECT-logo.png";
 const HERO_NETWORK_IMG_SRC = "/images/logonew-v-nect.png";
 
 const modules = [
