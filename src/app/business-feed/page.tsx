@@ -65,6 +65,11 @@ function normalizePostTypeForDb(type: string): string {
   return type;
 }
 
+function normalizePostTypeForSelect(type: string): string {
+  if (type === "news") return "company_news";
+  return type;
+}
+
 function getPostImages(post: Post): string[] {
   const list: string[] = [];
 
@@ -95,6 +100,7 @@ export default function BusinessFeedPage() {
   const [loading, setLoading] = useState(true);
   const [submitting, setSubmitting] = useState(false);
   const [showComposer, setShowComposer] = useState(false);
+  const [editingPostId, setEditingPostId] = useState<string | null>(null);
 
   const [error, setError] = useState("");
   const [success, setSuccess] = useState("");
@@ -103,6 +109,7 @@ export default function BusinessFeedPage() {
   const [content, setContent] = useState("");
   const [postType, setPostType] = useState("announcement");
 
+  const [existingImages, setExistingImages] = useState<string[]>([]);
   const [imageFiles, setImageFiles] = useState<File[]>([]);
   const [previewItems, setPreviewItems] = useState<PreviewItem[]>([]);
 
@@ -249,8 +256,35 @@ export default function BusinessFeedPage() {
     setTitle("");
     setContent("");
     setPostType("announcement");
+    setExistingImages([]);
     setImageFiles([]);
+    setEditingPostId(null);
     setShowComposer(false);
+  }
+
+  function openCreateComposer() {
+    setTitle("");
+    setContent("");
+    setPostType("announcement");
+    setExistingImages([]);
+    setImageFiles([]);
+    setEditingPostId(null);
+    setShowComposer(true);
+    setError("");
+    setSuccess("");
+  }
+
+  function startEditPost(post: Post) {
+    setTitle(post.title);
+    setContent(post.content);
+    setPostType(normalizePostTypeForSelect(post.post_type));
+    setExistingImages(getPostImages(post));
+    setImageFiles([]);
+    setEditingPostId(post.id);
+    setShowComposer(true);
+    setError("");
+    setSuccess("");
+    window.scrollTo({ top: 0, behavior: "smooth" });
   }
 
   function validateImage(file: File): string | null {
@@ -283,7 +317,8 @@ export default function BusinessFeedPage() {
     }
 
     const incoming = Array.from(filesList);
-    const remainingSlots = MAX_IMAGES - imageFiles.length;
+    const currentTotal = existingImages.length + imageFiles.length;
+    const remainingSlots = MAX_IMAGES - currentTotal;
 
     if (remainingSlots <= 0) {
       setError(`Maksimal ${MAX_IMAGES} gambar per post.`);
@@ -312,6 +347,13 @@ export default function BusinessFeedPage() {
     if (warning) {
       setError(warning);
     }
+  }
+
+  function removeExistingImage(indexToRemove: number) {
+    setError("");
+    setExistingImages((prev) =>
+      prev.filter((_, idx) => idx !== indexToRemove)
+    );
   }
 
   function removeSelectedImage(indexToRemove: number) {
@@ -344,7 +386,7 @@ export default function BusinessFeedPage() {
       return;
     }
 
-    if (imageFiles.length > MAX_IMAGES) {
+    if (existingImages.length + imageFiles.length > MAX_IMAGES) {
       setError(`Maksimal ${MAX_IMAGES} gambar per post.`);
       return;
     }
@@ -356,6 +398,8 @@ export default function BusinessFeedPage() {
         return;
       }
     }
+
+    const isEditing = Boolean(editingPostId);
 
     setSubmitting(true);
     setError("");
@@ -374,6 +418,14 @@ export default function BusinessFeedPage() {
       }
 
       const formData = new FormData();
+
+      if (editingPostId) {
+        formData.append("post_id", editingPostId);
+        formData.append(
+          "keep_image_urls",
+          JSON.stringify(existingImages)
+        );
+      }
 
       formData.append("company_id", company.id);
       formData.append("title", title.trim());
@@ -429,12 +481,16 @@ export default function BusinessFeedPage() {
         throw new Error(
           data?.message ||
           data?.error ||
-          "The post could not be published."
+          (isEditing
+            ? "The post could not be updated."
+            : "The post could not be published.")
         );
       }
 
       setSuccess(
-        "Your post passed AI moderation and was published successfully!"
+        isEditing
+          ? "Your post passed AI moderation and was updated successfully!"
+          : "Your post passed AI moderation and was published successfully!"
       );
 
       resetComposer();
@@ -536,6 +592,10 @@ export default function BusinessFeedPage() {
 
     await removeStoredImages(imagesToDelete);
 
+    if (editingPostId === post.id) {
+      resetComposer();
+    }
+
     setPosts((current) =>
       current.filter((item) => item.id !== post.id)
     );
@@ -564,6 +624,8 @@ export default function BusinessFeedPage() {
       year: "numeric",
     });
   }
+
+  const totalComposerImages = existingImages.length + imageFiles.length;
 
   return (
     <main className="feed-page">
@@ -656,16 +718,10 @@ export default function BusinessFeedPage() {
                     type="button"
                     className="create-button"
                     onClick={() => {
-                      if (showComposer) {
+                      if (showComposer && !editingPostId) {
                         resetComposer();
                       } else {
-                        setTitle("");
-                        setContent("");
-                        setPostType("announcement");
-                        setImageFiles([]);
-                        setShowComposer(true);
-                        setError("");
-                        setSuccess("");
+                        openCreateComposer();
                       }
                     }}
                   >
@@ -713,10 +769,12 @@ export default function BusinessFeedPage() {
                 <div className="composer-heading">
                   <div>
                     <span className="eyebrow">
-                      PUBLISH UPDATE
+                      {editingPostId ? "EDIT UPDATE" : "PUBLISH UPDATE"}
                     </span>
 
-                    <h2>Create a Post</h2>
+                    <h2>
+                      {editingPostId ? "Edit Post" : "Create a Post"}
+                    </h2>
                   </div>
 
                   <button
@@ -773,8 +831,34 @@ export default function BusinessFeedPage() {
                   />
 
                   <label>
-                    Upload Images ({imageFiles.length}/{MAX_IMAGES})
+                    Images ({totalComposerImages}/{MAX_IMAGES})
                   </label>
+
+                  {existingImages.length > 0 && (
+                    <div className="image-preview">
+                      <span>
+                        CURRENT IMAGES ({existingImages.length})
+                      </span>
+
+                      <div className="preview-grid">
+                        {existingImages.map((imgUrl, index) => (
+                          <div className="preview-card" key={`${imgUrl}-${index}`}>
+                            <img
+                              src={imgUrl}
+                              alt={`Current image ${index + 1}`}
+                            />
+                            <button
+                              type="button"
+                              className="remove-image-button"
+                              onClick={() => removeExistingImage(index)}
+                            >
+                              Remove
+                            </button>
+                          </div>
+                        ))}
+                      </div>
+                    </div>
+                  )}
 
                   <div className="upload-area">
                     <input
@@ -788,14 +872,14 @@ export default function BusinessFeedPage() {
                     />
 
                     <small>
-                      All image formats supported · Max {MAX_IMAGES} images · Max 5 MB each
+                      All image formats supported · Max {MAX_IMAGES} images total · Max 5 MB each
                     </small>
                   </div>
 
                   {previewItems.length > 0 && (
                     <div className="image-preview">
                       <span>
-                        SELECTED IMAGES ({previewItems.length}/{MAX_IMAGES})
+                        NEW IMAGES TO UPLOAD ({previewItems.length})
                       </span>
 
                       <div className="preview-grid">
@@ -803,7 +887,7 @@ export default function BusinessFeedPage() {
                           <div className="preview-card" key={item.url}>
                             <img
                               src={item.url}
-                              alt={`Selected image ${index + 1}`}
+                              alt={`New image ${index + 1}`}
                             />
                             <button
                               type="button"
@@ -822,7 +906,8 @@ export default function BusinessFeedPage() {
                     <strong>AI Content Moderation</strong>
                     <p>
                       Your text and uploaded images will be
-                      checked before the post is published.
+                      checked before the post is{" "}
+                      {editingPostId ? "updated" : "published"}.
                     </p>
                   </div>
 
@@ -833,6 +918,8 @@ export default function BusinessFeedPage() {
                   >
                     {submitting
                       ? "Checking content..."
+                      : editingPostId
+                      ? "Save Changes →"
                       : "Publish Post →"}
                   </button>
                 </form>
@@ -873,7 +960,7 @@ export default function BusinessFeedPage() {
                   <button
                     type="button"
                     className="create-button"
-                    onClick={() => setShowComposer(true)}
+                    onClick={openCreateComposer}
                   >
                     Create the First Post
                   </button>
@@ -994,9 +1081,13 @@ export default function BusinessFeedPage() {
 
                       {isOwner && (
                         <div className="post-actions">
-                          <span className="edit-disabled">
-                            Editing temporarily unavailable
-                          </span>
+                          <button
+                            type="button"
+                            className="edit-button"
+                            onClick={() => startEditPost(post)}
+                          >
+                            Edit Post
+                          </button>
 
                           <button
                             type="button"
@@ -1517,12 +1608,16 @@ export default function BusinessFeedPage() {
         .post-actions {
           display: flex;
           align-items: center;
-          gap: 15px;
+          gap: 14px;
         }
 
-        .edit-disabled {
-          color: #98a5b5;
-          font-size: 10px;
+        .edit-button {
+          background: transparent;
+          border: none;
+          color: #2874db;
+          font-size: 11px;
+          font-weight: 700;
+          cursor: pointer;
         }
 
         .delete-button {
