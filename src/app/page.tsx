@@ -84,6 +84,23 @@ const categoryLabels: Record<string, string> = {
   presentation: "Presentation",
 };
 
+function extractVideoUrlFromPost(post: HomePost): string | null {
+  const text = post.content || "";
+  const linkVideoMatch = text.match(/Link Video:\s*(https?:\/\/\S+)/i);
+  if (linkVideoMatch && linkVideoMatch[1]) {
+    return linkVideoMatch[1].trim();
+  }
+
+  const mediaMatch = text.match(
+    /(https?:\/\/\S+(?:\.mp4|\.webm|\.mov|\.m4v)(?:\?\S*)?)/i
+  );
+  if (mediaMatch && mediaMatch[1]) {
+    return mediaMatch[1].trim();
+  }
+
+  return null;
+}
+
 function getPostImages(post: HomePost): string[] {
   const list: string[] = [];
 
@@ -493,6 +510,7 @@ export default function Home() {
               {posts.map((post) => {
                 const postImages = getPostImages(post);
                 const postImageCaptions = getPostImageCaptions(post, postImages);
+                const videoUrl = extractVideoUrlFromPost(post);
                 const isFocusedPost = focusTarget?.postId === post.id;
 
                 return (
@@ -527,6 +545,28 @@ export default function Home() {
                     <div className="home-post-body">
                       <h3>{post.title}</h3>
                       <p>{post.content}</p>
+
+                      {videoUrl && (
+                        <div className="home-video-box">
+                          <video
+                            src={videoUrl}
+                            controls
+                            playsInline
+                            preload="metadata"
+                            className="home-video-player"
+                          />
+                          <div className="home-video-footer">
+                            <span>🎬 Video Clip</span>
+                            <a
+                              href={videoUrl}
+                              target="_blank"
+                              rel="noreferrer"
+                            >
+                              Buka Video ↗
+                            </a>
+                          </div>
+                        </div>
+                      )}
 
                       {postImages.length > 0 && (
                         <div
@@ -1209,6 +1249,43 @@ export default function Home() {
           font-size: 14px;
           line-height: 1.72;
           white-space: pre-wrap;
+          overflow-wrap: anywhere;
+        }
+
+        .home-video-box {
+          margin-top: 14px;
+          border-radius: 12px;
+          overflow: hidden;
+          background: #07111f;
+          border: 1px solid #d7e2f0;
+        }
+
+        .home-video-player {
+          display: block;
+          width: 100%;
+          max-height: 420px;
+          background: #050d18;
+        }
+
+        .home-video-footer {
+          display: flex;
+          align-items: center;
+          justify-content: space-between;
+          gap: 10px;
+          padding: 9px 14px;
+          background: #10243d;
+          color: #e6eef8;
+          font-size: 12px;
+          font-weight: 700;
+        }
+
+        .home-video-footer a {
+          color: #7ee8dc;
+          text-decoration: none;
+        }
+
+        .home-video-footer a:hover {
+          text-decoration: underline;
         }
 
         .home-images-grid {
