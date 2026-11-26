@@ -4,6 +4,7 @@ import { useEffect, useState } from "react";
 import Link from "next/link";
 import { createClient } from "@/lib/supabase";
 import { PostThreadComments } from "@/components/PostThreadComments";
+import { AccountAuthModal } from "@/components/AccountAuthModal";
 
 type HomePost = {
   id: string;
@@ -136,47 +137,50 @@ export default function Home() {
   const [currentUserId, setCurrentUserId] = useState<string | null>(null);
   const [currentUserName, setCurrentUserName] = useState<string | null>(null);
   const [focusTarget, setFocusTarget] = useState<FocusTarget | null>(null);
+  const [authModalOpen, setAuthModalOpen] = useState(false);
+
+  async function syncActiveUser() {
+    const {
+      data: { user },
+    } = await supabase.auth.getUser();
+
+    if (user) {
+      setCurrentUserId(user.id);
+      const fallbackName =
+        (user.user_metadata?.full_name as string | undefined)?.trim() ||
+        user.email?.split("@")[0] ||
+        "Member";
+      setCurrentUserName(fallbackName);
+
+      const { data: settings } = await supabase
+        .from("account_settings")
+        .select("active_profile_type, active_company_id")
+        .eq("user_id", user.id)
+        .maybeSingle();
+
+      if (settings?.active_profile_type === "company" && settings.active_company_id) {
+        const { data: companyData } = await supabase
+          .from("companies")
+          .select("company_name")
+          .eq("id", settings.active_company_id)
+          .maybeSingle();
+
+        if (companyData?.company_name) {
+          setCurrentUserName(companyData.company_name);
+        }
+      }
+    } else {
+      setCurrentUserId(null);
+      setCurrentUserName(null);
+    }
+  }
 
   useEffect(() => {
     let active = true;
 
     async function loadHomeData() {
       setLoadingPosts(true);
-
-      const {
-        data: { user },
-      } = await supabase.auth.getUser();
-
-      if (active && user) {
-        setCurrentUserId(user.id);
-        const fallbackName =
-          (user.user_metadata?.full_name as string | undefined)?.trim() ||
-          user.email?.split("@")[0] ||
-          "Member";
-        setCurrentUserName(fallbackName);
-
-        const { data: settings } = await supabase
-          .from("account_settings")
-          .select("active_profile_type, active_company_id")
-          .eq("user_id", user.id)
-          .maybeSingle();
-
-        if (
-          active &&
-          settings?.active_profile_type === "company" &&
-          settings.active_company_id
-        ) {
-          const { data: companyData } = await supabase
-            .from("companies")
-            .select("company_name")
-            .eq("id", settings.active_company_id)
-            .maybeSingle();
-
-          if (companyData?.company_name) {
-            setCurrentUserName(companyData.company_name);
-          }
-        }
-      }
+      await syncActiveUser();
 
       const { data, error } = await supabase
         .from("business_posts")
@@ -217,7 +221,14 @@ export default function Home() {
     return () => {
       active = false;
     };
+    // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [supabase]);
+
+  async function handleSignOut() {
+    await supabase.auth.signOut();
+    setCurrentUserId(null);
+    setCurrentUserName(null);
+  }
 
   function handleFocusImageComment(postId: string, imageIndex: number) {
     setFocusTarget((prev) => ({
@@ -253,9 +264,32 @@ export default function Home() {
           <a href="#about">About</a>
         </nav>
 
-        <Link className="nav-button" href="/business-feed">
-          Business Feed ↗
-        </Link>
+        <div className="nav-right-actions">
+          {currentUserName ? (
+            <>
+              <span className="nav-account-badge">● {currentUserName}</span>
+              <button
+                type="button"
+                className="nav-ghost-btn"
+                onClick={handleSignOut}
+              >
+                Keluar
+              </button>
+            </>
+          ) : (
+            <button
+              type="button"
+              className="nav-ghost-btn"
+              onClick={() => setAuthModalOpen(true)}
+            >
+              Masuk / Register
+            </button>
+          )}
+
+          <Link className="nav-button" href="/business-feed">
+            Business Feed ↗
+          </Link>
+        </div>
       </header>
 
       <section className="hero" id="about">
@@ -540,6 +574,13 @@ export default function Home() {
         <small>© 2026 v-nect. All rights reserved.</small>
       </footer>
 
+      <AccountAuthModal
+        open={authModalOpen}
+        initialMode="login"
+        onClose={() => setAuthModalOpen(false)}
+        onSuccess={() => syncActiveUser()}
+      />
+
       <style jsx>{`
         .home-page {
           min-height: 100vh;
@@ -643,6 +684,41 @@ export default function Home() {
 
         .navbar nav a:hover {
           color: #13c8b5;
+        }
+
+        .nav-right-actions {
+          display: flex;
+          align-items: center;
+          gap: 10px;
+          flex-wrap: wrap;
+        }
+
+        .nav-account-badge {
+          padding: 7px 12px;
+          border-radius: 999px;
+          background: rgba(19, 200, 181, 0.16);
+          border: 1px solid rgba(19, 200, 181, 0.45);
+          color: #7ee8dc;
+          font-size: 12px;
+          font-weight: 700;
+          white-space: nowrap;
+        }
+
+        .nav-ghost-btn {
+          background: rgba(255, 255, 255, 0.06);
+          border: 1px solid rgba(255, 255, 255, 0.22);
+          color: #e6effa;
+          padding: 9px 14px;
+          border-radius: 9px;
+          font-size: 13px;
+          font-weight: 700;
+          cursor: pointer;
+          white-space: nowrap;
+        }
+
+        .nav-ghost-btn:hover {
+          border-color: #13c8b5;
+          color: #ffffff;
         }
 
         .nav-button {
