@@ -191,6 +191,7 @@ export default function BusinessFeedPage() {
 
   const [loading, setLoading] = useState(true);
   const [submitting, setSubmitting] = useState(false);
+  const [publishingClipId, setPublishingClipId] = useState<string | null>(null);
   const [showComposer, setShowComposer] = useState(false);
   const [showVChat, setShowVChat] = useState(false);
   const [editingPostId, setEditingPostId] = useState<string | null>(null);
@@ -311,9 +312,62 @@ export default function BusinessFeedPage() {
     setPublishedVideoClips((prev) => [...uploadedClips, ...prev]);
     setSuccess(
       cloudSuccessCount > 0
-        ? `${items.length} klip video (max ${maxDurationSec}s) diproses (${cloudSuccessCount} tersimpan ke Storage).`
-        : `${items.length} klip video (max ${maxDurationSec}s) diproses ke daftar unggahan.`
+        ? `${items.length} klip video (batas max ${maxDurationSec}s) diproses (${cloudSuccessCount} tersimpan ke Storage).`
+        : `${items.length} klip video (batas max ${maxDurationSec}s) diproses ke daftar unggahan.`
     );
+  }
+
+  async function handlePublishClipToHome(clip: PublishedVideoClip) {
+    if (!userId || !company) {
+      setError(
+        "Silakan masuk dan aktifkan profil perusahaan terlebih dahulu untuk memposting video ke halaman utama."
+      );
+      return;
+    }
+
+    if (publishingClipId) return;
+
+    setPublishingClipId(clip.id);
+    setError("");
+    setSuccess("");
+
+    try {
+      const durationSec = Math.max(1, clip.endSec - clip.startSec);
+      const videoLinkLine = clip.storageUploaded
+        ? `\nLink Video: ${clip.playUrl}`
+        : "";
+      const postContent = `Video highlight (${clip.startSec}s – ${clip.endSec}s / ${durationSec} detik) dari ${company.company_name}.${videoLinkLine}`;
+
+      const { error: insertError } = await supabase
+        .from("business_posts")
+        .insert({
+          company_id: company.id,
+          author_id: userId,
+          title: `Video: ${clip.fileName}`,
+          content: postContent,
+          post_type: normalizePostTypeForDb("presentation"),
+          image_url: null,
+          image_urls: [],
+          status: "published",
+        });
+
+      if (insertError) {
+        throw new Error(insertError.message);
+      }
+
+      setSuccess(
+        `Video "${clip.fileName}" berhasil diposting ke halaman utama!`
+      );
+      await loadFeed();
+    } catch (err) {
+      const message =
+        err instanceof Error
+          ? err.message
+          : "Gagal memposting video ke halaman utama.";
+      setError(message);
+    } finally {
+      setPublishingClipId(null);
+    }
   }
 
   async function loadFeed() {
@@ -1099,6 +1153,16 @@ export default function BusinessFeedPage() {
                           Durasi klip: {clip.startSec}s – {clip.endSec}s (
                           {clip.endSec - clip.startSec} detik)
                         </small>
+                        <button
+                          type="button"
+                          className="publish-clip-home-btn"
+                          disabled={publishingClipId === clip.id}
+                          onClick={() => handlePublishClipToHome(clip)}
+                        >
+                          {publishingClipId === clip.id
+                            ? "Memposting..."
+                            : "Post ke Halaman Utama →"}
+                        </button>
                       </div>
                     </div>
                   ))}
@@ -1880,6 +1944,24 @@ export default function BusinessFeedPage() {
           margin-top: 4px;
           font-size: 12px;
           color: #7ee8dc;
+        }
+
+        .publish-clip-home-btn {
+          margin-top: 10px;
+          width: 100%;
+          padding: 8px 10px;
+          border: none;
+          border-radius: 7px;
+          background: linear-gradient(110deg, #347cf0, #13bcae);
+          color: #ffffff;
+          font-size: 12px;
+          font-weight: 700;
+          cursor: pointer;
+        }
+
+        .publish-clip-home-btn:disabled {
+          opacity: 0.65;
+          cursor: not-allowed;
         }
 
         .extra-tool-box {
