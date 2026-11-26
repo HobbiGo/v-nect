@@ -1,4 +1,21 @@
 
+"use client";
+
+import Link from "next/link";
+
+export type EcosystemModuleItem = {
+  number: string;
+  icon: string;
+  name: string;
+  description: string;
+  href: string;
+};
+
+type EcosystemSectionProps = {
+  modules: EcosystemModuleItem[];
+  exploreHref?: string;
+};
+
 export function EcosystemSection({
   modules,
   exploreHref = "/business-feed",
@@ -6,6 +23,8 @@ export function EcosystemSection({
   return (
     <section className="platform-section" id="platform">
       <div className="ecosystem-shell">
+
+        {/* HEADER */}
         <div className="ecosystem-topbar">
           <div className="ecosystem-heading">
             <span className="ecosystem-eyebrow">
@@ -13,7 +32,10 @@ export function EcosystemSection({
             </span>
 
             <div className="ecosystem-title">
-              <span className="ecosystem-bar" aria-hidden="true" />
+              <span
+                className="ecosystem-bar"
+                aria-hidden="true"
+              />
               <h2>One Ecosystem. Every Connection.</h2>
             </div>
 
@@ -24,12 +46,16 @@ export function EcosystemSection({
             </p>
           </div>
 
-          <Link href={exploreHref} className="ecosystem-link">
+          <Link
+            href={exploreHref}
+            className="ecosystem-link"
+          >
             Explore the ecosystem
-            <span>↗</span>
+            <span aria-hidden="true">↗</span>
           </Link>
         </div>
 
+        {/* ECOSYSTEM MODULES */}
         <div className="ecosystem-grid">
           {modules.map((module, idx) => (
             <Link
@@ -38,8 +64,11 @@ export function EcosystemSection({
               key={module.number}
             >
               <div className="eco-card-top">
-                <div className="eco-icon-box" aria-hidden="true">
-                  {renderModuleIcon(module.name, idx)}
+                <div
+                  className="eco-icon-box"
+                  aria-hidden="true"
+                >
+                  {module.icon}
                 </div>
 
                 <span className="eco-number">
@@ -54,7 +83,11 @@ export function EcosystemSection({
 
               <div className="eco-card-bottom">
                 <span>Explore module</span>
-                <span className="eco-circle-arrow" aria-hidden="true">
+
+                <span
+                  className="eco-circle-arrow"
+                  aria-hidden="true"
+                >
                   ↗
                 </span>
               </div>
@@ -62,12 +95,17 @@ export function EcosystemSection({
           ))}
         </div>
 
+        {/* FOOTER */}
         <div className="ecosystem-footer">
           <span className="ecosystem-footer-dot" />
-          <span>ONE PLATFORM. CONNECTED POSSIBILITIES.</span>
+          <span>
+            ONE PLATFORM. CONNECTED POSSIBILITIES.
+          </span>
         </div>
+
       </div>
 
+      {/* COMPONENT STYLES */}
       <style jsx>{`
         .platform-section {
           max-width: 1320px;
@@ -93,11 +131,17 @@ export function EcosystemSection({
               rgba(14, 165, 233, 0.12),
               transparent 36%
             ),
-            linear-gradient(145deg, #101c38 0%, #080f22 100%);
+            linear-gradient(
+              145deg,
+              #101c38 0%,
+              #080f22 100%
+            );
           box-shadow:
             0 24px 70px rgba(0, 0, 0, 0.3),
             inset 0 1px 0 rgba(255, 255, 255, 0.07);
         }
+
+        /* HEADER */
 
         .ecosystem-topbar {
           display: flex;
@@ -183,6 +227,8 @@ export function EcosystemSection({
           transform: translateY(-2px);
         }
 
+        /* MODULE GRID */
+
         .ecosystem-grid {
           display: grid;
           grid-template-columns: repeat(3, minmax(0, 1fr));
@@ -239,6 +285,8 @@ export function EcosystemSection({
           box-shadow: 0 18px 36px rgba(0, 0, 0, 0.24);
         }
 
+        /* ICON */
+
         .eco-card-top {
           display: flex;
           align-items: center;
@@ -253,12 +301,9 @@ export function EcosystemSection({
           place-items: center;
           border-radius: 15px;
           color: #ffffff;
+          font-size: 25px;
+          line-height: 1;
           border: 1px solid rgba(255, 255, 255, 0.22);
-        }
-
-        .eco-icon-box :global(svg) {
-          width: 27px;
-          height: 27px;
         }
 
         .eco-tone-0 .eco-icon-box {
@@ -291,6 +336,8 @@ export function EcosystemSection({
           box-shadow: 0 8px 24px rgba(30, 132, 224, 0.25);
         }
 
+        /* CARD CONTENT */
+
         .eco-number {
           color: rgba(165, 190, 230, 0.38);
           font-size: 28px;
@@ -317,6 +364,8 @@ export function EcosystemSection({
           font-size: 13px;
           line-height: 1.7;
         }
+
+        /* CARD FOOTER */
 
         .eco-card-bottom {
           display: flex;
@@ -350,6 +399,8 @@ export function EcosystemSection({
           transform: rotate(45deg);
         }
 
+        /* SECTION FOOTER */
+
         .ecosystem-footer {
           display: flex;
           justify-content: center;
@@ -370,6 +421,8 @@ export function EcosystemSection({
           box-shadow: 0 0 10px rgba(57, 199, 237, 0.8);
         }
 
+        /* TABLET */
+
         @media (max-width: 900px) {
           .ecosystem-shell {
             padding: 28px;
@@ -384,6 +437,8 @@ export function EcosystemSection({
             flex-direction: column;
           }
         }
+
+        /* MOBILE */
 
         @media (max-width: 540px) {
           .platform-section {
@@ -433,11 +488,18 @@ export function EcosystemSection({
           }
         }
 
+        /* ACCESSIBILITY */
+
         @media (prefers-reduced-motion: reduce) {
           .eco-card,
           .ecosystem-link,
           .eco-circle-arrow {
             transition: none;
+          }
+
+          .eco-card:hover,
+          .ecosystem-link:hover {
+            transform: none;
           }
         }
       `}</style>
