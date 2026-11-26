@@ -66,7 +66,7 @@ const modules = [
     number: "05",
     name: "v-circle",
     description: "Meet professionals and grow your network.",
-    href: null,
+    href: "/v-circle",
   },
   {
     number: "06",
