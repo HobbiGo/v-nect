@@ -251,6 +251,16 @@ export function LiveStoriesAndVideoComposer({
     );
   }
 
+  function updateQueuedCaption(id: string, nextCaption: string) {
+    setVideoQueue((prev) =>
+      prev.map((item) =>
+        item.id === id
+          ? { ...item, caption: nextCaption.slice(0, 240) }
+          : item
+      )
+    );
+  }
+
   function removeQueuedVideo(id: string) {
     setVideoQueue((prev) => {
       const target = prev.find((v) => v.id === id);
@@ -421,6 +431,19 @@ export function LiveStoriesAndVideoComposer({
                           ? `Terpotong: ${item.startSec}s – ${item.endSec}s (${clipLength}s / asli ${item.originalDuration}s)`
                           : `Durasi OK: ${clipLength}s (max ${maxDurationSec}s)`}
                       </span>
+                    </div>
+
+                    <div className="vn-queue-caption-row">
+                      <input
+                        type="text"
+                        className="vn-queue-caption-input"
+                        value={item.caption}
+                        onChange={(e) =>
+                          updateQueuedCaption(item.id, e.target.value)
+                        }
+                        placeholder="Tulis teks / caption video sebelum diunggah..."
+                        maxLength={240}
+                      />
                     </div>
 
                     <div className="vn-trim-controls">
@@ -784,6 +807,30 @@ export function LiveStoriesAndVideoComposer({
           font-size: 14px;
           color: #ffffff;
           overflow-wrap: anywhere;
+        }
+
+        .vn-queue-caption-row {
+          margin-top: 9px;
+        }
+
+        .vn-queue-caption-input {
+          width: 100%;
+          box-sizing: border-box;
+          padding: 8px 11px;
+          border-radius: 8px;
+          border: 1px solid rgba(255, 255, 255, 0.2);
+          background: #091627;
+          color: #ffffff;
+          font-size: 13px;
+          outline: none;
+        }
+
+        .vn-queue-caption-input::placeholder {
+          color: #8fa6c2;
+        }
+
+        .vn-queue-caption-input:focus {
+          border-color: #13c8b5;
         }
 
         .vn-trim-badge {
