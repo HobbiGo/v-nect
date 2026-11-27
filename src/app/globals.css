@@ -1,30 +1,79 @@
-/* v-nect - WARNA WAJIB Blue Navy - timpa semua merah/pink lama */
-:root { --vn-navy: #060B24; --vn-blue: #4B6BFF; --vn-violet: #7854FF; --vn-sky: #8AB4FF; }
+@tailwind base;
+@tailwind components;
+@tailwind utilities;
 
-/* Paksa semua tombol pink/merah lama jadi biru */
-button, .btn-primary, .btn, [class*="btn-primary"] {
-  /* jangan ubah layout, cuma warna */
+/* ===== v-nect base ===== */
+:root {
+  --navy: #060B24;
+  --navy-2: #0E183A;
+  --blue: #4B6BFF;
+  --light: #8AB4FF;
 }
-.fc-community, .community-card, [class*="community"] {
-  background: linear-gradient(155deg, #4B6BFF, #0E183A) !important;
+
+* { box-sizing: border-box; }
+
+html, body {
+  margin: 0;
+  padding: 0;
+  background: #060B24;
+  color: #F3F7FF;
+  font-family: var(--font-sans), Arial, sans-serif;
+  overflow-x: hidden;
 }
-/* Like merah di TikTok tetap merah muda, itu ikon like, bukan tema */
-/* Tapi: Edit Profile, Share Profile, tombol aksi, tab aktif = BIRU */
-button[class*="edit"], button[class*="Edit"], .edit-profile {
-  background: linear-gradient(110deg, #4B6BFF, #7854FF) !important;
+
+a { color: inherit; }
+
+/* ===== FIX UTAMA: matiin gradasi lama yang bikin biru nabrak ===== */
+/* Gradasi lama di sini yang dulu nimpa page.tsx - sekarang dimatiin total */
+
+.fc-community,
+.community-card,
+.comm-card {
+  background: #0E183A !important;
+  background-image: none !important;
+  background-color: #0E183A !important;
+  border: 1px solid rgba(138,165,255,.35) !important;
   color: #fff !important;
 }
-/* Tab Following / For You / Trending yang aktif = BIRU, bukan merah */
-.tab.active, [class*="tab"].active, .nav-tab.active {
-  background: #fff !important; color: #060B24 !important;
-}
-/* Badge & link merah lama jadi biru */
-a { color: #9EC0FF; }
-/* Bottom nav aktif = biru */
-.bottom-nav a.active, .bnav.active { color: #8AB4FF !important; }
 
-/* PENTING: di file v-circle / v-hub, cari & ganti manual 3 warna ini: */
-/* #FE2C55 -> #4B6BFF */
-/* #F472B6 -> #4B6BFF */
-/* #E11D48 / #EF4444 / red-500 -> #4B6BFF */
-/* Caranya: GitHub -> Search (kaca pembesar) -> ketik #FE2C55 -> ganti satu-satu */
+.fc-community *,
+.community-card *,
+.comm-card * {
+  background-image: none !important;
+}
+
+.comm-icon,
+.comm-stats div {
+  background: #1A2A5A !important;
+  background-image: none !important;
+}
+
+.comm-head h2,
+.comm-desc,
+.comm-stats b {
+  color: #FFFFFF !important;
+}
+
+.comm-head p,
+.comm-stats span {
+  color: #B4C6E7 !important;
+}
+
+/* ===== Topnav pills ===== */
+.nav-pills a,
+.nav-pills button {
+  text-decoration: none !important;
+}
+
+.pill.active {
+  background: #fff !important;
+  color: #060B24 !important;
+  border-color: #fff !important;
+}
+
+/* ===== Biar nggak ada lagi sisa gradient pink/merah lama yang nyangkut ===== */
+[class*="gradient"],
+.bg-gradient-to-r,
+.bg-gradient-to-br {
+  background-image: none !important;
+}
