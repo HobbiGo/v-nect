@@ -957,14 +957,14 @@ export default function HomePage() {
 
         .top-nav {
           min-height: 72px;
-          padding: 10px 6%;
-          background: rgba(6, 11, 34, 0.88);
+          padding: 12px 6%;
+          background: rgba(6, 11, 34, 0.9);
           backdrop-filter: blur(16px);
-          border-bottom: 1px solid rgba(138, 165, 255, 0.14);
+          border-bottom: 1px solid rgba(138, 165, 255, 0.15);
           display: flex;
           align-items: center;
           justify-content: space-between;
-          gap: 16px;
+          gap: 18px;
           position: sticky;
           top: 0;
           z-index: 30;
@@ -1028,7 +1028,7 @@ export default function HomePage() {
         .nav-links {
           display: flex;
           align-items: center;
-          gap: 20px;
+          gap: 22px;
         }
 
         .nav-links :global(a) {
@@ -1084,12 +1084,18 @@ export default function HomePage() {
           font-size: 12px;
           font-weight: 700;
           cursor: pointer;
+          transition: background 0.2s ease, border-color 0.2s ease;
+        }
+
+        .btn-ghost:hover {
+          background: rgba(255, 255, 255, 0.11);
+          border-color: rgba(154, 178, 255, 0.45);
         }
 
         .hero-section {
-          padding: 28px 7% 36px;
+          padding: 36px 7% 44px;
           display: flex;
-          align-items: flex-start;
+          align-items: center;
           background:
             radial-gradient(
               circle at 76% 42%,
@@ -1105,16 +1111,16 @@ export default function HomePage() {
 
         .hero-grid {
           width: 100%;
-          max-width: 1320px;
+          max-width: 1340px;
           margin: 0 auto;
           display: grid;
-          grid-template-columns: minmax(0, 0.92fr) minmax(0, 1.08fr);
+          grid-template-columns: minmax(0, 0.88fr) minmax(0, 1.12fr);
           align-items: center;
-          gap: 24px 36px;
+          gap: 28px 40px;
         }
 
         .hero-content {
-          max-width: 580px;
+          max-width: 560px;
         }
 
         .eyebrow,
@@ -1130,7 +1136,7 @@ export default function HomePage() {
 
         .hero-content h1 {
           margin: 0 0 18px;
-          font-size: clamp(40px, 5.5vw, 62px);
+          font-size: clamp(40px, 5.4vw, 62px);
           font-weight: 850;
           line-height: 1.05;
           letter-spacing: -1.6px;
@@ -1142,7 +1148,7 @@ export default function HomePage() {
           color: #b8c7e6;
           font-size: 15.5px;
           line-height: 1.72;
-          max-width: 540px;
+          max-width: 520px;
         }
 
         .hero-buttons {
@@ -1168,6 +1174,12 @@ export default function HomePage() {
           box-shadow: 0 10px 24px rgba(75, 107, 255, 0.28);
           width: auto;
           max-width: fit-content;
+          transition: transform 0.2s ease, box-shadow 0.2s ease;
+        }
+
+        :global(.btn-primary:hover) {
+          transform: translateY(-1px);
+          box-shadow: 0 12px 26px rgba(75, 107, 255, 0.36);
         }
 
         :global(.btn-secondary) {
@@ -1184,6 +1196,12 @@ export default function HomePage() {
           gap: 8px;
           width: auto;
           max-width: fit-content;
+          transition: background 0.2s ease, border-color 0.2s ease;
+        }
+
+        :global(.btn-secondary:hover) {
+          background: rgba(24, 38, 82, 0.85);
+          border-color: rgba(154, 178, 255, 0.5);
         }
 
         .hero-visual {
@@ -1192,7 +1210,7 @@ export default function HomePage() {
           align-items: center;
           justify-content: center;
           width: 100%;
-          min-height: 420px;
+          min-height: 460px;
           background: transparent;
           border: none;
           box-shadow: none;
@@ -1201,10 +1219,10 @@ export default function HomePage() {
 
         .hero-globe-img {
           width: 100%;
-          max-width: 780px;
-          max-height: 620px;
+          max-width: 860px;
+          max-height: 680px;
           height: auto;
-          transform: scale(1.12);
+          transform: scale(1.18);
           object-fit: contain;
           object-position: center;
           display: block;
@@ -1222,12 +1240,12 @@ export default function HomePage() {
         .posts-section,
         .video-showcase-section,
         .about-section {
-          padding: 44px 7%;
+          padding: 48px 7%;
         }
 
         .section-header {
-          max-width: 620px;
-          margin-bottom: 30px;
+          max-width: 640px;
+          margin-bottom: 28px;
         }
 
         .section-header h2,
@@ -1267,6 +1285,8 @@ export default function HomePage() {
           border: 1px solid rgba(138, 165, 255, 0.16);
           border-radius: 18px;
           padding: 26px;
+          display: flex;
+          flex-direction: column;
         }
 
         .feature-icon {
@@ -1313,12 +1333,17 @@ export default function HomePage() {
           display: inline-flex;
           align-items: center;
           gap: 6px;
+          transition: color 0.2s ease;
+        }
+
+        :global(.eco-link:hover) {
+          color: #c5daff;
         }
 
         .ecosystem-grid {
           display: grid;
           grid-template-columns: repeat(3, minmax(0, 1fr));
-          gap: 16px;
+          gap: 18px;
         }
 
         .eco-card {
@@ -1420,7 +1445,7 @@ export default function HomePage() {
           display: flex;
           gap: 8px;
           flex-wrap: wrap;
-          margin-bottom: 20px;
+          margin-bottom: 22px;
         }
 
         .home-filter-pill {
@@ -1432,6 +1457,12 @@ export default function HomePage() {
           font-size: 12px;
           font-weight: 700;
           cursor: pointer;
+          transition: background 0.2s ease, border-color 0.2s ease, color 0.2s ease;
+        }
+
+        .home-filter-pill:hover {
+          border-color: rgba(148, 184, 255, 0.48);
+          color: #ffffff;
         }
 
         .home-filter-pill.active {
@@ -1465,7 +1496,7 @@ export default function HomePage() {
         .post-video-thumb,
         .video-showcase-thumb {
           position: relative;
-          height: 190px;
+          height: 192px;
           background: #070d24;
           overflow: hidden;
         }
@@ -1714,8 +1745,8 @@ export default function HomePage() {
           );
           border: 1px solid rgba(138, 165, 255, 0.2);
           border-radius: 22px;
-          padding: 36px;
-          max-width: 920px;
+          padding: 34px 36px;
+          max-width: 960px;
         }
 
         .site-footer {
@@ -1823,20 +1854,32 @@ export default function HomePage() {
         }
 
         @media (max-width: 960px) {
+          .hero-section {
+            padding: 28px 6% 36px;
+          }
+
           .hero-grid {
             grid-template-columns: 1fr;
             gap: 24px;
           }
 
           .hero-visual {
-            min-height: 340px;
+            min-height: 360px;
           }
 
           .hero-globe-img {
             width: 100%;
-            max-width: 640px;
-            max-height: 540px;
-            transform: scale(1.06);
+            max-width: 720px;
+            max-height: 580px;
+            transform: scale(1.12);
+          }
+
+          .features-section,
+          .ecosystem-section,
+          .posts-section,
+          .video-showcase-section,
+          .about-section {
+            padding: 40px 6%;
           }
 
           .features-grid,
@@ -1851,12 +1894,27 @@ export default function HomePage() {
           .top-nav {
             flex-wrap: wrap;
             justify-content: center;
+            padding: 12px 5%;
           }
 
           .nav-links {
             flex-wrap: wrap;
             justify-content: center;
             gap: 10px 14px;
+          }
+
+          .hero-visual {
+            min-height: 260px;
+          }
+
+          .hero-globe-img {
+            max-width: 100%;
+            max-height: 360px;
+            transform: scale(1.06);
+          }
+
+          .about-card {
+            padding: 24px 20px;
           }
 
           .features-grid,
