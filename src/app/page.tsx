@@ -320,7 +320,6 @@ export default function HomePage() {
     ? extractVideoCaption(activeVideoPost.content)
     : "";
 
-
   return (
     <main className="vnect-home">
       <header className="top-nav">
@@ -360,7 +359,7 @@ export default function HomePage() {
         </div>
       </header>
 
-      {/* HERO - GLOBE SUDAH TIDAK KEPOTONG: tanpa scale, tanpa mix-blend, tanpa mask */}
+      {/* HERO - GLOBE SUDAH TIDAK KEPOTONG: tanpa scale, tanpa mask, tanpa kotak hitam */}
       <section className="hero-section">
         <div className="hero-grid">
           <div className="hero-content">
@@ -1011,7 +1010,7 @@ export default function HomePage() {
           transition: background 0.2s ease, border-color 0.2s ease;
         }
         :global(.btn-secondary:hover) { background: rgba(24, 38, 82, 0.85); border-color: rgba(154, 178, 255, 0.5); }
-        /* HERO FIX - INI YANG BIKIN GLOBE TIDAK KEPOTONG LAGI (lihat screenshot: sebelumnya kepotong bawah) */
+        /* HERO FIX - HILANGKAN KOTAK HITAM & JAGA GLOBE UTUH */
         .hero-visual {
           position: relative; display: flex; align-items: center; justify-content: center;
           width: 100%; min-height: 460px; background: transparent; border: none; box-shadow: none; overflow: visible;
@@ -1020,10 +1019,12 @@ export default function HomePage() {
           width: 100%; max-width: 860px;
           display: grid; place-items: center;
           background: transparent; overflow: visible;
+          -webkit-mask-image: radial-gradient(ellipse 76% 74% at 50% 50%, #000 58%, rgba(0, 0, 0, 0.45) 78%, transparent 98%);
+          mask-image: radial-gradient(ellipse 76% 74% at 50% 50%, #000 58%, rgba(0, 0, 0, 0.45) 78%, transparent 98%);
         }
         .hero-globe-img {
           width: 100%; max-width: 860px; height: auto;
-          /* TANPA scale / mask / cover - itu penyebab kepotong */
+          mix-blend-mode: lighten;
           object-fit: contain; object-position: center; display: block; background: transparent;
         }
         .small-btn { padding: 9px 15px; font-size: 12.5px; }
