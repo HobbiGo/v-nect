@@ -1108,7 +1108,7 @@ export default function HomePage() {
           max-width: 1240px;
           margin: 0 auto;
           display: grid;
-          grid-template-columns: minmax(0, 1.05fr) minmax(0, 0.95fr);
+          grid-template-columns: minmax(0, 1fr) minmax(0, 1.05fr);
           align-items: center;
           gap: 24px 32px;
         }
@@ -1192,34 +1192,34 @@ export default function HomePage() {
           align-items: center;
           justify-content: center;
           width: 100%;
-          min-height: auto;
+          min-height: 360px;
           background: transparent;
           border: none;
           box-shadow: none;
-          overflow: hidden;
+          overflow: visible;
         }
 
         .hero-globe-img {
           width: 100%;
-          max-width: 460px;
-          max-height: 380px;
+          max-width: 640px;
+          max-height: 520px;
           height: auto;
           object-fit: contain;
           object-position: center;
           display: block;
           mix-blend-mode: screen;
-          filter: contrast(1.08) saturate(1.12);
+          filter: contrast(1.08) saturate(1.14);
           -webkit-mask-image: radial-gradient(
-            ellipse 76% 74% at 50% 50%,
-            #000 56%,
-            rgba(0, 0, 0, 0.55) 74%,
-            transparent 96%
+            ellipse 90% 88% at 50% 50%,
+            #000 68%,
+            rgba(0, 0, 0, 0.72) 84%,
+            transparent 100%
           );
           mask-image: radial-gradient(
-            ellipse 76% 74% at 50% 50%,
-            #000 56%,
-            rgba(0, 0, 0, 0.55) 74%,
-            transparent 96%
+            ellipse 90% 88% at 50% 50%,
+            #000 68%,
+            rgba(0, 0, 0, 0.72) 84%,
+            transparent 100%
           );
         }
 
@@ -1840,12 +1840,12 @@ export default function HomePage() {
           }
 
           .hero-visual {
-            min-height: auto;
+            min-height: 280px;
           }
 
           .hero-globe-img {
-            max-width: 360px;
-            max-height: 300px;
+            max-width: 480px;
+            max-height: 400px;
           }
 
           .features-grid,
