@@ -17,15 +17,9 @@ const MODULES = [
   { id: "v-chat", name: "v-chat", tag: "Chat & Messaging", desc: "Connect and communicate.", href: "/business-feed", icon: "💬", color: "#36b9ff" },
   { id: "v-meet", name: "v-meet", tag: "Live Meetings", desc: "Voice & video meetings.", href: "/v-meet", icon: "🎥", color: "#bd78ff" },
   { id: "v-hub", name: "v-hub", tag: "Identity Hub", desc: "Build your professional identity.", href: "/v-hub", icon: "✣", color: "#32dce9" },
-  { id: "v-feed", name: "v-business feed", tag: "Business Feed • Di dalam Ecosystem", desc: "Business updates & opportunities — feed-nya ada di bawah, di section ini juga.", href: "#feed", icon: "▤", color: "#559fff" },
+  { id: "v-feed", name: "v-business feed", tag: "Business Feed", desc: "Business updates & opportunities.", href: "/business-feed", icon: "▤", color: "#559fff" },
   { id: "v-circle", name: "v-circle", tag: "Network Circle", desc: "Grow your network.", href: "/v-circle", icon: "👥", color: "#f472b6" },
   { id: "v-market", name: "v-market", tag: "Marketplace", desc: "Products & suppliers.", href: "/v-market", icon: "🛒", color: "#fbbf24" },
-];
-
-const FEATURES = [
-  { icon: "💬", title: "Direct & Group Messaging", desc: "Chat real-time sama partner, tim & kontak bisnis." },
-  { icon: "🎥", title: "Voice & Video Meetings", desc: "Pitch & meeting cross-border langsung di dalam v-nect." },
-  { icon: "🌐", title: "Business Network & Feed", desc: "Share update, launch & insight ke seluruh ekosistem." },
 ];
 
 function isVideoUrl(u: string) {
@@ -78,7 +72,6 @@ export default function HomePage() {
   const [openComments, setOpenComments] = useState<string[]>([]);
   const [savedIds, setSavedIds] = useState<string[]>([]);
   const [showYoutube, setShowYoutube] = useState<Record<string,boolean>>({});
-  const [feedTab, setFeedTab] = useState<"foryou"|"following">("foryou");
   const feedRef = useRef<HTMLDivElement>(null);
 
   useEffect(()=>{ fetchPosts(); loadUser();
@@ -125,20 +118,16 @@ export default function HomePage() {
   async function toggleLike(id: string){
     if(!currentUserId){ setAuthModalOpen(true); return; }
     const liked = likedPostIds.includes(id);
-    if(liked){ setLikedPostIds(p=>p.filter(x=>x!==id)); setLikeCounts(p=>({...p,[id]:Math.max(0,(p[id]||0)-1)})); await supabase.from("post_likes").delete().eq("post_id",id).eq("user_id",currentUserId); }
+    if(liked){ setLikedPostIds(p=>p.filter(x=>x!==id)); setLikeCounts(p=>({...p,[id]:Math.max(0,(p[id]||0)-1)}); await supabase.from("post_likes").delete().eq("post_id",id).eq("user_id",currentUserId); }
     else { setLikedPostIds(p=>[...p,id]); setLikeCounts(p=>({...p,[id]:(p[id]||0)+1})); await supabase.from("post_likes").insert({post_id:id,user_id:currentUserId}); }
   }
 
   return (
     <main className="home">
-      {/* TOP BAR ala TikTok: atas cuma pilih feed */}
+      {/* TOP NAV - simpel */}
       <header className="topnav">
         <Link href="/" className="brand">v<span>-nect</span></Link>
-        <div className="tiktok-tabs">
-          <button onClick={()=>setFeedTab("following")} className={feedTab==="following"?"tab active":"tab"}>Mengikuti</button>
-          <button onClick={()=>setFeedTab("foryou")} className={feedTab==="foryou"?"tab active":"tab"}>Untuk Kamu</button>
-        </div>
-        <nav className="nav-desktop"><Link href="#feature-community">Feature</Link><Link href="#feature-community">Community</Link><Link href="#explore">Explore</Link><Link href="#feed">Feed</Link></nav>
+        <nav className="nav-desktop"><Link href="#explore">Explore</Link><Link href="#feed">Feed</Link><Link href="/v-circle">Community</Link></nav>
         {currentUserName ? <span className="chip">● {currentUserName}</span> : <button className="btn-ghost" onClick={()=>setAuthModalOpen(true)}>Sign In</button>}
       </header>
 
@@ -151,40 +140,9 @@ export default function HomePage() {
         <div className="hero-stats"><b>6</b> Modules &nbsp;•&nbsp; <b>1</b> Platform &nbsp;•&nbsp; <b>24/7</b> Global</div>
       </section>
 
-      {/* 2. FEATURE + COMMUNITY berdampingan di depan */}
-      <section id="feature-community" className="feature-community">
-        <div className="fc-grid">
-          <div className="fc-feature">
-            <span className="eyebrow">FEATURE</span>
-            <h2>Everything Your Business Needs to Connect</h2>
-            <p className="fc-sub">Satu ekosistem, 3 cara utama buat connect.</p>
-            <div className="feature-list">
-              {FEATURES.map(f=>(
-                <div key={f.title} className="feature-row"><span className="f-icon">{f.icon}</span><div><b>{f.title}</b><p>{f.desc}</p></div></div>
-              ))}
-            </div>
-            <a href="#explore" className="link">Lihat semua modul di Explore ↓</a>
-          </div>
-
-          <Link href="/v-circle" className="fc-community">
-            <span className="eyebrow">COMMUNITY</span>
-            <div className="comm-head"><span className="comm-icon">👥</span><div><h2>v-circle Community</h2><p>Grow your network.</p></div></div>
-            <p className="comm-desc">Temuin founder, profesional & perusahaan. Diskusi, tanya produk, sampai cari partner — semuanya di satu circle.</p>
-            <div className="comm-stats">
-              <div><b>{posts.length || "—"}</b><span>Post terbaru</span></div>
-              <div><b>{Object.values(likeCounts).reduce((a,b)=>a+b,0) || "—"}</b><span>Total likes</span></div>
-              <div><b>{Object.values(commentCounts).reduce((a,b)=>a+b,0) || "—"}</b><span>Diskusi</span></div>
-            </div>
-            <span className="btn-primary">Join Community →</span>
-            <small className="comm-note">Klik untuk buka v-circle • Diskusi • Messages</small>
-          </Link>
-        </div>
-      </section>
-
-      {/* 3. EXPLORE = ECOSYSTEM, digabung jadi 1 aja, cuma 1x */}
-
+      {/* 2. EXPLORE = ECOSYSTEM, cuma 1x, grid kecil */}
       <section id="explore" className="explore">
-        <div className="sec-head"><div><span className="eyebrow">EXPLORE • ECOSYSTEM — 1 SECTION</span><h2>Explore the v-nect Suite</h2><p className="eco-note">Business Feed nggak lagi terpisah — dia ada di dalam Ecosystem ini. Klik kartu Business Feed di bawah, langsung scroll ke feed-nya.</p></div><span className="link">6 modul • 1 tempat • tanpa duplikasi</span></div>
+        <div className="sec-head"><div><span className="eyebrow">EXPLORE</span><h2>Explore the v-nect Suite</h2></div><Link href="/explore" className="link">All modules ↗</Link></div>
         <div className="module-grid">
           {MODULES.map(m=>(
             <Link key={m.id} href={m.href} className="module-card">
@@ -195,9 +153,9 @@ export default function HomePage() {
         </div>
       </section>
 
-      {/* 4. FEED TIKTOK - scroll ke bawah */}
+      {/* 3. FEED TIKTOK - scroll ke bawah */}
       <section id="feed" className="feed-section">
-        <div className="sec-head"><div><span className="eyebrow">BUSINESS FEED • DI DALAM ECOSYSTEM</span><h2>{feedTab==="following" ? "Mengikuti" : "Untuk Kamu"}</h2><p>{feedTab==="following" ? "Post dari bisnis & orang yang kamu ikuti." : "Scroll ke bawah kayak TikTok. Video jalan sendiri."}</p></div><a href="#explore" className="link">↑ Balik ke Ecosystem</a></div>
+        <div className="sec-head"><div><span className="eyebrow">SCROLL FOR MORE</span><h2>Latest Posts</h2><p>Scroll ke bawah kayak TikTok. Video jalan sendiri.</p></div><Link href="/business-feed" className="link">Business Feed ↗</Link></div>
 
         {loadingPosts ? <div className="loading">Loading posts...</div> : posts.length===0 ? <div className="loading">Belum ada post published.</div> : (
         <div className="tiktok-feed" ref={feedRef}>
@@ -223,7 +181,7 @@ export default function HomePage() {
                     <button onClick={()=>toggleLike(post.id)} className={liked?"act liked":"act"}><span>♥</span><small>{likeCounts[post.id]||0}</small></button>
                     <button onClick={()=>setOpenComments(p=>p.includes(post.id)?p.filter(x=>x!==post.id):[...p,post.id])} className="act"><span>💬</span><small>{commentCounts[post.id]||0}</small></button>
                     <button onClick={()=>setSavedIds(p=>p.includes(post.id)?p.filter(x=>x!==post.id):[...p,post.id])} className={saved?"act saved":"act"}><span>{saved?"★":"☆"}</span><small>Save</small></button>
-                    <a href="#feed" className="act"><span>↗</span><small>Share</small></a>
+                    <Link href="/business-feed" className="act"><span>↗</span><small>Share</small></Link>
                   </div>
 
                   {/* Caption nempel di video */}
@@ -242,7 +200,7 @@ export default function HomePage() {
         )}
       </section>
 
-      {/* 5. SISANYA - ringkas, di bawah */}
+      {/* 4. SISANYA FITUR - ringkas, di bawah, nggak numpuk di atas */}
       <section className="more">
         <h2>One Platform. Every Business Connection.</h2>
         <p>v-nect menyatukan chat, meeting, community & marketplace dalam satu ekosistem untuk founder, tim & creator.</p>
@@ -256,13 +214,9 @@ export default function HomePage() {
 
       <footer className="footer"><b>v<span>-nect</span></b><p>Connect Beyond Boundaries.</p><small>© 2026 v-nect</small></footer>
 
-      {/* BOTTOM NAV persis TikTok: Beranda, Market, +, Kotak Masuk, Profil */}
+      {/* BOTTOM NAV khusus HP */}
       <nav className="bottom-nav">
-        <a href="/" className="bnav active">⌂<small>Beranda</small></a>
-        <a href="/v-market" className="bnav">🛒<small>Market</small></a>
-        <a href="#feed" className="bnav plus">+<small></small></a>
-        <a href="/v-circle?tab=messages" className="bnav">✉️<small>Kotak Masuk</small></a>
-        <a href="/v-hub" className="bnav">●<small>Profil</small></a>
+        <a href="/">⌂<small>Home</small></a><a href="#explore">▦<small>Explore</small></a><a href="#feed" className="plus">+<small>Feed</small></a><a href="/v-circle">👥<small>Circle</small></a><a href="/v-hub">●<small>Profile</small></a>
       </nav>
 
       <AccountAuthModal open={authModalOpen} initialMode="login" onClose={()=>setAuthModalOpen(false)} onSuccess={()=>loadUser()} />
@@ -280,16 +234,6 @@ export default function HomePage() {
         .hero h1{font-size:clamp(38px,7vw,60px);line-height:1.05;letter-spacing:-1.5px;margin:12px 0 12px}.hero h1 span{color:#8ab4ff}
         .hero p{color:#b8c7e6;max-width:520px;line-height:1.7;margin:0 0 20px}.hero-stats{margin-top:18px;color:#9cb0d9;font-size:13px}
         .explore,.feed-section,.more{padding:28px 7%;max-width:1100px;margin:0 auto}
-        .feature-community{padding:10px 7% 28px;max-width:1100px;margin:0 auto}
-        .fc-grid{display:grid;grid-template-columns:1.1fr 0.9fr;gap:16px;align-items:stretch}
-        .fc-feature{background:linear-gradient(160deg,rgba(20,32,72,.9),rgba(11,19,46,.95));border:1px solid rgba(138,165,255,.16);border-radius:20px;padding:24px}
-        .eco-note{color:#a9b9da;font-size:13px;margin:8px 0 0;max-width:620px;line-height:1.6}.fc-feature h2{margin:8px 0 6px;font-size:clamp(22px,3.5vw,30px);line-height:1.2}.fc-sub{color:#a9b9da;font-size:13px;margin:0 0 16px}
-        .feature-list{display:flex;flex-direction:column;gap:12px;margin-bottom:16px}
-        .feature-row{display:flex;gap:12px;align-items:flex-start;background:rgba(255,255,255,.04);border:1px solid rgba(138,165,255,.12);border-radius:14px;padding:12px}.feature-row b{font-size:14px}.feature-row p{margin:3px 0 0;color:#b4c6e7;font-size:12.5px;line-height:1.5}.f-icon{width:40px;height:40px;flex-shrink:0;border-radius:11px;background:rgba(92,124,255,.18);display:grid;place-items:center;font-size:18px}
-        .fc-community{background:linear-gradient(155deg,#f472b6,#9d174d);border-radius:20px;padding:24px;color:#fff;text-decoration:none;display:flex;flex-direction:column;gap:10px}
-        .fc-community .eyebrow{color:#ffe4ef}.comm-head{display:flex;gap:12px;align-items:center}.comm-icon{width:52px;height:52px;border-radius:16px;background:rgba(255,255,255,.22);display:grid;place-items:center;font-size:24px}.comm-head h2{margin:0;font-size:22px}.comm-head p{margin:2px 0 0;opacity:.9;font-size:13px}.comm-desc{margin:0;line-height:1.6;font-size:13.5px;opacity:.95}
-        .comm-stats{display:grid;grid-template-columns:repeat(3,1fr);gap:10px;margin:6px 0}.comm-stats div{background:rgba(0,0,0,.22);border-radius:12px;padding:12px;text-align:center;display:flex;flex-direction:column}.comm-stats b{font-size:20px}.comm-stats span{font-size:11px;opacity:.85}
-        .fc-community .btn-primary{background:#fff;color:#9d174d;box-shadow:none;justify-content:center}.comm-note{font-size:11px;opacity:.85;text-align:center}
         .sec-head{display:flex;justify-content:space-between;align-items:flex-end;gap:16px;margin-bottom:18px}.sec-head h2{margin:6px 0 0;font-size:clamp(24px,4vw,32px)}.sec-head p{color:#a9b9da;font-size:13px;margin:6px 0 0}.link{color:#9ec0ff;text-decoration:none;font-size:13px;font-weight:700;white-space:nowrap}
         .module-grid{display:grid;grid-template-columns:repeat(3,1fr);gap:14px}
         .module-card{background:linear-gradient(160deg,rgba(20,32,72,.9),rgba(11,19,46,.95));border:1px solid rgba(138,165,255,.16);border-radius:16px;padding:18px;text-decoration:none;color:#fff;display:flex;flex-direction:column;gap:4px}
@@ -306,13 +250,10 @@ export default function HomePage() {
         .loading{padding:30px;text-align:center;color:#a9b9da;background:rgba(15,25,58,.7);border-radius:16px}
         .more{background:linear-gradient(145deg,rgba(22,36,82,.92),rgba(11,19,46,.96));border:1px solid rgba(138,165,255,.2);border-radius:22px;padding:28px;margin-top:10px}.more h2{margin:0 0 8px}.more p{color:#a9b9da}.more-grid{display:grid;grid-template-columns:repeat(3,1fr);gap:14px;margin:18px 0}
         .footer{text-align:center;padding:28px;color:#96a8d0}.footer b{color:#fff;font-size:22px}
-        .tiktok-tabs{display:flex;gap:4px;background:rgba(255,255,255,.06);padding:4px;border-radius:999px}
-        .tiktok-tabs .tab{background:transparent;border:none;color:#a9b9da;padding:7px 14px;border-radius:999px;font-size:12.5px;font-weight:700;cursor:pointer}
-        .tiktok-tabs .tab.active{background:#fff;color:#060b24}
         .bottom-nav{display:none}
         @media(max-width:640px){
-          .nav-desktop{display:none}.tiktok-tabs{position:absolute;left:50%;transform:translateX(-50%)}.topnav{justify-content:space-between}.chip,.btn-ghost{display:none}.module-grid{grid-template-columns:repeat(2,1fr);gap:10px}.module-card{padding:14px}.hero{padding:26px 5% 18px}.explore,.feed-section,.more{padding:22px 5%}
-          .fc-grid{grid-template-columns:1fr}.feature-community{padding:14px 5% 20px}.tiktok-media{aspect-ratio:9/16;max-height:none;border-radius:18px}.more-grid{grid-template-columns:1fr}
+          .nav-desktop{display:none}.module-grid{grid-template-columns:repeat(2,1fr);gap:10px}.module-card{padding:14px}.hero{padding:26px 5% 18px}.explore,.feed-section,.more{padding:22px 5%}
+          .tiktok-media{aspect-ratio:9/16;max-height:none;border-radius:18px}.more-grid{grid-template-columns:1fr}
           .bottom-nav{display:flex;position:fixed;left:0;right:0;bottom:0;z-index:40;background:rgba(6,11,34,.96);backdrop-filter:blur(12px);border-top:1px solid rgba(138,165,255,.2);justify-content:space-around;padding:8px 4px 12px}
           .bottom-nav a{color:#c8d7f5;text-decoration:none;display:flex;flex-direction:column;align-items:center;font-size:18px}.bottom-nav small{font-size:9px;margin-top:2px}.bottom-nav .plus{background:linear-gradient(110deg,#4b6bff,#7854ff);width:44px;height:44px;border-radius:14px;display:flex;flex-direction:column;align-items:center;justify-content:center;color:#fff;margin-top:-18px}
         }
