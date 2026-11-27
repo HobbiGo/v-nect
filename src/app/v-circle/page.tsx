@@ -12,7 +12,11 @@ type ProfessionalMember = {
   avatarText: string;
   role: string;
   company: string;
-  sector: "Founder & CEO" | "Product & Tech" | "Business & Partnerships" | "Marketing & Growth";
+  sector:
+    | "Founder & CEO"
+    | "Product & Tech"
+    | "Business & Partnerships"
+    | "Marketing & Growth";
   location: string;
   bio: string;
   tags: string[];
@@ -140,7 +144,8 @@ const INITIAL_CIRCLES: NetworkCircle[] = [
     name: "APAC Founders & Operators",
     category: "Leadership",
     membersCount: 428,
-    description: "Weekly founder roundtables, product feedback loops, and operational playbooks.",
+    description:
+      "Weekly founder roundtables, product feedback loops, and operational playbooks.",
     focusLabel: "Active Discussions",
   },
   {
@@ -148,7 +153,8 @@ const INITIAL_CIRCLES: NetworkCircle[] = [
     name: "Brand & Video Commerce Hub",
     category: "Commerce",
     membersCount: 312,
-    description: "Sharing short-form product clips, launch campaigns, and conversion experiments.",
+    description:
+      "Sharing short-form product clips, launch campaigns, and conversion experiments.",
     focusLabel: "Weekly Showcase",
   },
   {
@@ -156,7 +162,8 @@ const INITIAL_CIRCLES: NetworkCircle[] = [
     name: "Global B2B & Channel Partners",
     category: "Alliances",
     membersCount: 256,
-    description: "Find trusted regional distributors, agencies, and co-marketing collaborators.",
+    description:
+      "Find trusted regional distributors, agencies, and co-marketing collaborators.",
     focusLabel: "Partner Match",
   },
 ];
@@ -169,22 +176,39 @@ const SECTOR_FILTERS = [
   "Marketing & Growth",
 ] as const;
 
-function mapIndustryToSector(industry?: string | null): ProfessionalMember["sector"] {
+function mapIndustryToSector(
+  industry?: string | null
+): ProfessionalMember["sector"] {
   const lower = (industry || "").toLowerCase();
-  if (lower.includes("tech") || lower.includes("software") || lower.includes("digital") || lower.includes("it")) {
+  if (
+    lower.includes("tech") ||
+    lower.includes("software") ||
+    lower.includes("digital") ||
+    lower.includes("it")
+  ) {
     return "Product & Tech";
   }
-  if (lower.includes("market") || lower.includes("growth") || lower.includes("media") || lower.includes("brand")) {
+  if (
+    lower.includes("market") ||
+    lower.includes("growth") ||
+    lower.includes("media") ||
+    lower.includes("brand")
+  ) {
     return "Marketing & Growth";
   }
-  if (lower.includes("trade") || lower.includes("supply") || lower.includes("partner") || lower.includes("consult")) {
+  if (
+    lower.includes("trade") ||
+    lower.includes("supply") ||
+    lower.includes("partner") ||
+    lower.includes("consult")
+  ) {
     return "Business & Partnerships";
   }
   return "Founder & CEO";
 }
 
 export default function VCirclePage() {
-  const supabase = createClient();
+  const [supabase] = useState(() => createClient());
 
   const [currentUserId, setCurrentUserId] = useState<string | null>(null);
   const [currentUserName, setCurrentUserName] = useState<string | null>(null);
@@ -198,9 +222,13 @@ export default function VCirclePage() {
   const [onlyOnline, setOnlyOnline] = useState(false);
 
   const [connectedIds, setConnectedIds] = useState<string[]>(["pro-1"]);
-  const [joinedGroupIds, setJoinedGroupIds] = useState<string[]>(["circle-founders"]);
+  const [joinedGroupIds, setJoinedGroupIds] = useState<string[]>([
+    "circle-founders",
+  ]);
   const [notesByMember, setNotesByMember] = useState<ConnectionNoteMap>({});
-  const [activeNoteTargetId, setActiveNoteTargetId] = useState<string | null>(null);
+  const [activeNoteTargetId, setActiveNoteTargetId] = useState<string | null>(
+    null
+  );
   const [draftNote, setDraftNote] = useState("");
   const [statusBanner, setStatusBanner] = useState("");
 
@@ -210,7 +238,9 @@ export default function VCirclePage() {
       if (savedConn) {
         const parsed = JSON.parse(savedConn);
         if (Array.isArray(parsed)) {
-          setConnectedIds(parsed.filter((item): item is string => typeof item === "string"));
+          setConnectedIds(
+            parsed.filter((item): item is string => typeof item === "string")
+          );
         }
       }
 
@@ -218,11 +248,15 @@ export default function VCirclePage() {
       if (savedGroups) {
         const parsed = JSON.parse(savedGroups);
         if (Array.isArray(parsed)) {
-          setJoinedGroupIds(parsed.filter((item): item is string => typeof item === "string"));
+          setJoinedGroupIds(
+            parsed.filter((item): item is string => typeof item === "string")
+          );
         }
       }
 
-      const savedNotes = window.localStorage.getItem(CONNECTION_NOTES_STORAGE_KEY);
+      const savedNotes = window.localStorage.getItem(
+        CONNECTION_NOTES_STORAGE_KEY
+      );
       if (savedNotes) {
         const parsed = JSON.parse(savedNotes);
         if (parsed && typeof parsed === "object") {
@@ -236,7 +270,10 @@ export default function VCirclePage() {
 
   useEffect(() => {
     try {
-      window.localStorage.setItem(CIRCLE_STORAGE_KEY, JSON.stringify(connectedIds));
+      window.localStorage.setItem(
+        CIRCLE_STORAGE_KEY,
+        JSON.stringify(connectedIds)
+      );
     } catch {
       // Ignore storage errors
     }
@@ -244,7 +281,10 @@ export default function VCirclePage() {
 
   useEffect(() => {
     try {
-      window.localStorage.setItem(JOINED_GROUPS_STORAGE_KEY, JSON.stringify(joinedGroupIds));
+      window.localStorage.setItem(
+        JOINED_GROUPS_STORAGE_KEY,
+        JSON.stringify(joinedGroupIds)
+      );
     } catch {
       // Ignore storage errors
     }
@@ -252,7 +292,10 @@ export default function VCirclePage() {
 
   useEffect(() => {
     try {
-      window.localStorage.setItem(CONNECTION_NOTES_STORAGE_KEY, JSON.stringify(notesByMember));
+      window.localStorage.setItem(
+        CONNECTION_NOTES_STORAGE_KEY,
+        JSON.stringify(notesByMember)
+      );
     } catch {
       // Ignore storage errors
     }
@@ -283,23 +326,20 @@ export default function VCirclePage() {
 
     if (!connErr && Array.isArray(connRows)) {
       setDbSyncEnabled(true);
-      if (connRows.length > 0) {
-        setConnectedIds(connRows.map((r) => r.target_key));
-        const noteMap: ConnectionNoteMap = {};
-        for (const r of connRows) {
-          if (r.note && r.note.trim()) {
-            noteMap[r.target_key] = r.note.trim();
-          }
+      setConnectedIds(connRows.map((r) => r.target_key));
+
+      const noteMap: ConnectionNoteMap = {};
+      for (const r of connRows) {
+        if (r.note && r.note.trim()) {
+          noteMap[r.target_key] = r.note.trim();
         }
-        setNotesByMember((prev) => ({ ...prev, ...noteMap }));
       }
+      setNotesByMember(noteMap);
     }
 
     if (!memErr && Array.isArray(memRows)) {
       setDbSyncEnabled(true);
-      if (memRows.length > 0) {
-        setJoinedGroupIds(memRows.map((m) => m.circle_id));
-      }
+      setJoinedGroupIds(memRows.map((m) => m.circle_id));
     }
   }
 
@@ -328,7 +368,10 @@ export default function VCirclePage() {
       .eq("user_id", user.id)
       .maybeSingle();
 
-    if (settings?.active_profile_type === "company" && settings.active_company_id) {
+    if (
+      settings?.active_profile_type === "company" &&
+      settings.active_company_id
+    ) {
       const { data: companyData } = await supabase
         .from("companies")
         .select("company_name")
@@ -371,18 +414,20 @@ export default function VCirclePage() {
   }
 
   const allCircles = useMemo<NetworkCircle[]>(() => {
-    const companyCircles: NetworkCircle[] = liveCompanies.slice(0, 3).map((comp) => ({
-      id: `company-circle-${comp.id}`,
-      name: comp.company_name,
-      category: comp.industry || "Verified Company",
-      membersCount: 64,
-      description:
-        comp.description?.trim() ||
-        `Official v-circle space for ${comp.company_name} updates, partnerships, and community discussions.`,
-      focusLabel: comp.location || "Verified Hub",
-      logoUrl: comp.logo_url,
-      isLiveCompany: true,
-    }));
+    const companyCircles: NetworkCircle[] = liveCompanies
+      .slice(0, 3)
+      .map((comp) => ({
+        id: `company-circle-${comp.id}`,
+        name: comp.company_name,
+        category: comp.industry || "Verified Company",
+        membersCount: 64,
+        description:
+          comp.description?.trim() ||
+          `Official v-circle space for ${comp.company_name} updates, partnerships, and community discussions.`,
+        focusLabel: comp.location || "Verified Hub",
+        logoUrl: comp.logo_url,
+        isLiveCompany: true,
+      }));
 
     return [...companyCircles, ...INITIAL_CIRCLES];
   }, [liveCompanies]);
@@ -399,7 +444,9 @@ export default function VCirclePage() {
       return {
         id: `company-member-${comp.id}`,
         name: cleanName,
-        handle: `@${cleanName.toLowerCase().replace(/[^a-z0-9]/g, "") || "company"}`,
+        handle: `@${
+          cleanName.toLowerCase().replace(/[^a-z0-9]/g, "") || "company"
+        }`,
         avatarText: initials || "VN",
         role: comp.industry || "Verified Business Profile",
         company: cleanName,
@@ -471,10 +518,15 @@ export default function VCirclePage() {
     );
   }
 
-  async function toggleConnection(member: ProfessionalMember, customNote?: string) {
+  async function toggleConnection(
+    member: ProfessionalMember,
+    customNote?: string
+  ) {
     const alreadyConnected = connectedIds.includes(member.id);
     const noteToSave =
-      customNote !== undefined ? customNote.trim() : (notesByMember[member.id] || "").trim();
+      customNote !== undefined
+        ? customNote.trim()
+        : (notesByMember[member.id] || "").trim();
 
     if (alreadyConnected && customNote === undefined) {
       setConnectedIds((prev) => prev.filter((id) => id !== member.id));
@@ -492,7 +544,9 @@ export default function VCirclePage() {
         ...prev,
         [member.id]: customNote.trim(),
       }));
-      setStatusBanner(`Permintaan & catatan koneksi terkirim ke ${member.name}.`);
+      setStatusBanner(
+        `Permintaan & catatan koneksi terkirim ke ${member.name}.`
+      );
     } else {
       setStatusBanner(`Terhubung dengan ${member.name} (${member.company}).`);
     }
@@ -556,6 +610,8 @@ export default function VCirclePage() {
 
           <nav className="circle-nav-links">
             <Link href="/">Home</Link>
+            <Link href="/explore">Explore</Link>
+            <Link href="/v-hub">v-hub</Link>
             <Link href="/business-feed">Business Feed</Link>
             <Link href="/company">Company</Link>
           </nav>
@@ -565,7 +621,11 @@ export default function VCirclePage() {
           {currentUserName ? (
             <>
               <span className="circle-user-pill">● {currentUserName}</span>
-              <button type="button" className="circle-ghost-btn" onClick={handleSignOut}>
+              <button
+                type="button"
+                className="circle-ghost-btn"
+                onClick={handleSignOut}
+              >
                 Keluar
               </button>
             </>
@@ -591,7 +651,8 @@ export default function VCirclePage() {
               v-<span>circle.</span>
             </h1>
             <p>
-              Meet professionals, discover verified business leaders, and grow high-trust circles across the v-nect ecosystem.
+              Meet professionals, discover verified business leaders, and grow
+              high-trust circles across the v-nect ecosystem.
             </p>
           </div>
 
@@ -624,7 +685,8 @@ export default function VCirclePage() {
           <div className="circle-section-head">
             <div>
               <span className="circle-eyebrow">
-                CURATED COMMUNITIES &amp; VERIFIED COMPANIES ({liveCompanies.length} DB)
+                CURATED COMMUNITIES &amp; VERIFIED COMPANIES (
+                {liveCompanies.length} DB)
               </span>
               <h2>Active Network Circles</h2>
             </div>
@@ -642,17 +704,23 @@ export default function VCirclePage() {
                 <article className="circle-group-card" key={group.id}>
                   <div className="circle-group-top">
                     <span className="circle-badge">
-                      {group.isLiveCompany ? `★ ${group.category}` : group.category}
+                      {group.isLiveCompany
+                        ? `★ ${group.category}`
+                        : group.category}
                     </span>
                     <small>{totalMembers.toLocaleString()} members</small>
                   </div>
                   <h3>{group.name}</h3>
                   <p>{group.description}</p>
                   <div className="circle-group-foot">
-                    <span className="circle-focus-pill">● {group.focusLabel}</span>
+                    <span className="circle-focus-pill">
+                      ● {group.focusLabel}
+                    </span>
                     <button
                       type="button"
-                      className={joined ? "circle-btn-joined" : "circle-btn-primary"}
+                      className={
+                        joined ? "circle-btn-joined" : "circle-btn-primary"
+                      }
                       onClick={() => toggleJoinCircle(group)}
                     >
                       {joined ? "Joined ✓" : "Join Circle"}
@@ -673,7 +741,11 @@ export default function VCirclePage() {
 
             <button
               type="button"
-              className={onlyOnline ? "circle-filter-chip active" : "circle-filter-chip"}
+              className={
+                onlyOnline
+                  ? "circle-filter-chip active"
+                  : "circle-filter-chip"
+              }
               onClick={() => setOnlyOnline((v) => !v)}
             >
               ● Online Only
@@ -689,13 +761,19 @@ export default function VCirclePage() {
               className="circle-search-input"
             />
 
-            <div className="circle-sector-list" role="tablist" aria-label="Filter Bidang">
+            <div
+              className="circle-sector-list"
+              role="tablist"
+              aria-label="Filter Bidang"
+            >
               {SECTOR_FILTERS.map((sector) => (
                 <button
                   key={sector}
                   type="button"
                   className={
-                    selectedSector === sector ? "circle-filter-chip active" : "circle-filter-chip"
+                    selectedSector === sector
+                      ? "circle-filter-chip active"
+                      : "circle-filter-chip"
                   }
                   onClick={() => setSelectedSector(sector)}
                 >
@@ -733,7 +811,12 @@ export default function VCirclePage() {
                       <div className="circle-person-identity">
                         <div className="circle-avatar-wrap">
                           <div className="circle-avatar">{person.avatarText}</div>
-                          {person.online && <span className="circle-online-dot" title="Online" />}
+                          {person.online && (
+                            <span
+                              className="circle-online-dot"
+                              title="Online"
+                            />
+                          )}
                         </div>
 
                         <div>
@@ -773,7 +856,9 @@ export default function VCirclePage() {
                         <input
                           type="text"
                           value={draftNote}
-                          onChange={(e) => setDraftNote(e.target.value.slice(0, 180))}
+                          onChange={(e) =>
+                            setDraftNote(e.target.value.slice(0, 180))
+                          }
                           placeholder={`Tulis pesan singkat untuk ${person.name}...`}
                         />
                         <div className="circle-note-actions">
@@ -808,7 +893,11 @@ export default function VCirclePage() {
                         </button>
                         <button
                           type="button"
-                          className={isConnected ? "circle-btn-joined" : "circle-btn-primary"}
+                          className={
+                            isConnected
+                              ? "circle-btn-joined"
+                              : "circle-btn-primary"
+                          }
                           onClick={() => toggleConnection(person)}
                         >
                           {isConnected ? "Connected ✓" : "+ Connect"}
@@ -826,7 +915,9 @@ export default function VCirclePage() {
       <footer className="circle-footer">
         v-nect v-circle ·{" "}
         {currentUserId
-          ? `Signed in as ${currentUserName}${dbSyncEnabled ? " (Supabase Sync Active)" : " (Local Sync)"}`
+          ? `Signed in as ${currentUserName}${
+              dbSyncEnabled ? " (Supabase Sync Active)" : " (Local Sync)"
+            }`
           : "Public Network Preview"}{" "}
         · © {new Date().getFullYear()} v-nect
       </footer>
