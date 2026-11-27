@@ -127,4 +127,11 @@ export default function HomePage() {
           .hero-globe-wrap { max-width: 520px; }
           .hero-globe-img { width: 128%; height: 128%; }
         }
-        @media (max-width: 640px
+        @media (max-width: 640px) {
+          .hero-globe-wrap { max-width: 420px; }
+          .hero-globe-img { width: 125%; height: 125%; }
+        }
+      `}</style>
+    </main>
+  );
+}
