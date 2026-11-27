@@ -10,7 +10,7 @@ type ModuleCategory = "All" | "Communication" | "Workspace" | "Network & Feed";
 
 type ExploreModule = {
   id: string;
-  code: string;
+  label: string;
   icon: string;
   accent: string;
   border: string;
@@ -21,6 +21,10 @@ type ExploreModule = {
   keywords: string[];
   features: string[];
   href: string;
+  initialLikes: number;
+  initialChats: number;
+  initialShares: number;
+  initialViews: string;
 };
 
 const BRAND_LOGO_SRC = "/images/V-NECT-logo.png";
@@ -28,10 +32,10 @@ const BRAND_LOGO_SRC = "/images/V-NECT-logo.png";
 const EXPLORE_MODULES: ExploreModule[] = [
   {
     id: "v-chat",
-    code: "01 · CHAT & MESSAGING",
+    label: "CHAT & MESSAGING",
     icon: "💬",
-    accent: "#38bdf8",
-    border: "rgba(56, 189, 248, 0.34)",
+    accent: "#8ab4ff",
+    border: "rgba(138, 180, 255, 0.34)",
     name: "v-chat",
     category: "Communication",
     tagline: "Connect and communicate.",
@@ -44,13 +48,17 @@ const EXPLORE_MODULES: ExploreModule[] = [
       "Partner & team threads",
     ],
     href: "/business-feed",
+    initialLikes: 148,
+    initialChats: 36,
+    initialShares: 19,
+    initialViews: "2.4K",
   },
   {
     id: "v-meet",
-    code: "02 · LIVE MEETINGS",
+    label: "LIVE MEETINGS",
     icon: "🎥",
-    accent: "#c084fc",
-    border: "rgba(192, 132, 252, 0.34)",
+    accent: "#a78bfa",
+    border: "rgba(167, 139, 250, 0.34)",
     name: "v-meet",
     category: "Communication",
     tagline: "Voice & video meetings.",
@@ -63,13 +71,17 @@ const EXPLORE_MODULES: ExploreModule[] = [
       "Direct pitch & sync rooms",
     ],
     href: "/v-meet",
+    initialLikes: 124,
+    initialChats: 28,
+    initialShares: 15,
+    initialViews: "1.9K",
   },
   {
     id: "v-hub",
-    code: "03 · IDENTITY HUB",
+    label: "IDENTITY HUB",
     icon: "✣",
-    accent: "#22d3ee",
-    border: "rgba(34, 211, 238, 0.34)",
+    accent: "#79a6ff",
+    border: "rgba(121, 166, 255, 0.34)",
     name: "v-hub",
     category: "Workspace",
     tagline: "Build your professional identity.",
@@ -82,13 +94,17 @@ const EXPLORE_MODULES: ExploreModule[] = [
       "Quick module launcher",
     ],
     href: "/v-hub",
+    initialLikes: 112,
+    initialChats: 21,
+    initialShares: 14,
+    initialViews: "1.7K",
   },
   {
     id: "v-business-feed",
-    code: "04 · BUSINESS FEED",
+    label: "BUSINESS FEED",
     icon: "▤",
-    accent: "#60a5fa",
-    border: "rgba(96, 165, 250, 0.34)",
+    accent: "#8ab4ff",
+    border: "rgba(138, 180, 255, 0.34)",
     name: "v-business feed",
     category: "Network & Feed",
     tagline: "Business updates & opportunities.",
@@ -101,13 +117,17 @@ const EXPLORE_MODULES: ExploreModule[] = [
       "Video & media highlights",
     ],
     href: "/business-feed",
+    initialLikes: 215,
+    initialChats: 54,
+    initialShares: 31,
+    initialViews: "4.2K",
   },
   {
     id: "v-circle",
-    code: "05 · NETWORK CIRCLE",
+    label: "NETWORK CIRCLE",
     icon: "👥",
-    accent: "#f472b6",
-    border: "rgba(244, 114, 182, 0.34)",
+    accent: "#c4b5fd",
+    border: "rgba(196, 181, 253, 0.34)",
     name: "v-circle",
     category: "Network & Feed",
     tagline: "Grow your network.",
@@ -129,13 +149,17 @@ const EXPLORE_MODULES: ExploreModule[] = [
       "Connection notes & sync",
     ],
     href: "/v-circle",
+    initialLikes: 164,
+    initialChats: 42,
+    initialShares: 22,
+    initialViews: "3.1K",
   },
   {
     id: "v-market",
-    code: "06 · MARKETPLACE",
+    label: "MARKETPLACE",
     icon: "🛒",
-    accent: "#fbbf24",
-    border: "rgba(251, 191, 36, 0.34)",
+    accent: "#9ec0ff",
+    border: "rgba(158, 192, 255, 0.34)",
     name: "v-market",
     category: "Workspace",
     tagline: "Products & suppliers.",
@@ -148,6 +172,10 @@ const EXPLORE_MODULES: ExploreModule[] = [
       "Direct info requests",
     ],
     href: "/v-market",
+    initialLikes: 139,
+    initialChats: 31,
+    initialShares: 18,
+    initialViews: "2.8K",
   },
 ];
 
@@ -168,6 +196,10 @@ function ExploreContent() {
     useState<ModuleCategory>("All");
   const [userName, setUserName] = useState<string | null>(null);
   const [authModalOpen, setAuthModalOpen] = useState(false);
+
+  const [likedIds, setLikedIds] = useState<Record<string, boolean>>({});
+  const [extraShares, setExtraShares] = useState<Record<string, number>>({});
+  const [toastNotice, setToastNotice] = useState<string>("");
 
   useEffect(() => {
     const paramQ = searchParams.get("q");
@@ -232,6 +264,27 @@ function ExploreContent() {
     }
     const qs = params.toString();
     router.replace(qs ? `/explore?${qs}` : "/explore", { scroll: false });
+  }
+
+  function handleToggleLike(modId: string) {
+    setLikedIds((prev) => ({ ...prev, [modId]: !prev[modId] }));
+  }
+
+  async function handleShareModule(mod: ExploreModule) {
+    setExtraShares((prev) => ({ ...prev, [mod.id]: (prev[mod.id] || 0) + 1 }));
+    const shareUrl =
+      typeof window !== "undefined"
+        ? `${window.location.origin}${mod.href}`
+        : mod.href;
+
+    try {
+      if (typeof navigator !== "undefined" && navigator.clipboard) {
+        await navigator.clipboard.writeText(shareUrl);
+      }
+      setToastNotice(`Tautan ${mod.name} disalin ke clipboard.`);
+    } catch {
+      setToastNotice(`Tautan ${mod.name}: ${shareUrl}`);
+    }
   }
 
   const filteredModules = useMemo(() => {
@@ -357,6 +410,15 @@ function ExploreContent() {
       </section>
 
       <section className="modules-section">
+        {toastNotice && (
+          <div className="toast-banner">
+            <span>✓ {toastNotice}</span>
+            <button type="button" onClick={() => setToastNotice("")}>
+              ✕
+            </button>
+          </div>
+        )}
+
         <div className="modules-meta">
           <span>
             Menampilkan <strong>{filteredModules.length}</strong> dari{" "}
@@ -389,53 +451,94 @@ function ExploreContent() {
           </div>
         ) : (
           <div className="modules-grid">
-            {filteredModules.map((mod) => (
-              <article
-                key={mod.id}
-                className="module-card"
-                style={{ borderColor: mod.border }}
-              >
-                <div className="module-top">
-                  <div
-                    className="module-icon"
-                    style={{
-                      background: `color-mix(in srgb, ${mod.accent} 18%, transparent)`,
-                      borderColor: mod.border,
-                    }}
-                  >
-                    <span>{mod.icon}</span>
-                  </div>
-                  <span className="module-category">{mod.category}</span>
-                </div>
+            {filteredModules.map((mod) => {
+              const isLiked = Boolean(likedIds[mod.id]);
+              const likesCount = mod.initialLikes + (isLiked ? 1 : 0);
+              const sharesCount = mod.initialShares + (extraShares[mod.id] || 0);
 
-                <span className="module-code" style={{ color: mod.accent }}>
-                  {mod.code}
-                </span>
-                <h2>{mod.name}</h2>
-                <p className="module-tagline">{mod.tagline}</p>
-                <p className="module-desc">{mod.description}</p>
-
-                <ul className="module-features">
-                  {mod.features.map((feat) => (
-                    <li key={feat}>✓ {feat}</li>
-                  ))}
-                </ul>
-
-                <div className="module-actions">
-                  <Link href={mod.href} className="module-open-btn">
-                    Buka {mod.name} <span>→</span>
-                  </Link>
-                  {mod.id === "v-circle" && (
-                    <Link
-                      href="/v-circle?tab=discussions"
-                      className="module-sub-link"
+              return (
+                <article
+                  key={mod.id}
+                  className="module-card"
+                  style={{ borderColor: mod.border }}
+                >
+                  <div className="module-top">
+                    <div
+                      className="module-icon"
+                      style={{
+                        background:
+                          "linear-gradient(135deg, rgba(75, 107, 255, 0.28), rgba(120, 84, 255, 0.28))",
+                        borderColor: mod.border,
+                      }}
                     >
-                      Discussions
+                      <span>{mod.icon}</span>
+                    </div>
+                    <span className="module-category">{mod.category}</span>
+                  </div>
+
+                  <span className="module-label" style={{ color: mod.accent }}>
+                    {mod.label}
+                  </span>
+                  <h2>{mod.name}</h2>
+                  <p className="module-tagline">{mod.tagline}</p>
+                  <p className="module-desc">{mod.description}</p>
+
+                  <ul className="module-features">
+                    {mod.features.map((feat) => (
+                      <li key={feat}>✓ {feat}</li>
+                    ))}
+                  </ul>
+
+                  <div className="module-metrics" aria-label="Statistik modul">
+                    <button
+                      type="button"
+                      className={isLiked ? "metric-btn liked" : "metric-btn"}
+                      onClick={() => handleToggleLike(mod.id)}
+                    >
+                      <span>{isLiked ? "♥" : "♡"}</span>
+                      <strong>{likesCount}</strong>
+                      <small>Like</small>
+                    </button>
+
+                    <Link href={mod.href} className="metric-btn">
+                      <span>💬</span>
+                      <strong>{mod.initialChats}</strong>
+                      <small>Chat</small>
                     </Link>
-                  )}
-                </div>
-              </article>
-            ))}
+
+                    <button
+                      type="button"
+                      className="metric-btn"
+                      onClick={() => handleShareModule(mod)}
+                    >
+                      <span>↗</span>
+                      <strong>{sharesCount}</strong>
+                      <small>Share</small>
+                    </button>
+
+                    <span className="metric-static">
+                      <span>👁</span>
+                      <strong>{mod.initialViews}</strong>
+                      <small>View</small>
+                    </span>
+                  </div>
+
+                  <div className="module-actions">
+                    <Link href={mod.href} className="module-open-btn">
+                      Buka {mod.name} <span>→</span>
+                    </Link>
+                    {mod.id === "v-circle" && (
+                      <Link
+                        href="/v-circle?tab=discussions"
+                        className="module-sub-link"
+                      >
+                        Discussions
+                      </Link>
+                    )}
+                  </div>
+                </article>
+              );
+            })}
           </div>
         )}
       </section>
@@ -695,6 +798,28 @@ function ExploreContent() {
           padding: 16px 7% 68px;
         }
 
+        .toast-banner {
+          margin-bottom: 16px;
+          padding: 10px 14px;
+          border-radius: 11px;
+          background: rgba(92, 124, 255, 0.22);
+          border: 1px solid rgba(138, 180, 255, 0.45);
+          color: #eef4ff;
+          font-size: 12.5px;
+          display: flex;
+          align-items: center;
+          justify-content: space-between;
+          gap: 12px;
+        }
+
+        .toast-banner button {
+          border: none;
+          background: transparent;
+          color: #ffffff;
+          cursor: pointer;
+          font-weight: 700;
+        }
+
         .modules-meta {
           display: flex;
           align-items: center;
@@ -721,14 +846,15 @@ function ExploreContent() {
         .module-card {
           background: linear-gradient(
             155deg,
-            rgba(32, 54, 104, 0.9),
-            rgba(14, 25, 56, 0.96)
+            rgba(32, 54, 104, 0.92),
+            rgba(14, 25, 56, 0.98)
           );
           border: 1px solid rgba(148, 184, 255, 0.25);
           border-radius: 18px;
           padding: 22px;
           display: flex;
           flex-direction: column;
+          box-shadow: 0 12px 28px rgba(3, 8, 24, 0.28);
         }
 
         .module-top {
@@ -752,16 +878,17 @@ function ExploreContent() {
         .module-category {
           font-size: 11px;
           font-weight: 700;
-          color: #c8d7f5;
-          background: rgba(255, 255, 255, 0.06);
+          color: #dce7ff;
+          background: rgba(255, 255, 255, 0.08);
+          border: 1px solid rgba(148, 184, 255, 0.22);
           padding: 4px 10px;
           border-radius: 999px;
         }
 
-        .module-code {
-          font-size: 10px;
+        .module-label {
+          font-size: 10.5px;
           font-weight: 800;
-          letter-spacing: 1.3px;
+          letter-spacing: 1.4px;
           margin-bottom: 6px;
         }
 
@@ -789,21 +916,89 @@ function ExploreContent() {
         .module-features {
           list-style: none;
           padding: 0;
-          margin: 0 0 22px;
+          margin: 0 0 16px;
           display: flex;
           flex-direction: column;
-          gap: 7px;
+          gap: 6px;
           font-size: 12px;
-          color: #c7d6f5;
+          color: #d2def7;
           flex: 1;
+        }
+
+        .module-metrics {
+          display: grid;
+          grid-template-columns: repeat(4, minmax(0, 1fr));
+          gap: 6px;
+          padding: 10px;
+          margin-bottom: 14px;
+          border-radius: 12px;
+          background: rgba(6, 11, 36, 0.72);
+          border: 1px solid rgba(148, 184, 255, 0.18);
+        }
+
+        .metric-btn,
+        .metric-static {
+          appearance: none;
+          border: 1px solid rgba(148, 184, 255, 0.14);
+          background: rgba(255, 255, 255, 0.04);
+          color: #e6efff;
+          border-radius: 9px;
+          padding: 6px 4px;
+          display: flex;
+          flex-direction: column;
+          align-items: center;
+          justify-content: center;
+          gap: 2px;
+          text-decoration: none;
+          font: inherit;
+          cursor: pointer;
+          transition: background 0.18s ease, border-color 0.18s ease,
+            transform 0.15s ease;
+        }
+
+        .metric-btn:hover {
+          background: rgba(92, 124, 255, 0.22);
+          border-color: rgba(148, 184, 255, 0.42);
+          transform: translateY(-1px);
+        }
+
+        .metric-btn.liked {
+          background: rgba(120, 84, 255, 0.28);
+          border-color: rgba(167, 139, 250, 0.65);
+          color: #ffffff;
+        }
+
+        .metric-static {
+          cursor: default;
+          opacity: 0.92;
+        }
+
+        .metric-btn span,
+        .metric-static span {
+          font-size: 12px;
+          line-height: 1;
+        }
+
+        .metric-btn strong,
+        .metric-static strong {
+          font-size: 11.5px;
+          font-weight: 800;
+          color: #ffffff;
+          line-height: 1.1;
+        }
+
+        .metric-btn small,
+        .metric-static small {
+          font-size: 9.5px;
+          color: #a4b7de;
+          line-height: 1;
         }
 
         .module-actions {
           display: flex;
           align-items: center;
           gap: 10px;
-          padding-top: 14px;
-          margin-top: auto;
+          padding-top: 12px;
           border-top: 1px solid rgba(160, 192, 240, 0.18);
         }
 
@@ -811,24 +1006,24 @@ function ExploreContent() {
           flex: 1;
           text-decoration: none;
           background: linear-gradient(110deg, #4b6bff, #7854ff);
-          border: 1px solid rgba(168, 196, 255, 0.35);
+          border: 1px solid rgba(176, 200, 255, 0.4);
           color: #ffffff;
           padding: 10px 16px;
           border-radius: 999px;
           font-size: 13px;
-          font-weight: 750;
+          font-weight: 800;
           display: inline-flex;
           align-items: center;
           justify-content: space-between;
           gap: 8px;
-          box-shadow: 0 6px 18px rgba(75, 107, 255, 0.32);
+          box-shadow: 0 6px 18px rgba(75, 107, 255, 0.35);
           transition: transform 0.18s ease, box-shadow 0.18s ease,
             filter 0.18s ease;
         }
 
         .module-open-btn:hover {
           transform: translateY(-1px);
-          box-shadow: 0 8px 22px rgba(120, 84, 255, 0.45);
+          box-shadow: 0 8px 22px rgba(120, 84, 255, 0.48);
           filter: brightness(1.06);
         }
 
@@ -842,12 +1037,6 @@ function ExploreContent() {
           background: rgba(92, 124, 255, 0.24);
           border: 1px solid rgba(138, 180, 255, 0.42);
           white-space: nowrap;
-          transition: background 0.18s ease, border-color 0.18s ease;
-        }
-
-        .module-sub-link:hover {
-          background: rgba(92, 124, 255, 0.38);
-          border-color: rgba(168, 196, 255, 0.65);
         }
 
         .empty-state {
