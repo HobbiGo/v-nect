@@ -69,16 +69,16 @@ const DEFAULT_FEATURE_PHOTO =
     `<svg xmlns="http://www.w3.org/2000/svg" width="800" height="420" viewBox="0 0 800 420">
       <defs>
         <linearGradient id="bg" x1="0%" y1="0%" x2="100%" y2="100%">
-          <stop offset="0%" stop-color="#102b4d"/>
-          <stop offset="100%" stop-color="#134a66"/>
+          <stop offset="0%" stop-color="#162452"/>
+          <stop offset="100%" stop-color="#0d183e"/>
         </linearGradient>
       </defs>
       <rect width="800" height="420" fill="url(#bg)"/>
-      <circle cx="670" cy="85" r="110" fill="#13c8b5" fill-opacity="0.16"/>
-      <circle cx="130" cy="350" r="130" fill="#347cf0" fill-opacity="0.18"/>
-      <text x="48" y="185" fill="#7ee8dc" font-family="Arial, sans-serif" font-size="18" font-weight="bold" letter-spacing="2">V-MARKET PRODUCT FEATURE</text>
+      <circle cx="670" cy="85" r="110" fill="#4b6bff" fill-opacity="0.22"/>
+      <circle cx="130" cy="350" r="130" fill="#7854ff" fill-opacity="0.22"/>
+      <text x="48" y="185" fill="#8ab4ff" font-family="Arial, sans-serif" font-size="18" font-weight="bold" letter-spacing="2">V-MARKET PRODUCT FEATURE</text>
       <text x="48" y="232" fill="#ffffff" font-family="Arial, sans-serif" font-size="34" font-weight="bold">Showcase &amp; Feature Highlights</text>
-      <text x="48" y="272" fill="#c7d9ec" font-family="Arial, sans-serif" font-size="18">Klik foto untuk memperbesar detail fitur produk perusahaan</text>
+      <text x="48" y="272" fill="#b8c7e6" font-family="Arial, sans-serif" font-size="18">Klik foto untuk memperbesar detail fitur produk perusahaan</text>
     </svg>`
   );
 
@@ -1175,21 +1175,36 @@ export default function VMarketPage() {
       <style jsx>{`
         .market-page {
           min-height: 100vh;
-          background: #07111f;
-          color: #eef4fb;
+          color: #f3f7ff;
           font-family: var(--font-sans), Arial, sans-serif;
+          background:
+            radial-gradient(
+              circle at 78% 14%,
+              rgba(78, 108, 255, 0.32),
+              transparent 36%
+            ),
+            radial-gradient(
+              circle at 22% 32%,
+              rgba(120, 84, 255, 0.22),
+              transparent 42%
+            ),
+            linear-gradient(180deg, #060b24 0%, #091338 55%, #060b24 100%);
         }
 
         .market-navbar {
           min-height: 74px;
           padding: 12px 7%;
-          background: #07111f;
-          border-bottom: 1px solid rgba(255, 255, 255, 0.08);
+          background: rgba(6, 11, 36, 0.88);
+          backdrop-filter: blur(12px);
+          border-bottom: 1px solid rgba(138, 165, 255, 0.14);
           display: flex;
           align-items: center;
           justify-content: space-between;
           gap: 14px;
           flex-wrap: wrap;
+          position: sticky;
+          top: 0;
+          z-index: 30;
         }
 
         .market-nav-left,
@@ -1204,7 +1219,7 @@ export default function VMarketPage() {
           color: #ffffff;
           text-decoration: none;
           font-size: 21px;
-          font-weight: 800;
+          font-weight: 850;
           display: inline-flex;
           align-items: baseline;
           gap: 8px;
@@ -1212,14 +1227,14 @@ export default function VMarketPage() {
 
         .market-brand span,
         .market-hero h1 span {
-          color: #13c8b5;
+          color: #8ab4ff;
         }
 
         .market-brand small {
           font-size: 10px;
           font-weight: 800;
           letter-spacing: 1.3px;
-          color: #9cb0c9;
+          color: #96a8d0;
         }
 
         .market-nav-links {
@@ -1230,30 +1245,30 @@ export default function VMarketPage() {
         }
 
         .market-nav-links a {
-          color: #d2deed;
+          color: #c8d7f5;
           text-decoration: none;
           font-size: 14px;
           font-weight: 600;
         }
 
         .market-nav-links a:hover {
-          color: #13c8b5;
+          color: #ffffff;
         }
 
         .market-user-pill {
           padding: 6px 12px;
           border-radius: 999px;
-          background: rgba(19, 200, 181, 0.16);
-          border: 1px solid rgba(19, 200, 181, 0.45);
-          color: #7ee8dc;
+          background: rgba(92, 124, 255, 0.18);
+          border: 1px solid rgba(138, 180, 255, 0.38);
+          color: #c7dcff;
           font-size: 12px;
           font-weight: 700;
         }
 
         .market-ghost-btn {
           background: rgba(255, 255, 255, 0.06);
-          border: 1px solid rgba(255, 255, 255, 0.22);
-          color: #eef4fb;
+          border: 1px solid rgba(138, 165, 255, 0.28);
+          color: #eef3ff;
           padding: 7px 13px;
           border-radius: 9px;
           font-size: 12px;
@@ -1268,8 +1283,12 @@ export default function VMarketPage() {
         }
 
         .market-hero {
-          background: linear-gradient(125deg, #102b4d, #134a66);
-          border: 1px solid rgba(126, 232, 220, 0.2);
+          background: linear-gradient(
+            125deg,
+            rgba(22, 36, 82, 0.94),
+            rgba(13, 24, 62, 0.98)
+          );
+          border: 1px solid rgba(138, 165, 255, 0.24);
           border-radius: 18px;
           padding: 34px 32px;
           display: flex;
@@ -1277,25 +1296,28 @@ export default function VMarketPage() {
           align-items: center;
           gap: 20px;
           flex-wrap: wrap;
+          box-shadow: 0 14px 32px rgba(3, 8, 24, 0.36);
         }
 
         .market-eyebrow {
           display: inline-block;
-          color: #13c8b5;
+          color: #79a6ff;
           font-size: 11px;
           font-weight: 800;
           letter-spacing: 1.5px;
+          text-transform: uppercase;
         }
 
         .market-hero h1 {
           margin: 8px 0;
           font-size: 42px;
-          font-weight: 800;
+          font-weight: 850;
+          color: #ffffff;
         }
 
         .market-hero p {
           margin: 0;
-          color: #d2e2f3;
+          color: #b8c7e6;
           font-size: 15px;
           line-height: 1.65;
           max-width: 600px;
@@ -1309,8 +1331,12 @@ export default function VMarketPage() {
 
         .market-create-card {
           margin-top: 20px;
-          background: #0d1e34;
-          border: 1px solid rgba(126, 232, 220, 0.28);
+          background: linear-gradient(
+            160deg,
+            rgba(20, 32, 72, 0.94),
+            rgba(11, 19, 46, 0.98)
+          );
+          border: 1px solid rgba(138, 165, 255, 0.28);
           border-radius: 16px;
           padding: 24px;
           display: flex;
@@ -1321,6 +1347,7 @@ export default function VMarketPage() {
         .market-create-head h2 {
           margin: 4px 0 0;
           font-size: 20px;
+          color: #ffffff;
         }
 
         .market-form-grid {
@@ -1335,7 +1362,7 @@ export default function VMarketPage() {
           gap: 6px;
           font-size: 12px;
           font-weight: 700;
-          color: #c5d5e8;
+          color: #c8d7f5;
         }
 
         .market-create-card input,
@@ -1344,13 +1371,19 @@ export default function VMarketPage() {
           width: 100%;
           box-sizing: border-box;
           padding: 9px 12px;
-          border-radius: 8px;
-          border: 1px solid rgba(255, 255, 255, 0.16);
-          background: #081526;
-          color: #ffffff;
+          border-radius: 9px;
+          border: 1px solid rgba(138, 165, 255, 0.24);
+          background: #081029;
+          color: #f3f7ff;
           font: inherit;
           font-size: 13px;
           outline: none;
+        }
+
+        .market-create-card input:focus,
+        .market-create-card select:focus,
+        .market-create-card textarea:focus {
+          border-color: #7854ff;
         }
 
         .market-form-submit-row {
@@ -1363,7 +1396,7 @@ export default function VMarketPage() {
           align-items: center;
           justify-content: center;
           border: none;
-          background: linear-gradient(110deg, #347cf0, #13bcae);
+          background: linear-gradient(110deg, #4b6bff, #7854ff);
           color: #ffffff;
           padding: 8px 14px;
           border-radius: 9px;
@@ -1378,9 +1411,9 @@ export default function VMarketPage() {
           display: inline-flex;
           align-items: center;
           justify-content: center;
-          border: 1px solid rgba(126, 232, 220, 0.35);
-          background: rgba(255, 255, 255, 0.05);
-          color: #dcebfa;
+          border: 1px solid rgba(138, 165, 255, 0.28);
+          background: rgba(255, 255, 255, 0.06);
+          color: #dce7ff;
           padding: 7px 12px;
           border-radius: 9px;
           font-size: 12px;
@@ -1391,14 +1424,14 @@ export default function VMarketPage() {
         }
 
         .market-secondary-btn:hover {
-          border-color: #13c8b5;
-          color: #7ee8dc;
+          border-color: #8ab4ff;
+          color: #ffffff;
         }
 
         .market-btn-done {
-          border: 1px solid rgba(19, 200, 181, 0.45);
-          background: rgba(19, 200, 181, 0.16);
-          color: #7ee8dc;
+          border: 1px solid rgba(138, 180, 255, 0.5);
+          background: rgba(92, 124, 255, 0.24);
+          color: #ffffff;
           padding: 8px 14px;
           border-radius: 9px;
           font-size: 12px;
@@ -1411,19 +1444,20 @@ export default function VMarketPage() {
           margin-top: 18px;
           padding: 12px 16px;
           border-radius: 10px;
-          background: rgba(19, 200, 181, 0.14);
-          border: 1px solid rgba(19, 200, 181, 0.4);
-          color: #9ff5eb;
+          background: rgba(92, 124, 255, 0.18);
+          border: 1px solid rgba(138, 180, 255, 0.42);
+          color: #dce7ff;
           font-size: 13px;
           display: flex;
           align-items: center;
           justify-content: space-between;
+          gap: 12px;
         }
 
         .market-banner button {
           border: none;
           background: transparent;
-          color: #9ff5eb;
+          color: #dce7ff;
           cursor: pointer;
         }
 
@@ -1439,11 +1473,19 @@ export default function VMarketPage() {
           box-sizing: border-box;
           padding: 12px 15px;
           border-radius: 10px;
-          border: 1px solid rgba(255, 255, 255, 0.16);
-          background: #0d1e34;
-          color: #ffffff;
+          border: 1px solid rgba(138, 165, 255, 0.24);
+          background: #081029;
+          color: #f3f7ff;
           font-size: 14px;
           outline: none;
+        }
+
+        .market-search-input::placeholder {
+          color: #889bc2;
+        }
+
+        .market-search-input:focus {
+          border-color: #7854ff;
         }
 
         .market-chips {
@@ -1453,9 +1495,9 @@ export default function VMarketPage() {
         }
 
         .market-chip {
-          border: 1px solid rgba(255, 255, 255, 0.14);
-          background: #0d1e34;
-          color: #c8d7ea;
+          border: 1px solid rgba(138, 165, 255, 0.22);
+          background: rgba(14, 24, 58, 0.85);
+          color: #c8d7f5;
           padding: 7px 14px;
           border-radius: 999px;
           font-size: 12px;
@@ -1464,9 +1506,9 @@ export default function VMarketPage() {
         }
 
         .market-chip.active {
-          background: rgba(19, 200, 181, 0.2);
-          border-color: #13c8b5;
-          color: #7ee8dc;
+          background: linear-gradient(110deg, #4b6bff, #7854ff);
+          border-color: transparent;
+          color: #ffffff;
         }
 
         .market-grid {
@@ -1477,13 +1519,18 @@ export default function VMarketPage() {
         }
 
         .market-card {
-          background: #0d1e34;
-          border: 1px solid rgba(255, 255, 255, 0.09);
-          border-radius: 14px;
+          background: linear-gradient(
+            160deg,
+            rgba(20, 32, 72, 0.92),
+            rgba(11, 19, 46, 0.96)
+          );
+          border: 1px solid rgba(138, 165, 255, 0.18);
+          border-radius: 16px;
           padding: 22px;
           display: flex;
           flex-direction: column;
           min-width: 0;
+          box-shadow: 0 10px 24px rgba(3, 8, 24, 0.25);
         }
 
         .market-media-box {
@@ -1498,15 +1545,15 @@ export default function VMarketPage() {
           height: 200px;
           object-fit: cover;
           border-radius: 10px;
-          background: #07111f;
+          background: #060b24;
           cursor: pointer;
         }
 
         .market-media-expand {
           align-self: flex-start;
-          border: 1px solid rgba(126, 232, 220, 0.3);
-          background: rgba(19, 200, 181, 0.12);
-          color: #7ee8dc;
+          border: 1px solid rgba(138, 180, 255, 0.32);
+          background: rgba(92, 124, 255, 0.16);
+          color: #c7dcff;
           padding: 5px 11px;
           border-radius: 7px;
           font-size: 11px;
@@ -1527,25 +1574,26 @@ export default function VMarketPage() {
           font-weight: 800;
           padding: 4px 10px;
           border-radius: 999px;
-          background: rgba(52, 124, 240, 0.2);
-          color: #8cc0ff;
+          background: rgba(92, 124, 255, 0.2);
+          border: 1px solid rgba(138, 180, 255, 0.28);
+          color: #9ec0ff;
         }
 
         .market-card-top small {
-          color: #9cb2cc;
+          color: #9cb0d9;
           font-size: 12px;
         }
 
         .market-card h3 {
           margin: 10px 0 0;
           font-size: 18px;
-          font-weight: 700;
+          font-weight: 750;
           color: #ffffff;
           line-height: 1.35;
         }
 
         .market-ver {
-          color: #13c8b5;
+          color: #8ab4ff;
           font-size: 14px;
         }
 
@@ -1553,13 +1601,13 @@ export default function VMarketPage() {
           margin-top: 4px;
           font-size: 12px;
           font-weight: 700;
-          color: #7ee8dc;
+          color: #9ec0ff;
         }
 
         .market-desc {
           margin: 10px 0 10px;
           font-size: 13px;
-          color: #b7c8dd;
+          color: #b8c7e6;
           line-height: 1.65;
           overflow-wrap: anywhere;
         }
@@ -1568,20 +1616,20 @@ export default function VMarketPage() {
           margin-bottom: 12px;
           padding: 10px 12px;
           border-radius: 9px;
-          background: rgba(255, 255, 255, 0.04);
-          border-left: 3px solid #13c8b5;
+          background: rgba(92, 124, 255, 0.1);
+          border-left: 3px solid #7854ff;
           font-size: 12px;
         }
 
         .market-feature-box strong {
           display: block;
-          color: #7ee8dc;
+          color: #9ec0ff;
           margin-bottom: 4px;
         }
 
         .market-feature-box p {
           margin: 0;
-          color: #dce8f7;
+          color: #dce7ff;
           line-height: 1.55;
         }
 
@@ -1589,8 +1637,8 @@ export default function VMarketPage() {
           margin-bottom: 12px;
           padding: 10px 12px;
           border-radius: 9px;
-          background: rgba(19, 200, 181, 0.09);
-          border: 1px solid rgba(19, 200, 181, 0.28);
+          background: rgba(92, 124, 255, 0.14);
+          border: 1px solid rgba(138, 180, 255, 0.3);
           font-size: 12px;
           display: flex;
           flex-direction: column;
@@ -1598,7 +1646,7 @@ export default function VMarketPage() {
         }
 
         .market-inquiry-info strong {
-          color: #7ee8dc;
+          color: #9ec0ff;
         }
 
         .market-inquiry-item {
@@ -1607,17 +1655,17 @@ export default function VMarketPage() {
           align-items: center;
           gap: 8px;
           flex-wrap: wrap;
-          color: #e6f2ff;
+          color: #eef3ff;
         }
 
         .market-inquiry-item small {
-          color: #9cb2cc;
+          color: #9cb0d9;
           font-size: 11px;
         }
 
         .market-card-divider {
           margin-top: auto;
-          border-top: 1px solid rgba(255, 255, 255, 0.08);
+          border-top: 1px solid rgba(138, 165, 255, 0.14);
           padding-top: 14px;
         }
 
@@ -1646,7 +1694,7 @@ export default function VMarketPage() {
         }
 
         .market-connect-link {
-          color: #7ee8dc;
+          color: #8ab4ff;
           text-decoration: none;
           font-size: 12px;
           font-weight: 700;
@@ -1660,7 +1708,7 @@ export default function VMarketPage() {
         .market-comments-panel {
           margin-top: 14px;
           padding-top: 14px;
-          border-top: 1px dashed rgba(255, 255, 255, 0.14);
+          border-top: 1px dashed rgba(138, 165, 255, 0.24);
           display: flex;
           flex-direction: column;
           gap: 10px;
@@ -1670,16 +1718,16 @@ export default function VMarketPage() {
         .market-comments-title {
           font-size: 12px;
           font-weight: 800;
-          color: #7ee8dc;
+          color: #9ec0ff;
         }
 
         .market-chat-reqs {
-          background: rgba(52, 124, 240, 0.12);
-          border: 1px solid rgba(52, 124, 240, 0.3);
+          background: rgba(92, 124, 255, 0.14);
+          border: 1px solid rgba(138, 180, 255, 0.32);
           border-radius: 8px;
           padding: 8px 10px;
           font-size: 11px;
-          color: #cfe4ff;
+          color: #dce7ff;
           display: flex;
           flex-direction: column;
           gap: 4px;
@@ -1688,7 +1736,7 @@ export default function VMarketPage() {
         .market-comments-empty {
           margin: 0;
           font-size: 12px;
-          color: #9cb2cc;
+          color: #9cb0d9;
         }
 
         .market-chat-list,
@@ -1703,7 +1751,8 @@ export default function VMarketPage() {
 
         .market-chat-list li,
         .market-comments-list li {
-          background: rgba(255, 255, 255, 0.04);
+          background: rgba(8, 16, 41, 0.72);
+          border: 1px solid rgba(138, 165, 255, 0.14);
           border-radius: 8px;
           padding: 8px 10px;
           display: flex;
@@ -1721,18 +1770,18 @@ export default function VMarketPage() {
 
         .market-chat-meta strong,
         .market-comments-list strong {
-          color: #8cc0ff;
+          color: #9ec0ff;
           font-size: 11px;
         }
 
         .market-chat-meta small {
-          color: #9cb2cc;
+          color: #8ea3cc;
           font-size: 10px;
         }
 
         .market-chat-list span,
         .market-comments-list span {
-          color: #e6effa;
+          color: #eef3ff;
           line-height: 1.5;
         }
 
@@ -1746,17 +1795,22 @@ export default function VMarketPage() {
           min-width: 0;
           padding: 8px 10px;
           border-radius: 8px;
-          border: 1px solid rgba(255, 255, 255, 0.16);
-          background: #081526;
-          color: #ffffff;
+          border: 1px solid rgba(138, 165, 255, 0.24);
+          background: #081029;
+          color: #f3f7ff;
           font-size: 12px;
           outline: none;
+        }
+
+        .market-comment-form input:focus {
+          border-color: #7854ff;
         }
 
         .market-modal-backdrop {
           position: fixed;
           inset: 0;
-          background: rgba(3, 9, 18, 0.82);
+          background: rgba(3, 8, 24, 0.84);
+          backdrop-filter: blur(6px);
           display: flex;
           align-items: center;
           justify-content: center;
@@ -1767,8 +1821,12 @@ export default function VMarketPage() {
         .market-modal-card {
           width: 100%;
           max-width: 720px;
-          background: #0d1e34;
-          border: 1px solid rgba(126, 232, 220, 0.28);
+          background: linear-gradient(
+            160deg,
+            rgba(20, 32, 72, 0.96),
+            rgba(11, 19, 46, 0.98)
+          );
+          border: 1px solid rgba(138, 165, 255, 0.32);
           border-radius: 16px;
           padding: 20px;
           display: flex;
@@ -1786,10 +1844,11 @@ export default function VMarketPage() {
         .market-modal-head strong {
           display: block;
           font-size: 16px;
+          color: #ffffff;
         }
 
         .market-modal-head small {
-          color: #7ee8dc;
+          color: #9ec0ff;
           font-size: 12px;
         }
 
@@ -1798,23 +1857,23 @@ export default function VMarketPage() {
           max-height: 440px;
           object-fit: contain;
           border-radius: 10px;
-          background: #07111f;
+          background: #060b24;
         }
 
         .market-modal-notes {
           margin: 0;
           font-size: 13px;
-          color: #dce8f7;
+          color: #dce7ff;
           line-height: 1.6;
         }
 
         .market-footer {
           text-align: center;
-          padding: 26px 20px;
-          background: #050d18;
-          color: #8fa4bf;
+          padding: 28px 20px;
+          background: #050a20;
+          color: #96a8d0;
           font-size: 12px;
-          border-top: 1px solid rgba(255, 255, 255, 0.06);
+          border-top: 1px solid rgba(138, 165, 255, 0.14);
         }
 
         @media (max-width: 900px) {
