@@ -1105,12 +1105,12 @@ export default function HomePage() {
 
         .hero-grid {
           width: 100%;
-          max-width: 1240px;
+          max-width: 1320px;
           margin: 0 auto;
           display: grid;
-          grid-template-columns: minmax(0, 1fr) minmax(0, 1.05fr);
+          grid-template-columns: minmax(0, 0.92fr) minmax(0, 1.08fr);
           align-items: center;
-          gap: 24px 32px;
+          gap: 24px 36px;
         }
 
         .hero-content {
@@ -1192,7 +1192,7 @@ export default function HomePage() {
           align-items: center;
           justify-content: center;
           width: 100%;
-          min-height: 360px;
+          min-height: 420px;
           background: transparent;
           border: none;
           box-shadow: none;
@@ -1201,26 +1201,15 @@ export default function HomePage() {
 
         .hero-globe-img {
           width: 100%;
-          max-width: 640px;
-          max-height: 520px;
+          max-width: 780px;
+          max-height: 620px;
           height: auto;
+          transform: scale(1.12);
           object-fit: contain;
           object-position: center;
           display: block;
           mix-blend-mode: screen;
           filter: contrast(1.08) saturate(1.14);
-          -webkit-mask-image: radial-gradient(
-            ellipse 90% 88% at 50% 50%,
-            #000 68%,
-            rgba(0, 0, 0, 0.72) 84%,
-            transparent 100%
-          );
-          mask-image: radial-gradient(
-            ellipse 90% 88% at 50% 50%,
-            #000 68%,
-            rgba(0, 0, 0, 0.72) 84%,
-            transparent 100%
-          );
         }
 
         .small-btn {
@@ -1844,10 +1833,11 @@ export default function HomePage() {
           }
 
           .hero-globe-img {
-          width: 100%;
-          max-width: 600px;
-          max-height: 500px;
-        }
+            width: 100%;
+            max-width: 640px;
+            max-height: 540px;
+            transform: scale(1.06);
+          }
 
           .features-grid,
           .ecosystem-grid,
