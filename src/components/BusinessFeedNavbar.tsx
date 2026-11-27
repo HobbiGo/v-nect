@@ -190,8 +190,9 @@ export function BusinessFeedNavbar({
             top: 0;
             z-index: 40;
             width: 100%;
-            background: #07111f;
-            border-bottom: 1px solid rgba(255, 255, 255, 0.1);
+            background: rgba(6, 11, 36, 0.88);
+            backdrop-filter: blur(12px);
+            border-bottom: 1px solid rgba(138, 165, 255, 0.14);
             padding: 12px 24px;
             font-family: var(--font-sans), Arial, sans-serif;
           }
@@ -230,13 +231,13 @@ export function BusinessFeedNavbar({
 
           .bf-brand-name {
             font-size: 18px;
-            font-weight: 800;
+            font-weight: 850;
             letter-spacing: 0.6px;
             color: #ffffff;
           }
 
           .bf-brand-name span {
-            color: #13c8b5;
+            color: #8ab4ff;
           }
 
           .bf-home-btn {
@@ -245,7 +246,7 @@ export function BusinessFeedNavbar({
             gap: 6px;
             padding: 8px 14px;
             border-radius: 8px;
-            background: linear-gradient(110deg, #347cf0, #13bcae);
+            background: linear-gradient(110deg, #4b6bff, #7854ff);
             color: #ffffff;
             font-size: 13px;
             font-weight: 700;
@@ -254,7 +255,7 @@ export function BusinessFeedNavbar({
           }
 
           .bf-home-btn:hover {
-            opacity: 0.92;
+            opacity: 0.94;
           }
 
           .bf-topbar-nav {
@@ -267,20 +268,21 @@ export function BusinessFeedNavbar({
           .bf-nav-item {
             padding: 7px 12px;
             border-radius: 8px;
-            color: #d6e2f0;
+            color: #c8d7f5;
             font-size: 12.5px;
             font-weight: 600;
             text-decoration: none;
-            background: rgba(255, 255, 255, 0.05);
-            border: 1px solid rgba(255, 255, 255, 0.1);
+            background: rgba(14, 24, 58, 0.72);
+            border: 1px solid rgba(138, 165, 255, 0.18);
             white-space: nowrap;
+            transition: all 0.2s ease;
           }
 
           .bf-nav-item:hover,
           .bf-nav-item.active {
             color: #ffffff;
-            border-color: #13c8b5;
-            background: rgba(19, 200, 181, 0.16);
+            border-color: rgba(138, 180, 255, 0.5);
+            background: rgba(92, 124, 255, 0.22);
           }
 
           .bf-account-group {
@@ -293,9 +295,9 @@ export function BusinessFeedNavbar({
           .bf-account-pill {
             padding: 7px 12px;
             border-radius: 999px;
-            background: rgba(19, 200, 181, 0.16);
-            border: 1px solid rgba(19, 200, 181, 0.45);
-            color: #7ee8dc;
+            background: rgba(92, 124, 255, 0.18);
+            border: 1px solid rgba(138, 180, 255, 0.38);
+            color: #c7dcff;
             font-size: 12px;
             font-weight: 700;
             white-space: nowrap;
@@ -305,7 +307,7 @@ export function BusinessFeedNavbar({
             padding: 8px 14px;
             border-radius: 8px;
             border: none;
-            background: linear-gradient(110deg, #347cf0, #13bcae);
+            background: linear-gradient(110deg, #4b6bff, #7854ff);
             color: #ffffff;
             font-size: 13px;
             font-weight: 700;
@@ -315,8 +317,8 @@ export function BusinessFeedNavbar({
 
           .bf-auth-btn.outline {
             background: rgba(255, 255, 255, 0.06);
-            border: 1px solid rgba(255, 255, 255, 0.22);
-            color: #e6effa;
+            border: 1px solid rgba(138, 165, 255, 0.28);
+            color: #eef3ff;
           }
 
           @media (max-width: 540px) {
