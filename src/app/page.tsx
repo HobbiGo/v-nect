@@ -1,12 +1,12 @@
 "use client";
 
-import { useEffect, useState } from "react";
+import React, { useEffect, useState } from "react";
 import Link from "next/link";
 import { createClient } from "@/lib/supabase";
-import { PostThreadComments } from "@/components/PostThreadComments";
 import { AccountAuthModal } from "@/components/AccountAuthModal";
+import { PostThreadComments } from "@/components/PostThreadComments";
 
-type HomePost = {
+interface BusinessPost {
   id: string;
   company_id: string;
   author_id: string;
@@ -15,877 +15,916 @@ type HomePost = {
   post_type: string;
   image_url: string | null;
   image_urls?: string[] | null;
-  image_captions?: string[] | null;
   status: string;
   created_at: string;
   companies: {
     company_name: string;
     logo_url: string | null;
   } | null;
-};
+}
 
-type LocalCaptionMap = Record<string, Record<string, string>>;
-
-type FocusTarget = {
-  postId: string;
-  imageIndex: number;
-  trigger: number;
-};
-
-type EcosystemModule = {
-  icon: string;
-  tag: string;
-  accent: string;
-  border: string;
-  name: string;
-  description: string;
-  href: string;
-};
-
-const MAX_IMAGES = 5;
-const LOCAL_CAPTIONS_STORAGE_KEY =
-  "v-nect_business_post_image_captions_v1";
+interface CommentCountRow {
+  post_id: string;
+}
 
 const BRAND_LOGO_SRC = "/images/V-NECT-logo.png";
-const HERO_NETWORK_IMG_SRC = "/images/logonew-v-nect.png";
 
-const modules: EcosystemModule[] = [
-  {
-    icon: "💬",
-    tag: "CHAT & MESSAGING",
-    accent: "#36b9ff",
-    border: "rgba(54, 185, 255, 0.34)",
-    name: "v-chat",
-    description: "Connect and communicate.",
-    href: "/business-feed",
-  },
-  {
-    icon: "🎥",
-    tag: "LIVE MEETINGS",
-    accent: "#bd78ff",
-    border: "rgba(189, 120, 255, 0.34)",
-    name: "v-meet",
-    description: "Voice & video meetings.",
-    href: "/v-meet",
-  },
-  {
-    icon: "✣",
-    tag: "IDENTITY HUB",
-    accent: "#32dce9",
-    border: "rgba(50, 220, 233, 0.34)",
-    name: "v-hub",
-    description: "Build your professional identity.",
-    href: "/v-hub",
-  },
-  {
-    icon: "▤",
-    tag: "BUSINESS FEED",
-    accent: "#559fff",
-    border: "rgba(85, 159, 255, 0.34)",
-    name: "v-business feed",
-    description: "Business updates & opportunities.",
-    href: "/business-feed",
-  },
-  {
-    icon: "👥",
-    tag: "NETWORK CIRCLE",
-    accent: "#f472b6",
-    border: "rgba(244, 114, 182, 0.34)",
-    name: "v-circle",
-    description: "Grow your network.",
-    href: "/v-circle",
-  },
-  {
-    icon: "🛒",
-    tag: "MARKETPLACE",
-    accent: "#fbbf24",
-    border: "rgba(251, 191, 36, 0.34)",
-    name: "v-market",
-    description: "Products & suppliers.",
-    href: "/v-market",
-  },
-];
+function getPostImages(post: BusinessPost): string[] {
+  const list: string[] = [];
+  if (Array.isArray(post.image_urls)) {
+    for (const url of post.image_urls) {
+      if (typeof url === "string" && url.trim() && !list.includes(url.trim())) {
+        list.push(url.trim());
+      }
+    }
+  }
+  if (post.image_url && post.image_url.trim() && !list.includes(post.image_url.trim())) {
+    list.push(post.image_url.trim());
+  }
+  return list;
+}
 
-const categoryLabels: Record<string, string> = {
-  announcement: "Official Update",
-  company_news: "Business",
-  news: "Business",
-  product_launch: "Trending",
-  presentation: "Community",
-};
-
-function extractVideoUrlFromPost(post: HomePost): string | null {
-  const text = post.content || "";
-  const linkVideoMatch = text.match(/Link Video:\s*(https?:\/\/\S+)/i);
-
-  if (linkVideoMatch?.[1]) return linkVideoMatch[1].trim();
-
-  const mediaMatch = text.match(
-    /(https?:\/\/\S+\.(?:mp4|webm|mov|m4v)(?:\?\S*)?)/i
+function isVideoUrl(url: string): boolean {
+  const clean = (url || "").split("?")[0].toLowerCase();
+  return (
+    clean.endsWith(".mp4") ||
+    clean.endsWith(".webm") ||
+    clean.endsWith(".mov") ||
+    clean.endsWith(".m4v") ||
+    clean.endsWith(".avi") ||
+    clean.endsWith(".mkv") ||
+    clean.includes("/video/upload/")
   );
-
-  return mediaMatch?.[1] ? mediaMatch[1].trim() : null;
 }
 
-function extractVideoCaptionFromPost(post: HomePost): string {
-  const match = (post.content || "").match(/\(VideoCaption:\s*([^)]+)\)/i);
-  return match?.[1] ? match[1].trim() : "";
+function extractVideoCaption(content: string): string {
+  const match = (content || "").match(/\(VideoCaption:\s*([^)]*)\)/i);
+  return match ? match[1].trim() : "";
 }
 
-function cleanPostContentForDisplay(post: HomePost): string {
-  return (post.content || "")
+function extractExternalVideoLink(content: string): string {
+  const match = (content || "").match(/^\s*Link Video:\s*(https?:\/\/\S+)\s*$/im);
+  return match ? match[1].trim() : "";
+}
+
+function getEmbedVideoUrl(url: string): string | null {
+  const raw = (url || "").trim();
+  if (!raw) return null;
+
+  const ytMatch = raw.match(
+    /(?:youtube\.com\/(?:watch\?v=|shorts\/|embed\/)|youtu\.be\/)([A-Za-z0-9_-]{6,})/i
+  );
+  if (ytMatch?.[1]) {
+    return `https://www.youtube.com/embed/${ytMatch[1]}`;
+  }
+
+  const vimeoMatch = raw.match(/vimeo\.com\/(?:video\/)?(\d+)/i);
+  if (vimeoMatch?.[1]) {
+    return `https://player.vimeo.com/video/${vimeoMatch[1]}`;
+  }
+
+  return null;
+}
+
+function formatCleanTitle(rawTitle: string): string {
+  const clean = (rawTitle || "")
+    .trim()
+    .replace(/^Video:\s*/i, "")
+    .replace(/\.(mp4|webm|mov|m4v|avi|mkv)$/i, "")
+    .replace(/[_-]+/g, " ")
+    .replace(/\s+/g, " ")
+    .trim();
+
+  if (!clean) return rawTitle || "Untitled";
+  return clean.charAt(0).toUpperCase() + clean.slice(1);
+}
+
+function formatCleanExcerpt(rawContent: string): string {
+  return (rawContent || "")
     .replace(/\(VideoCaption:\s*[^)]*\)/gi, "")
     .replace(/^\s*Link Video:\s*https?:\/\/\S+\s*$/gim, "")
     .replace(/\n{3,}/g, "\n\n")
     .trim();
 }
 
-function formatCleanPostTitle(title: string): string {
-  const trimmed = (title || "").trim();
-  const withoutPrefix = trimmed.replace(/^Video:\s*/i, "");
-  const withoutExt = withoutPrefix.replace(
-    /\.(mp4|webm|mov|m4v|avi|mkv)$/i,
-    ""
-  );
-
-  const spaced = withoutExt
-    .replace(/[_-]+/g, " ")
-    .replace(/\s+/g, " ")
-    .trim();
-
-  if (!spaced) return trimmed;
-
-  return spaced.charAt(0).toUpperCase() + spaced.slice(1);
-}
-
-function getPostImages(post: HomePost): string[] {
-  const list: string[] = [];
-
-  if (Array.isArray(post.image_urls)) {
-    for (const item of post.image_urls) {
-      if (typeof item === "string" && item.trim()) {
-        list.push(item.trim());
-      }
-    }
-  }
-
-  if (list.length === 0 && post.image_url?.trim()) {
-    list.push(post.image_url.trim());
-  }
-
-  return list.slice(0, MAX_IMAGES);
-}
-
-function readLocalCaptionMap(): LocalCaptionMap {
-  if (typeof window === "undefined") return {};
-
-  try {
-    const raw = window.localStorage.getItem(LOCAL_CAPTIONS_STORAGE_KEY);
-    if (!raw) return {};
-
-    const parsed = JSON.parse(raw);
-    return parsed && typeof parsed === "object" ? parsed : {};
-  } catch {
-    return {};
-  }
-}
-
-function getPostImageCaptions(
-  post: HomePost,
-  images: string[]
-): string[] {
-  const localMap = readLocalCaptionMap()[post.id] || {};
-
-  return images.map((url, idx) => {
-    const dbCaption =
-      Array.isArray(post.image_captions) &&
-      typeof post.image_captions[idx] === "string"
-        ? post.image_captions[idx].trim()
-        : "";
-
-    return dbCaption || (localMap[url] || "").trim();
-  });
-}
-
-function formatDate(date: string) {
-  return new Date(date).toLocaleDateString("en-US", {
-    day: "numeric",
-    month: "short",
-    year: "numeric",
-  });
-}
-
-function formatRelativeOrShortDate(date: string) {
-  const timestamp = new Date(date).getTime();
-  if (Number.isNaN(timestamp)) return formatDate(date);
-
-  const diffMs = Date.now() - timestamp;
-  const diffHours = Math.floor(diffMs / (1000 * 60 * 60));
-
-  if (diffHours < 1) return "Just now";
-  if (diffHours < 24) return `${diffHours}h ago`;
-
-  const diffDays = Math.floor(diffHours / 24);
-  if (diffDays < 7) return `${diffDays}d ago`;
-
-  return formatDate(date);
-}
-
-export default function Home() {
+export default function HomePage() {
   const [supabase] = useState(() => createClient());
 
-  const [posts, setPosts] = useState<HomePost[]>([]);
+  const [posts, setPosts] = useState<BusinessPost[]>([]);
   const [loadingPosts, setLoadingPosts] = useState(true);
+  const [activeFeedFilter, setActiveFeedFilter] = useState<string>("all");
+
   const [currentUserId, setCurrentUserId] = useState<string | null>(null);
   const [currentUserName, setCurrentUserName] = useState<string | null>(null);
-  const [focusTarget, setFocusTarget] = useState<FocusTarget | null>(null);
   const [authModalOpen, setAuthModalOpen] = useState(false);
 
-  async function syncActiveUser() {
-    const {
-      data: { user },
-    } = await supabase.auth.getUser();
+  const [likedPostIds, setLikedPostIds] = useState<string[]>([]);
+  const [likeCounts, setLikeCounts] = useState<Record<string, number>>({});
+  const [commentCounts, setCommentCounts] = useState<Record<string, number>>({});
+  const [openCommentsPostIds, setOpenCommentsPostIds] = useState<string[]>([]);
+  const [commentFocusTriggerByPost, setCommentFocusTriggerByPost] = useState<
+    Record<string, number>
+  >({});
 
-    if (user) {
-      setCurrentUserId(user.id);
-
-      const fallbackName =
-        (user.user_metadata?.full_name as string | undefined)?.trim() ||
-        user.email?.split("@")[0] ||
-        "Member";
-
-      setCurrentUserName(fallbackName);
-
-      const { data: settings } = await supabase
-        .from("account_settings")
-        .select("active_profile_type, active_company_id")
-        .eq("user_id", user.id)
-        .maybeSingle();
-
-      if (
-        settings?.active_profile_type === "company" &&
-        settings.active_company_id
-      ) {
-        const { data: companyData } = await supabase
-          .from("companies")
-          .select("company_name")
-          .eq("id", settings.active_company_id)
-          .maybeSingle();
-
-        if (companyData?.company_name) {
-          setCurrentUserName(companyData.company_name);
-        }
-      }
-    } else {
-      setCurrentUserId(null);
-      setCurrentUserName(null);
-    }
-  }
+  const [activeVideoPost, setActiveVideoPost] = useState<BusinessPost | null>(null);
 
   useEffect(() => {
-    let active = true;
-
-    async function loadHomeData() {
-      setLoadingPosts(true);
-      await syncActiveUser();
-
-      const { data, error } = await supabase
-        .from("business_posts")
-        .select(`
-          id,
-          company_id,
-          author_id,
-          title,
-          content,
-          post_type,
-          image_url,
-          image_urls,
-          status,
-          created_at,
-          companies (
-            company_name,
-            logo_url
-          )
-        `)
-        .eq("status", "published")
-        .order("created_at", { ascending: false })
-        .limit(6);
-
-      if (!active) return;
-
-      if (error) {
-        console.error("Home feed load error:", error);
-        setPosts([]);
-      } else {
-        setPosts((data || []) as unknown as HomePost[]);
-      }
-
-      setLoadingPosts(false);
-    }
-
-    loadHomeData();
+    fetchPublishedPosts();
+    loadCurrentUserAndLikes();
 
     const {
       data: { subscription },
     } = supabase.auth.onAuthStateChange(() => {
-      if (active) syncActiveUser();
+      loadCurrentUserAndLikes();
     });
 
     return () => {
-      active = false;
       subscription.unsubscribe();
     };
     // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [supabase]);
 
-  async function handleSignOut() {
-    await supabase.auth.signOut();
-    setCurrentUserId(null);
-    setCurrentUserName(null);
+  async function loadCurrentUserAndLikes() {
+    const {
+      data: { user },
+    } = await supabase.auth.getUser();
+
+    if (!user) {
+      setCurrentUserId(null);
+      setCurrentUserName(null);
+      setLikedPostIds([]);
+      return;
+    }
+
+    setCurrentUserId(user.id);
+    const metaName =
+      (user.user_metadata?.full_name as string | undefined)?.trim() ||
+      user.email?.split("@")[0] ||
+      "Member";
+    setCurrentUserName(metaName);
+
+    const { data: likeRows } = await supabase
+      .from("post_likes")
+      .select("post_id")
+      .eq("user_id", user.id);
+
+    if (likeRows) {
+      setLikedPostIds(likeRows.map((r) => r.post_id));
+    }
   }
 
-  function handleFocusImageComment(postId: string, imageIndex: number) {
-    setFocusTarget((prev) => ({
-      postId,
-      imageIndex,
-      trigger: (prev?.trigger || 0) + 1,
+  async function fetchPublishedPosts() {
+    setLoadingPosts(true);
+
+    const { data, error } = await supabase
+      .from("business_posts")
+      .select(`
+        id,
+        company_id,
+        author_id,
+        title,
+        content,
+        post_type,
+        image_url,
+        image_urls,
+        status,
+        created_at,
+        companies (
+          company_name,
+          logo_url
+        )
+      `)
+      .eq("status", "published")
+      .order("created_at", { ascending: false })
+      .limit(6);
+
+    if (error) {
+      console.error("Error loading home posts:", error);
+      setPosts([]);
+      setLoadingPosts(false);
+      return;
+    }
+
+    const postList = (data || []) as unknown as BusinessPost[];
+    setPosts(postList);
+
+    if (postList.length > 0) {
+      const postIds = postList.map((p) => p.id);
+
+      const { data: allLikes } = await supabase
+        .from("post_likes")
+        .select("post_id")
+        .in("post_id", postIds);
+
+      const countMap: Record<string, number> = {};
+      for (const id of postIds) countMap[id] = 0;
+      for (const row of allLikes || []) {
+        countMap[row.post_id] = (countMap[row.post_id] || 0) + 1;
+      }
+      setLikeCounts(countMap);
+
+      const { data: allComments } = await supabase
+        .from("post_comments")
+        .select("post_id")
+        .in("post_id", postIds);
+
+      const cMap: Record<string, number> = {};
+      for (const id of postIds) cMap[id] = 0;
+      for (const row of (allComments || []) as CommentCountRow[]) {
+        cMap[row.post_id] = (cMap[row.post_id] || 0) + 1;
+      }
+      setCommentCounts(cMap);
+    }
+
+    setLoadingPosts(false);
+  }
+
+  async function handleToggleLike(postId: string) {
+    if (!currentUserId) {
+      setAuthModalOpen(true);
+      return;
+    }
+
+    const alreadyLiked = likedPostIds.includes(postId);
+
+    if (alreadyLiked) {
+      setLikedPostIds((prev) => prev.filter((id) => id !== postId));
+      setLikeCounts((prev) => ({
+        ...prev,
+        [postId]: Math.max(0, (prev[postId] || 0) - 1),
+      }));
+
+      await supabase
+        .from("post_likes")
+        .delete()
+        .eq("post_id", postId)
+        .eq("user_id", currentUserId);
+    } else {
+      setLikedPostIds((prev) => [...prev, postId]);
+      setLikeCounts((prev) => ({
+        ...prev,
+        [postId]: (prev[postId] || 0) + 1,
+      }));
+
+      await supabase.from("post_likes").insert({
+        post_id: postId,
+        user_id: currentUserId,
+      });
+    }
+  }
+
+  function handleToggleComments(postId: string) {
+    setOpenCommentsPostIds((prev) => {
+      const exists = prev.includes(postId);
+      if (exists) {
+        return prev.filter((id) => id !== postId);
+      }
+      return [...prev, postId];
+    });
+    setCommentFocusTriggerByPost((prev) => ({
+      ...prev,
+      [postId]: (prev[postId] || 0) + 1,
     }));
   }
 
-  const featuredPost = posts[0] || null;
-  const spotlightPost = posts[1] || posts[0] || null;
-  const sideFeedPosts = posts.slice(2, 5);
+  function formatPostDate(dateStr: string) {
+    const d = new Date(dateStr);
+    if (Number.isNaN(d.getTime())) return "";
+    return d.toLocaleDateString("en-US", {
+      day: "numeric",
+      month: "short",
+      year: "numeric",
+    });
+  }
 
-  const featuredImages = featuredPost ? getPostImages(featuredPost) : [];
-  const featuredLeadImage = featuredImages[0] || HERO_NETWORK_IMG_SRC;
+  function getBadgeLabel(postType: string) {
+    switch (postType) {
+      case "announcement":
+        return "Official Update";
+      case "product_launch":
+        return "Trending";
+      case "company_news":
+      case "news":
+        return "Business";
+      case "presentation":
+        return "Community";
+      default:
+        return "Business Update";
+    }
+  }
+
+  const filteredPosts = posts.filter((post) => {
+    if (activeFeedFilter === "all") return true;
+    if (activeFeedFilter === "company_news") {
+      return post.post_type === "company_news" || post.post_type === "news";
+    }
+    return post.post_type === activeFeedFilter;
+  });
+
+  const videoPosts = posts.filter((post) => {
+    const mediaList = getPostImages(post);
+    const hasUploadedVideo = mediaList.some((url) => isVideoUrl(url));
+    const hasLinkVideo = Boolean(extractExternalVideoLink(post.content));
+    return hasUploadedVideo || hasLinkVideo;
+  });
+
+  const activeModalVideoUrl = activeVideoPost
+    ? getPostImages(activeVideoPost).find((u) => isVideoUrl(u)) || null
+    : null;
+  const activeModalExternalLink = activeVideoPost
+    ? extractExternalVideoLink(activeVideoPost.content)
+    : "";
+  const activeModalEmbedUrl = activeModalExternalLink
+    ? getEmbedVideoUrl(activeModalExternalLink)
+    : null;
+  const activeModalCaption = activeVideoPost
+    ? extractVideoCaption(activeVideoPost.content)
+    : "";
 
   return (
-    <main className="home-page">
-      <header className="navbar">
-        <Link className="logo" href="/">
-          <span className="logo-mark-wrap">
-            <img
-              src={BRAND_LOGO_SRC}
-              alt="v-nect logo"
-              className="logo-mark"
-            />
+    <main className="vnect-home">
+      <header className="top-nav">
+        <Link href="/" className="brand-logo">
+          <span className="brand-logo-mark">
+            <img src={BRAND_LOGO_SRC} alt="v-nect logo" />
           </span>
-
-          <span className="logo-text-wrap">
-            <span className="logo-main">
+          <span className="brand-text-group">
+            <span className="brand-wordmark">
               v<span>-nect</span>
             </span>
-            <small>GLOBAL BUSINESS ECOSYSTEM</small>
+            <small className="brand-tagline">GLOBAL BUSINESS ECOSYSTEM</small>
           </span>
         </Link>
 
-        <nav>
-          <a href="#platform">Home</a>
-          <a href="#community-posts">Explore</a>
-          <a href="#community-posts">Community</a>
-          <a href="#business">Business</a>
-          <a href="#about">More</a>
-          <Link className="nav-button" href="/business-feed">
+        <nav className="nav-links">
+          <a href="#features">Features</a>
+          <Link href="/explore">Explore</Link>
+          <a href="#ecosystem">Ecosystem</a>
+          <Link href="/v-circle?tab=discussions">Community</Link>
+          <a href="#about">About</a>
+          <Link href="/business-feed" className="nav-cta">
             Business Feed →
           </Link>
         </nav>
 
-        <div className="nav-right-actions">
+        <div className="nav-actions">
           {currentUserName ? (
-            <>
-              <span className="nav-account-badge">
-                ● {currentUserName}
-              </span>
-              <button
-                type="button"
-                className="nav-ghost-btn"
-                onClick={handleSignOut}
-              >
-                Sign Out
-              </button>
-            </>
+            <span className="user-chip">● {currentUserName}</span>
           ) : (
             <button
               type="button"
-              className="nav-ghost-btn"
+              className="btn-ghost"
               onClick={() => setAuthModalOpen(true)}
             >
-              Sign In / Register
+              Sign In
             </button>
           )}
         </div>
       </header>
 
-      <section className="hero" id="about">
+      <section className="hero-section">
         <div className="hero-content">
-          <div className="eyebrow">
-            <span className="eyebrow-dot" />
-            THE v-NECT ECOSYSTEM
-          </div>
-
+          <span className="eyebrow">THE V-NECT PLATFORM</span>
           <h1>
-            Everything
-            <span> Connected.</span>
+            Connect Beyond <span>Boundaries.</span>
           </h1>
-
-          <p>
-            A unified digital environment designed to bring
-            businesses and people closer, without boundaries.
+          <p className="hero-sub">
+            v-nect is the next-generation business ecosystem for communication,
+            video meetings, community engagement, and commercial growth.
           </p>
 
-          <div className="hero-actions" id="get-started">
-            <a className="primary-button" href="#platform">
+          <div className="hero-buttons">
+            <Link href="/explore" className="btn-primary">
               Explore Platform →
-            </a>
-            <Link className="secondary-button" href="/business-feed">
-              Watch Overview
             </Link>
-          </div>
-
-          <div className="hero-stats-strip">
-            <div className="hero-stat-item">
-              <strong>1M+</strong>
-              <span>Global Users</span>
-            </div>
-            <div className="hero-stat-item">
-              <strong>100K+</strong>
-              <span>Businesses</span>
-            </div>
-            <div className="hero-stat-item">
-              <strong>150+</strong>
-              <span>Countries</span>
-            </div>
-          </div>
-        </div>
-
-        <div className="hero-visual">
-          <div className="hero-ambient-glow" />
-
-          <svg
-            className="hero-connector-svg"
-            viewBox="0 0 600 400"
-            preserveAspectRatio="none"
-            aria-hidden="true"
-          >
-            <defs>
-              <linearGradient
-                id="voinBeamGrad"
-                x1="0%"
-                y1="0%"
-                x2="100%"
-                y2="100%"
-              >
-                <stop offset="0%" stopColor="#347cf0" stopOpacity="0.85" />
-                <stop offset="100%" stopColor="#13c8b5" stopOpacity="0.95" />
-              </linearGradient>
-            </defs>
-
-            <line x1="68" y1="42" x2="255" y2="165" className="connector-base" />
-            <line x1="532" y1="42" x2="345" y2="165" className="connector-base" />
-            <line x1="78" y1="358" x2="258" y2="236" className="connector-base" />
-            <line x1="532" y1="358" x2="342" y2="236" className="connector-base" />
-
-            <line x1="68" y1="42" x2="255" y2="165" stroke="url(#voinBeamGrad)" className="connector-pulse pulse-one" />
-            <line x1="532" y1="42" x2="345" y2="165" stroke="url(#voinBeamGrad)" className="connector-pulse pulse-two" />
-            <line x1="78" y1="358" x2="258" y2="236" stroke="url(#voinBeamGrad)" className="connector-pulse pulse-three" />
-            <line x1="532" y1="358" x2="342" y2="236" stroke="url(#voinBeamGrad)" className="connector-pulse pulse-four" />
-
-            <circle cx="255" cy="165" r="4" className="connector-node" />
-            <circle cx="345" cy="165" r="4" className="connector-node" />
-            <circle cx="258" cy="236" r="4" className="connector-node" />
-            <circle cx="342" cy="236" r="4" className="connector-node" />
-          </svg>
-
-          <img
-            src={HERO_NETWORK_IMG_SRC}
-            alt="v-nect Global Business Network"
-            className="hero-network-img"
-          />
-
-          <div className="orbit-label label-one">BUSINESS</div>
-          <div className="orbit-label label-two">CONNECT</div>
-          <div className="orbit-label label-three">COMMUNITY</div>
-          <div className="orbit-label label-four">GLOBAL</div>
-        </div>
-      </section>
-
-      <section className="platform-section" id="platform">
-        <div className="ecosystem-shell">
-          <div className="ecosystem-topbar">
-            <div className="ecosystem-heading">
-              <span className="ecosystem-eyebrow">THE V-NECT PLATFORM</span>
-
-              <div className="ecosystem-title">
-                <span className="ecosystem-bar" aria-hidden="true" />
-                <h2>One Ecosystem. Every Connection.</h2>
-              </div>
-
-              <p className="ecosystem-subtitle">
-                Everything you need to communicate, collaborate, build
-                communities, and grow your business — all connected in one
-                platform.
-              </p>
-            </div>
-
-            <Link href="/business-feed" className="ecosystem-link">
-              Explore the ecosystem
-              <span aria-hidden="true">↗</span>
+            <Link href="/business-feed" className="btn-secondary">
+              Open Business Feed
             </Link>
-          </div>
-
-          <div className="ecosystem-grid">
-            {modules.map((module, idx) => (
-              <Link
-                href={module.href}
-                className={`eco-card eco-tone-${idx % 6}`}
-                key={module.name}
-                style={{ borderColor: module.border }}
-              >
-                <div className="eco-card-top">
-                  <div className="eco-icon-box" aria-hidden="true">
-                    {module.icon}
-                  </div>
-                </div>
-
-                <div className="eco-card-content">
-                  <span
-                    className="eco-module-tag"
-                    style={{ color: module.accent }}
-                  >
-                    {module.tag}
-                  </span>
-                  <h3>{module.name}</h3>
-                  <p>{module.description}</p>
-                </div>
-
-                <div className="eco-card-bottom">
-                  <span>Explore module</span>
-                </div>
-              </Link>
-            ))}
-          </div>
-
-          <div className="ecosystem-footer">
-            <span className="ecosystem-footer-dot" />
-            <span>ONE PLATFORM. CONNECTED POSSIBILITIES.</span>
           </div>
         </div>
       </section>
 
-      <section className="home-posts-section" id="community-posts">
-        <div className="home-posts-inner">
-          <div className="home-posts-header">
-            <div className="home-posts-heading-copy">
-              <span className="home-posts-kicker">✦ LIVE COMMUNITY</span>
-              <h2>
-                Latest Posts <span>&amp; Discussion</span>
-              </h2>
-              <p>
-                Explore business insights, join the conversation, and be part
-                of our growing community.
-              </p>
-            </div>
+      <section id="features" className="features-section">
+        <div className="section-header">
+          <span className="section-eyebrow">CORE CAPABILITIES</span>
+          <h2>Everything Your Business Needs to Connect</h2>
+          <p>
+            One unified ecosystem bringing together business updates, direct
+            conversations, video meetings, and partner discovery.
+          </p>
+        </div>
 
-            <Link href="/business-feed" className="view-all-link">
-              View Full Feed <span>→</span>
-            </Link>
+        <div className="features-grid">
+          <article className="feature-card">
+            <div className="feature-icon">💬</div>
+            <h3>Direct &amp; Group Messaging</h3>
+            <p>
+              Communicate seamlessly with partners, teams, and business contacts
+              in real time.
+            </p>
+          </article>
+
+          <article className="feature-card">
+            <div className="feature-icon">🎥</div>
+            <h3>Voice &amp; Video Meetings</h3>
+            <p>
+              Host live discussions, pitches, and cross-border partner meetings
+              directly inside v-nect.
+            </p>
+          </article>
+
+          <article className="feature-card">
+            <div className="feature-icon">🌐</div>
+            <h3>Business Network &amp; Feed</h3>
+            <p>
+              Share announcements, product launches, and insights with businesses
+              and community members.
+            </p>
+          </article>
+        </div>
+      </section>
+
+      <section id="ecosystem" className="ecosystem-section">
+        <div className="ecosystem-header">
+          <div>
+            <span className="section-eyebrow">THE ECOSYSTEM</span>
+            <h2>Explore the v-nect Suite</h2>
+            <p>
+              Six integrated modules designed to support every stage of
+              connection, collaboration, and commerce.
+            </p>
           </div>
 
-          {loadingPosts ? (
-            <div className="home-posts-empty">
-              <div className="loading-orb" />
-              <p>Loading latest posts...</p>
-            </div>
-          ) : posts.length === 0 ? (
-            <div className="home-posts-empty">
-              <div className="empty-icon">✦</div>
-              <h3>Be the first to share.</h3>
-              <p>Published business updates will appear here.</p>
-              <Link href="/business-feed" className="primary-button">
-                View Full Feed →
-              </Link>
-            </div>
-          ) : (
-            <div className="hub-bento-grid">
-              {featuredPost && (
-                <article className="hub-featured-card">
-                  <img
-                    src={featuredLeadImage}
-                    alt={formatCleanPostTitle(featuredPost.title)}
-                    className="hub-featured-bg"
-                  />
-                  <div className="hub-featured-scrim" />
+          <Link href="/explore" className="eco-link">
+            Explore the ecosystem <span>↗</span>
+          </Link>
+        </div>
 
-                  <div className="hub-featured-content">
-                    <span className="hub-featured-pill">★ Featured</span>
-                    <h3>{formatCleanPostTitle(featuredPost.title)}</h3>
-                    <p>
-                      {cleanPostContentForDisplay(featuredPost) ||
-                        "Connecting companies, professionals, and communities across v-nect."}
-                    </p>
+        <div className="ecosystem-grid">
+          <Link href="/business-feed" className="eco-card eco-tone-0">
+            <div className="eco-icon">💬</div>
+            <span className="eco-code">01 · CHAT &amp; MESSAGING</span>
+            <h3>v-chat</h3>
+            <p className="eco-tagline">Connect and communicate.</p>
+            <p className="eco-desc">
+              Real-time direct and group conversations for partners, teams, and
+              business contacts.
+            </p>
+            <span className="eco-cta">
+              Explore module <span>↗</span>
+            </span>
+          </Link>
 
-                    <div className="hub-featured-brand">
-                      <span className="hub-mini-mark">v</span>
-                      <span>
-                        {featuredPost.companies?.company_name || "v-nect"}
+          <Link href="/v-meet" className="eco-card eco-tone-1">
+            <div className="eco-icon">🎥</div>
+            <span className="eco-code">02 · LIVE MEETINGS</span>
+            <h3>v-meet</h3>
+            <p className="eco-tagline">Voice &amp; video meetings.</p>
+            <p className="eco-desc">
+              Host live discussions, pitches, and cross-border partner meetings
+              directly inside v-nect.
+            </p>
+            <span className="eco-cta">
+              Explore module <span>↗</span>
+            </span>
+          </Link>
+
+          <Link href="/v-hub" className="eco-card eco-tone-2">
+            <div className="eco-icon">✣</div>
+            <span className="eco-code">03 · IDENTITY HUB</span>
+            <h3>v-hub</h3>
+            <p className="eco-tagline">Build your professional identity.</p>
+            <p className="eco-desc">
+              Central workspace dashboard to manage profile completion,
+              positioning, and ecosystem activity.
+            </p>
+            <span className="eco-cta">
+              Explore module <span>↗</span>
+            </span>
+          </Link>
+
+          <Link href="/business-feed" className="eco-card eco-tone-3">
+            <div className="eco-icon">▤</div>
+            <span className="eco-code">04 · BUSINESS FEED</span>
+            <h3>v-business feed</h3>
+            <p className="eco-tagline">Business updates &amp; opportunities.</p>
+            <p className="eco-desc">
+              Share announcements, product launches, and discussions with
+              businesses and community members.
+            </p>
+            <span className="eco-cta">
+              Explore module <span>↗</span>
+            </span>
+          </Link>
+
+          <Link href="/v-circle" className="eco-card eco-tone-4">
+            <div className="eco-icon">👥</div>
+            <span className="eco-code">05 · NETWORK CIRCLE</span>
+            <h3>v-circle</h3>
+            <p className="eco-tagline">Grow your network.</p>
+            <p className="eco-desc">
+              Discover founders, professionals, and companies to expand trusted
+              business connections.
+            </p>
+            <span className="eco-cta">
+              Explore module <span>↗</span>
+            </span>
+          </Link>
+
+          <Link href="/v-market" className="eco-card eco-tone-5">
+            <div className="eco-icon">🛒</div>
+            <span className="eco-code">06 · MARKETPLACE</span>
+            <h3>v-market</h3>
+            <p className="eco-tagline">Products &amp; suppliers.</p>
+            <p className="eco-desc">
+              Explore company products, services, and suppliers, inspect feature
+              photos, and request info.
+            </p>
+            <span className="eco-cta">
+              Explore module <span>↗</span>
+            </span>
+          </Link>
+        </div>
+      </section>
+
+      <section id="community-posts" className="posts-section">
+        <div className="posts-header">
+          <div>
+            <span className="section-eyebrow">LIVE FROM THE COMMUNITY</span>
+            <h2>Latest Posts &amp; Discussion</h2>
+            <p>
+              Fresh updates, announcements, and community conversations shared
+              across v-nect.
+            </p>
+          </div>
+
+          <Link href="/business-feed" className="eco-link">
+            View all posts <span>↗</span>
+          </Link>
+        </div>
+
+        <div className="home-filter-bar">
+          {[
+            { key: "all", label: "All Updates" },
+            { key: "announcement", label: "Official Update" },
+            { key: "company_news", label: "Business" },
+            { key: "product_launch", label: "Trending" },
+            { key: "presentation", label: "Community" },
+          ].map((tab) => (
+            <button
+              key={tab.key}
+              type="button"
+              className={
+                activeFeedFilter === tab.key
+                  ? "home-filter-pill active"
+                  : "home-filter-pill"
+              }
+              onClick={() => setActiveFeedFilter(tab.key)}
+            >
+              {tab.label}
+            </button>
+          ))}
+        </div>
+
+        {loadingPosts ? (
+          <div className="posts-empty">
+            <p>Loading latest community posts...</p>
+          </div>
+        ) : filteredPosts.length === 0 ? (
+          <div className="posts-empty">
+            <p>No published posts yet in this category.</p>
+            <Link href="/business-feed" className="btn-primary small-btn">
+              Go to Business Feed
+            </Link>
+          </div>
+        ) : (
+          <div className="posts-grid">
+            {filteredPosts.map((post) => {
+              const isLiked = likedPostIds.includes(post.id);
+              const likeTotal = likeCounts[post.id] ?? 0;
+              const commentTotal = commentCounts[post.id] ?? 0;
+              const isCommentsOpen = openCommentsPostIds.includes(post.id);
+              const mediaList = getPostImages(post);
+              const primaryMedia = mediaList[0] || null;
+              const primaryIsVideo = primaryMedia ? isVideoUrl(primaryMedia) : false;
+              const externalLink = extractExternalVideoLink(post.content);
+              const videoCaption = extractVideoCaption(post.content);
+              const cleanTitle = formatCleanTitle(post.title);
+              const cleanExcerpt = formatCleanExcerpt(post.content);
+
+              return (
+                <article key={post.id} className="post-card">
+                  {primaryMedia ? (
+                    primaryIsVideo ? (
+                      <div className="post-video-thumb">
+                        <video
+                          src={primaryMedia}
+                          muted
+                          playsInline
+                          preload="metadata"
+                          className="post-cover-video"
+                        />
+                        <div className="post-video-overlay">
+                          <span className="post-video-tag">▶ VIDEO</span>
+                          <button
+                            type="button"
+                            className="post-video-play-btn"
+                            onClick={() => setActiveVideoPost(post)}
+                          >
+                            ▶ Putar Video
+                          </button>
+                        </div>
+                      </div>
+                    ) : (
+                      <div className="post-cover-wrap">
+                        <img
+                          src={primaryMedia}
+                          alt={cleanTitle}
+                          className="post-cover-img"
+                        />
+                        {mediaList.length > 1 && (
+                          <span className="post-multi-badge">
+                            +{mediaList.length - 1} foto
+                          </span>
+                        )}
+                      </div>
+                    )
+                  ) : externalLink ? (
+                    <div className="post-video-thumb external-only">
+                      <div className="post-video-overlay">
+                        <span className="post-video-tag">▶ VIDEO LINK</span>
+                        <button
+                          type="button"
+                          className="post-video-play-btn"
+                          onClick={() => setActiveVideoPost(post)}
+                        >
+                          ▶ Putar Video
+                        </button>
+                      </div>
+                    </div>
+                  ) : null}
+
+                  <div className="post-card-body">
+                    <div className="post-meta-top">
+                      <span className="post-badge">
+                        {getBadgeLabel(post.post_type)}
                       </span>
+                      <span className="post-date">
+                        {formatPostDate(post.created_at)}
+                      </span>
+                    </div>
+
+                    <h3>{cleanTitle}</h3>
+
+                    {videoCaption && (
+                      <p className="post-video-caption-line">
+                        🎬 {videoCaption}
+                      </p>
+                    )}
+
+                    {cleanExcerpt && (
+                      <p className="post-excerpt">{cleanExcerpt}</p>
+                    )}
+
+                    <div className="post-author-row">
+                      <div className="post-author-avatar">
+                        {post.companies?.company_name?.charAt(0).toUpperCase() ||
+                          "V"}
+                      </div>
+                      <span className="post-author-name">
+                        {post.companies?.company_name || "v-nect Official"}
+                      </span>
+                    </div>
+
+                    <div className="post-actions-bar">
+                      <button
+                        type="button"
+                        className={
+                          isLiked ? "post-action-btn liked" : "post-action-btn"
+                        }
+                        onClick={() => handleToggleLike(post.id)}
+                      >
+                        {isLiked ? "♥" : "♡"} <span>{likeTotal}</span>
+                      </button>
+
+                      <button
+                        type="button"
+                        className="post-action-btn"
+                        onClick={() => handleToggleComments(post.id)}
+                      >
+                        💬 <span>{commentTotal}</span>
+                      </button>
+
+                      <Link href="/business-feed" className="post-read-link">
+                        Read more →
+                      </Link>
+                    </div>
+
+                    {isCommentsOpen && (
+                      <div className="home-thread-box">
+                        <PostThreadComments
+                          supabase={supabase}
+                          postId={post.id}
+                          currentUserId={currentUserId}
+                          currentUserName={currentUserName}
+                          focusTrigger={commentFocusTriggerByPost[post.id] || 0}
+                        />
+                      </div>
+                    )}
+                  </div>
+                </article>
+              );
+            })}
+          </div>
+        )}
+      </section>
+
+      {videoPosts.length > 0 && (
+        <section id="video-showcase" className="video-showcase-section">
+          <div className="posts-header">
+            <div>
+              <span className="section-eyebrow">VIDEO HIGHLIGHTS</span>
+              <h2>Featured Business &amp; Community Videos</h2>
+              <p>
+                Watch product showcases, company stories, and highlights shared on
+                v-nect.
+              </p>
+            </div>
+
+            <Link href="/business-feed" className="eco-link">
+              All videos in Feed <span>↗</span>
+            </Link>
+          </div>
+
+          <div className="video-showcase-grid">
+            {videoPosts.slice(0, 3).map((vPost) => {
+              const vUrl = getPostImages(vPost).find((u) => isVideoUrl(u)) || null;
+              const vLink = extractExternalVideoLink(vPost.content);
+              const vCap = extractVideoCaption(vPost.content);
+
+              return (
+                <article key={vPost.id} className="video-showcase-card">
+                  <div className="video-showcase-thumb">
+                    {vUrl ? (
+                      <video
+                        src={vUrl}
+                        muted
+                        playsInline
+                        preload="metadata"
+                        className="post-cover-video"
+                      />
+                    ) : (
+                      <div className="video-link-placeholder">
+                        <span>▶ External Video</span>
+                      </div>
+                    )}
+
+                    <button
+                      type="button"
+                      className="video-center-play"
+                      onClick={() => setActiveVideoPost(vPost)}
+                      aria-label={`Putar video ${formatCleanTitle(vPost.title)}`}
+                    >
+                      ▶
+                    </button>
+                  </div>
+
+                  <div className="video-showcase-body">
+                    <span className="post-badge">
+                      {vPost.companies?.company_name || "v-nect Creator"}
+                    </span>
+                    <h3>{formatCleanTitle(vPost.title)}</h3>
+                    {vCap && <p className="video-cap-text">{vCap}</p>}
+                    <div className="video-card-footer">
+                      <span>{formatPostDate(vPost.created_at)}</span>
+                      <button
+                        type="button"
+                        className="post-video-play-btn small"
+                        onClick={() => setActiveVideoPost(vPost)}
+                      >
+                        {vUrl || vLink ? "▶ Putar Video" : "Buka"}
+                      </button>
                     </div>
                   </div>
                 </article>
-              )}
-
-              {spotlightPost &&
-                (() => {
-                  const postImages = getPostImages(spotlightPost);
-                  const postImageCaptions = getPostImageCaptions(
-                    spotlightPost,
-                    postImages
-                  );
-                  const videoUrl = extractVideoUrlFromPost(spotlightPost);
-                  const videoCaption =
-                    extractVideoCaptionFromPost(spotlightPost);
-                  const displayContent =
-                    cleanPostContentForDisplay(spotlightPost);
-                  const displayTitle =
-                    formatCleanPostTitle(spotlightPost.title);
-                  const isFocusedPost =
-                    focusTarget?.postId === spotlightPost.id;
-
-                  return (
-                    <article className="hub-spotlight-card">
-                      <div className="home-post-top">
-                        <div className="home-company-info">
-                          {spotlightPost.companies?.logo_url ? (
-                            <img
-                              src={spotlightPost.companies.logo_url}
-                              alt={
-                                spotlightPost.companies.company_name ||
-                                "Company"
-                              }
-                            />
-                          ) : (
-                            <div className="home-company-avatar">
-                              {spotlightPost.companies?.company_name
-                                ?.charAt(0)
-                                .toUpperCase() || "V"}
-                            </div>
-                          )}
-
-                          <div>
-                            <strong>
-                              {spotlightPost.companies?.company_name ||
-                                "v-nect Official"}{" "}
-                              <span className="verified-check">✓</span>
-                            </strong>
-                            <small>
-                              {formatDate(spotlightPost.created_at)}
-                            </small>
-                          </div>
-                        </div>
-
-                        <span className="home-post-badge">
-                          {categoryLabels[spotlightPost.post_type] ||
-                            spotlightPost.post_type ||
-                            "Business"}
-                        </span>
-                      </div>
-
-                      <div className="home-post-body">
-                        <h3>{displayTitle}</h3>
-                        {displayContent && <p>{displayContent}</p>}
-
-                        {videoUrl && (
-                          <div className="home-video-box">
-                            <video
-                              src={videoUrl}
-                              controls
-                              playsInline
-                              preload="metadata"
-                              className="home-video-player"
-                            />
-                            <div className="home-video-footer">
-                              <span className="home-video-caption">
-                                {videoCaption || "Video Clip"}
-                              </span>
-                              <a
-                                href={videoUrl}
-                                target="_blank"
-                                rel="noreferrer"
-                              >
-                                Open Video ↗
-                              </a>
-                            </div>
-                          </div>
-                        )}
-
-                        {postImages.length > 0 && (
-                          <div
-                            className={
-                              postImages.length === 1
-                                ? "home-images-grid single"
-                                : "home-images-grid multi"
-                            }
-                          >
-                            {postImages.map((imgUrl, idx) => {
-                              const captionText =
-                                postImageCaptions[idx] || "";
-
-                              return (
-                                <div
-                                  className="home-image-card"
-                                  key={`${spotlightPost.id}-spot-img-${idx}`}
-                                >
-                                  <img
-                                    src={imgUrl}
-                                    alt={`${displayTitle} (${idx + 1})`}
-                                    loading="lazy"
-                                  />
-                                  <div className="home-image-bar">
-                                    <span className="home-image-caption">
-                                      {captionText || `Image ${idx + 1}`}
-                                    </span>
-                                    <button
-                                      type="button"
-                                      className="home-image-comment-btn"
-                                      onClick={() =>
-                                        handleFocusImageComment(
-                                          spotlightPost.id,
-                                          idx
-                                        )
-                                      }
-                                      title={`Comment on ${
-                                        captionText || `Image ${idx + 1}`
-                                      }`}
-                                    >
-                                      💬
-                                    </button>
-                                  </div>
-                                </div>
-                              );
-                            })}
-                          </div>
-                        )}
-                      </div>
-
-                      <PostThreadComments
-                        supabase={supabase}
-                        postId={spotlightPost.id}
-                        currentUserId={currentUserId}
-                        currentUserName={currentUserName}
-                        imageLabels={postImages.map(
-                          (_, idx) =>
-                            postImageCaptions[idx] || `Image ${idx + 1}`
-                        )}
-                        focusedImageIndex={
-                          isFocusedPost
-                            ? focusTarget?.imageIndex ?? null
-                            : null
-                        }
-                        focusTrigger={
-                          isFocusedPost ? focusTarget?.trigger ?? 0 : 0
-                        }
-                      />
-                    </article>
-                  );
-                })()}
-
-              <aside className="hub-side-stack">
-                {sideFeedPosts.map((item, idx) => {
-                  const itemImages = getPostImages(item);
-                  const thumbSrc =
-                    itemImages[0] ||
-                    item.companies?.logo_url ||
-                    HERO_NETWORK_IMG_SRC;
-
-                  const badgeText =
-                    categoryLabels[item.post_type] ||
-                    (idx === 0
-                      ? "Community"
-                      : idx === 1
-                      ? "Business"
-                      : "Networking");
-
-                  return (
-                    <Link
-                      href="/business-feed"
-                      className="hub-side-item"
-                      key={item.id}
-                    >
-                      <img
-                        src={thumbSrc}
-                        alt={formatCleanPostTitle(item.title)}
-                        className="hub-side-thumb"
-                        loading="lazy"
-                      />
-
-                      <div className="hub-side-body">
-                        <h4>{formatCleanPostTitle(item.title)}</h4>
-                        <div className="hub-side-meta">
-                          <span className="hub-side-time">
-                            🕒 {formatRelativeOrShortDate(item.created_at)}
-                          </span>
-                          <span className="hub-side-tag">{badgeText}</span>
-                        </div>
-                      </div>
-
-                      <span className="hub-side-chevron">›</span>
-                    </Link>
-                  );
-                })}
-              </aside>
-            </div>
-          )}
-
-          <div className="join-cta-banner" id="business">
-            <div className="join-cta-left">
-              <div className="join-cta-icon">📈</div>
-              <div>
-                <h3>Join v-nect Today</h3>
-                <p>
-                  Be part of a global ecosystem for endless opportunities.
-                </p>
-              </div>
-            </div>
-
-            <Link href="/business-feed" className="join-cta-btn">
-              Get Started →
-            </Link>
+              );
+            })}
           </div>
+        </section>
+      )}
+
+      <section id="about" className="about-section">
+        <div className="about-card">
+          <span className="section-eyebrow">ABOUT V-NECT</span>
+          <h2>Built for Modern Business &amp; Global Collaboration</h2>
+          <p>
+            v-nect unites communication, live meetings, community engagement, and
+            business discovery into one cohesive platform designed for founders,
+            teams, creators, and growing enterprises.
+          </p>
         </div>
       </section>
 
-      <footer className="footer">
-        <div className="footer-logo">
+      <footer className="site-footer">
+        <div className="footer-brand">
           v<span>-nect</span>
         </div>
         <p>Connect Beyond Boundaries.</p>
         <small>© 2026 v-nect. All rights reserved.</small>
       </footer>
 
+      {activeVideoPost && (
+        <div
+          className="video-modal-backdrop"
+          onClick={() => setActiveVideoPost(null)}
+        >
+          <div
+            className="video-modal-box"
+            onClick={(e) => e.stopPropagation()}
+          >
+            <div className="video-modal-top">
+              <div>
+                <span className="post-badge">
+                  {activeVideoPost.companies?.company_name || "v-nect Video"}
+                </span>
+                <h3>{formatCleanTitle(activeVideoPost.title)}</h3>
+              </div>
+
+              <button
+                type="button"
+                className="video-modal-close"
+                onClick={() => setActiveVideoPost(null)}
+                aria-label="Tutup video"
+              >
+                ✕
+              </button>
+            </div>
+
+            <div className="video-modal-player-wrap">
+              {activeModalVideoUrl ? (
+                <video
+                  src={activeModalVideoUrl}
+                  controls
+                  autoPlay
+                  playsInline
+                  className="video-modal-player"
+                />
+              ) : activeModalEmbedUrl ? (
+                <iframe
+                  src={activeModalEmbedUrl}
+                  title={formatCleanTitle(activeVideoPost.title)}
+                  allow="accelerometer; autoplay; clipboard-write; encrypted-media; gyroscope; picture-in-picture"
+                  allowFullScreen
+                  className="video-modal-iframe"
+                />
+              ) : activeModalExternalLink ? (
+                <div className="video-modal-external-box">
+                  <p>Video ini tertaut ke sumber eksternal:</p>
+                  <a
+                    href={activeModalExternalLink}
+                    target="_blank"
+                    rel="noopener noreferrer"
+                    className="btn-primary small-btn"
+                  >
+                    Buka Video Eksternal ↗
+                  </a>
+                </div>
+              ) : null}
+            </div>
+
+            {(activeModalCaption || formatCleanExcerpt(activeVideoPost.content)) && (
+              <p className="video-modal-caption">
+                {activeModalCaption || formatCleanExcerpt(activeVideoPost.content)}
+              </p>
+            )}
+          </div>
+        </div>
+      )}
+
       <AccountAuthModal
         open={authModalOpen}
         initialMode="login"
         onClose={() => setAuthModalOpen(false)}
-        onSuccess={() => syncActiveUser()}
+        onSuccess={() => loadCurrentUserAndLikes()}
       />
 
       <style jsx>{`
-        .home-page {
+        .vnect-home {
           min-height: 100vh;
           color: #f3f7ff;
           font-family: var(--font-sans), Arial, sans-serif;
           background:
-            radial-gradient(circle at 78% 14%, rgba(78,108,255,.3), transparent 36%),
-            radial-gradient(circle at 22% 28%, rgba(28,63,184,.24), transparent 42%),
-            linear-gradient(180deg, #060b24 0%, #091338 52%, #060b24 100%);
+            radial-gradient(circle at 78% 14%, rgba(78, 108, 255, 0.34), transparent 36%),
+            radial-gradient(circle at 22% 32%, rgba(28, 63, 184, 0.24), transparent 42%),
+            linear-gradient(180deg, #060b24 0%, #091338 55%, #060b24 100%);
         }
 
-        .navbar {
+        .top-nav {
           min-height: 72px;
           padding: 10px 6%;
-          background: rgba(6,11,34,.88);
+          background: rgba(6, 11, 34, 0.88);
           backdrop-filter: blur(16px);
-          border-bottom: 1px solid rgba(138,165,255,.14);
+          border-bottom: 1px solid rgba(138, 165, 255, 0.14);
           display: flex;
           align-items: center;
           justify-content: space-between;
@@ -895,8 +934,8 @@ export default function Home() {
           z-index: 30;
         }
 
-        .logo {
-          color: #fff;
+        .brand-logo {
+          color: #ffffff;
           text-decoration: none;
           display: inline-flex;
           align-items: center;
@@ -904,1389 +943,796 @@ export default function Home() {
           flex-shrink: 0;
         }
 
-        .logo-mark-wrap {
+        .brand-logo-mark {
           width: 36px;
           height: 36px;
           display: grid;
           place-items: center;
-          overflow: hidden;
           flex-shrink: 0;
+          overflow: hidden;
         }
 
-        .logo-mark {
+        .brand-logo-mark img {
           width: 100%;
           height: 100%;
           object-fit: contain;
+          display: block;
         }
 
-        .logo-text-wrap {
+        .brand-text-group {
           display: inline-flex;
           flex-direction: column;
+          justify-content: center;
         }
 
-        .logo-main {
+        .brand-wordmark {
           font-size: 21px;
           font-weight: 850;
-          letter-spacing: .3px;
-          white-space: nowrap;
+          letter-spacing: -0.4px;
           line-height: 1.05;
+          color: #ffffff;
         }
 
-        .logo-main span,
-        .footer-logo span {
+        .brand-wordmark span,
+        .hero-content h1 span,
+        .footer-brand span {
           color: #8ab4ff;
         }
 
-        .logo small {
+        .brand-tagline {
           font-size: 9px;
           font-weight: 700;
           letter-spacing: 1.2px;
           color: #9cb0d9;
+          text-transform: uppercase;
+          line-height: 1.1;
           margin-top: 4px;
-          white-space: nowrap;
         }
 
-        .navbar nav {
+        .nav-links {
           display: flex;
           align-items: center;
           gap: 20px;
         }
 
-        .navbar nav a {
+        .nav-links :global(a) {
           color: #d9e4ff;
           text-decoration: none;
           font-size: 13px;
           font-weight: 600;
-          white-space: nowrap;
-          transition: color .2s ease;
+          transition: color 0.2s ease;
         }
 
-        .navbar nav a:hover {
+        .nav-links :global(a:hover) {
           color: #8ab4ff;
         }
 
-        .navbar nav a.nav-button {
+        .nav-links :global(a.nav-cta),
+        :global(.nav-cta) {
           background: linear-gradient(110deg, #4b6bff, #7854ff);
-          color: #fff;
+          color: #ffffff;
           padding: 10px 16px;
           border-radius: 11px;
           font-size: 12px;
           font-weight: 750;
-          box-shadow: 0 7px 20px rgba(75,107,255,.22);
+          text-decoration: none;
+          display: inline-flex;
+          align-items: center;
+          gap: 6px;
+          box-shadow: 0 7px 20px rgba(75, 107, 255, 0.25);
         }
 
-        .nav-right-actions {
+        .nav-actions {
           display: flex;
           align-items: center;
           gap: 10px;
           flex-shrink: 0;
         }
 
-        .nav-account-badge {
-          padding: 8px 12px;
+        .user-chip {
+          background: rgba(138, 180, 255, 0.14);
+          border: 1px solid rgba(138, 180, 255, 0.35);
+          color: #c7dcff;
+          padding: 7px 12px;
           border-radius: 999px;
-          background: rgba(91,124,255,.18);
-          border: 1px solid rgba(138,165,255,.42);
-          color: #b7ccff;
           font-size: 12px;
           font-weight: 700;
-          white-space: nowrap;
         }
 
-        .nav-ghost-btn {
-          background: rgba(255,255,255,.06);
-          border: 1px solid rgba(154,178,255,.28);
+        .btn-ghost {
+          background: rgba(255, 255, 255, 0.06);
+          border: 1px solid rgba(154, 178, 255, 0.28);
           color: #eef3ff;
-          padding: 9px 14px;
+          padding: 8px 14px;
           border-radius: 10px;
           font-size: 12px;
           font-weight: 700;
           cursor: pointer;
-          white-space: nowrap;
-          transition: .2s ease;
         }
 
-        .nav-ghost-btn:hover {
-          border-color: #8ab4ff;
-          background: rgba(138,180,255,.14);
-        }
-
-        /* HERO */
-
-        .hero {
-          max-width: 1220px;
-          margin: 0 auto;
-          padding: 52px 24px 42px;
-          display: grid;
-          grid-template-columns: minmax(0,1fr) minmax(0,1.25fr);
-          gap: 30px;
+        .hero-section {
+          min-height: 70vh;
+          padding: 64px 7% 54px;
+          display: flex;
           align-items: center;
+          background:
+            radial-gradient(circle at 76% 42%, rgba(92, 124, 255, 0.32), transparent 36%),
+            radial-gradient(circle at 82% 24%, rgba(145, 92, 255, 0.22), transparent 34%);
         }
 
-        .eyebrow {
+        .hero-content {
+          max-width: 680px;
+        }
+
+        .eyebrow,
+        .section-eyebrow {
+          display: inline-block;
+          color: #79a6ff;
+          font-size: 10.5px;
+          font-weight: 800;
+          letter-spacing: 2.6px;
+          text-transform: uppercase;
+          margin-bottom: 12px;
+        }
+
+        .hero-content h1 {
+          margin: 0 0 18px;
+          font-size: clamp(42px, 6vw, 68px);
+          font-weight: 850;
+          line-height: 1.03;
+          letter-spacing: -1.8px;
+          color: #ffffff;
+        }
+
+        .hero-sub {
+          margin: 0 0 30px;
+          color: #b8c7e6;
+          font-size: 16px;
+          line-height: 1.72;
+          max-width: 560px;
+        }
+
+        .hero-buttons {
+          display: flex;
+          align-items: center;
+          gap: 14px;
+          flex-wrap: wrap;
+        }
+
+        :global(.btn-primary) {
+          background: linear-gradient(110deg, #4b6bff, #7854ff);
+          color: #ffffff;
+          text-decoration: none;
+          padding: 13px 22px;
+          border-radius: 12px;
+          font-size: 13.5px;
+          font-weight: 750;
           display: inline-flex;
           align-items: center;
           gap: 8px;
-          color: #a4c3ff;
-          background: rgba(52,79,196,.24);
-          border: 1px solid rgba(136,166,255,.28);
-          padding: 7px 12px;
-          border-radius: 999px;
-          font-size: 10px;
-          font-weight: 800;
-          letter-spacing: 1.2px;
-        }
-
-        .eyebrow-dot {
-          width: 7px;
-          height: 7px;
-          border-radius: 50%;
-          background: #5eead4;
-          box-shadow: 0 0 10px #5eead4;
-        }
-
-        .hero h1 {
-          font-size: clamp(38px,4.4vw,58px);
-          font-weight: 850;
-          line-height: 1.08;
-          letter-spacing: -1.4px;
-          margin: 17px 0 14px;
-          color: #fff;
-        }
-
-        .hero h1 span {
-          display: block;
-          background: linear-gradient(100deg,#8bb4ff,#a99aff 55%,#5eead4);
-          background-clip: text;
-          -webkit-background-clip: text;
-          color: transparent;
-        }
-
-        .hero p {
-          color: #c2d1f0;
-          font-size: 15px;
-          line-height: 1.75;
-          max-width: 530px;
-          margin: 0;
-        }
-
-        .hero-actions {
-          display: flex;
-          align-items: center;
-          gap: 12px;
-          margin-top: 25px;
-          flex-wrap: wrap;
-        }
-
-        .primary-button,
-        .secondary-button {
-          display: inline-flex;
-          align-items: center;
-          justify-content: center;
-          padding: 11px 18px;
-          border-radius: 11px;
-          font-size: 13px;
-          font-weight: 750;
-          text-decoration: none;
-          transition: transform .2s ease, background .2s ease;
-        }
-
-        .primary-button {
-          background: linear-gradient(110deg,#4b6bff,#7357ff);
-          color: #fff;
           border: none;
           cursor: pointer;
-          box-shadow: 0 10px 24px rgba(75,107,255,.35);
+          box-shadow: 0 10px 24px rgba(75, 107, 255, 0.28);
         }
 
-        .primary-button:hover {
-          transform: translateY(-2px);
-        }
-
-        .secondary-button {
-          background: rgba(16,29,78,.72);
-          border: 1px solid rgba(145,173,255,.34);
-          color: #e6eeff;
-        }
-
-        .secondary-button:hover {
-          background: rgba(34,57,134,.78);
-        }
-
-        .hero-stats-strip {
-          display: flex;
-          align-items: center;
-          gap: 28px;
-          flex-wrap: wrap;
-          margin-top: 27px;
-          padding-top: 19px;
-          border-top: 1px solid rgba(145,173,255,.16);
-        }
-
-        .hero-stat-item {
-          display: flex;
-          flex-direction: column;
-          gap: 3px;
-        }
-
-        .hero-stat-item strong {
-          font-size: 20px;
-          font-weight: 850;
-          color: #fff;
-        }
-
-        .hero-stat-item span {
-          font-size: 11px;
-          color: #9cb2dc;
-        }
-
-        .hero-visual {
-          position: relative;
-          min-height: 380px;
-          width: 100%;
-          display: grid;
-          place-items: center;
-          padding: 16px 8px;
-        }
-
-        .hero-ambient-glow {
-          position: absolute;
-          width: 420px;
-          height: 280px;
-          border-radius: 999px;
-          background: radial-gradient(circle,rgba(88,124,255,.34),rgba(19,200,181,.16) 55%,transparent 80%);
-          filter: blur(26px);
-          pointer-events: none;
-        }
-
-        .hero-connector-svg {
-          position: absolute;
-          inset: 0;
-          width: 100%;
-          height: 100%;
-          z-index: 2;
-          pointer-events: none;
-        }
-
-        .connector-base {
-          stroke: rgba(145,173,255,.24);
-          stroke-width: 1.4;
-          stroke-linecap: round;
-        }
-
-        .connector-pulse {
-          stroke-width: 2.2;
-          stroke-linecap: round;
-          stroke-dasharray: 10 14;
-          filter: drop-shadow(0 0 6px rgba(114,154,255,.65));
-          animation: voinFlowDash 2.2s linear infinite;
-        }
-
-        .pulse-two { animation-delay: -.55s; }
-        .pulse-three { animation-delay: -1.1s; }
-        .pulse-four { animation-delay: -1.65s; }
-
-        .connector-node {
-          fill: #8bb4ff;
-          transform-box: fill-box;
-          transform-origin: center;
-          filter: drop-shadow(0 0 7px rgba(114,154,255,.85));
-          animation: voinNodePulse 2.4s ease-in-out infinite;
-        }
-
-        @keyframes voinFlowDash {
-          from { stroke-dashoffset: 0; }
-          to { stroke-dashoffset: -48; }
-        }
-
-        @keyframes voinNodePulse {
-          0%,100% { opacity: .65; transform: scale(.95); }
-          50% { opacity: 1; transform: scale(1.22); }
-        }
-
-        .hero-network-img {
-          position: relative;
-          z-index: 2;
-          width: 100%;
-          max-width: 580px;
-          max-height: 340px;
-          object-fit: contain;
-          filter: drop-shadow(0 14px 32px rgba(59,99,246,.28));
-        }
-
-        .orbit-label {
-          position: absolute;
-          z-index: 3;
-          font-size: 10px;
-          font-weight: 800;
-          letter-spacing: 1.1px;
-          color: #b7ceff;
-          background: rgba(13,25,68,.92);
-          border: 1px solid rgba(138,165,255,.36);
-          padding: 6px 11px;
-          border-radius: 999px;
-        }
-
-        .label-one { top: 10px; left: 3%; }
-        .label-two { top: 10px; right: 3%; }
-        .label-three { bottom: 10px; left: 3%; }
-        .label-four { bottom: 10px; right: 3%; }
-
-        /* ECOSYSTEM SECTION */
-
-        .platform-section {
-          max-width: 1320px;
-          margin: 10px auto 0;
-          padding: 28px 24px 58px;
-          color: #f8fafc;
-        }
-
-        .ecosystem-shell {
-          position: relative;
-          overflow: hidden;
-          padding: 36px;
-          border-radius: 26px;
-          border: 1px solid rgba(130, 184, 255, 0.24);
-          background:
-            radial-gradient(
-              circle at 12% 0%,
-              rgba(56, 189, 248, 0.22),
-              transparent 44%
-            ),
-            radial-gradient(
-              circle at 92% 100%,
-              rgba(99, 102, 241, 0.2),
-              transparent 44%
-            ),
-            linear-gradient(150deg, #1a2f63 0%, #12224a 52%, #0e1a3a 100%);
-          box-shadow:
-            0 24px 64px rgba(2, 8, 26, 0.45),
-            inset 0 1px 0 rgba(255, 255, 255, 0.12);
-        }
-
-        .ecosystem-topbar {
-          display: flex;
-          justify-content: space-between;
-          align-items: flex-end;
-          gap: 24px;
-          margin-bottom: 28px;
-          padding-bottom: 20px;
-          border-bottom: 1px solid rgba(148, 190, 255, 0.18);
-        }
-
-        .ecosystem-heading {
-          max-width: 690px;
-        }
-
-        .ecosystem-eyebrow {
-          display: inline-block;
-          margin-bottom: 10px;
-          color: #7dd3fc;
-          font-size: 10px;
-          font-weight: 800;
-          letter-spacing: 2.6px;
-        }
-
-        .ecosystem-title {
-          display: flex;
-          align-items: center;
-          gap: 12px;
-        }
-
-        .ecosystem-bar {
-          flex-shrink: 0;
-          width: 4px;
-          height: 30px;
-          border-radius: 99px;
-          background: linear-gradient(180deg, #67e8f9, #a78bfa);
-          box-shadow: 0 0 16px rgba(103, 232, 249, 0.5);
-        }
-
-        .ecosystem-title h2 {
-          margin: 0;
-          font-size: clamp(23px, 3vw, 34px);
-          line-height: 1.2;
-          font-weight: 850;
-          letter-spacing: -0.8px;
-          background: linear-gradient(105deg, #67e8f9 0%, #93c5fd 45%, #e879f9 100%);
-          background-clip: text;
-          -webkit-background-clip: text;
-          color: transparent;
-        }
-
-        .ecosystem-subtitle {
-          max-width: 620px;
-          margin: 12px 0 0 16px;
-          color: #c2d3f0;
+        :global(.btn-secondary) {
+          background: rgba(16, 26, 58, 0.72);
+          border: 1px solid rgba(154, 178, 255, 0.32);
+          color: #eef3ff;
+          text-decoration: none;
+          padding: 13px 22px;
+          border-radius: 12px;
           font-size: 13.5px;
-          line-height: 1.75;
-        }
-
-        .ecosystem-link {
-          flex-shrink: 0;
+          font-weight: 700;
           display: inline-flex;
           align-items: center;
-          gap: 10px;
-          padding: 12px 18px;
-          border: 1px solid rgba(125, 211, 252, 0.42);
-          border-radius: 12px;
-          color: #eef6ff;
-          background: rgba(56, 130, 246, 0.22);
-          font-size: 12px;
-          font-weight: 700;
-          text-decoration: none;
-          transition: all 0.25s ease;
+          gap: 8px;
         }
 
-        .ecosystem-link span {
-          font-size: 16px;
-          color: #7dd3fc;
+        .small-btn {
+          padding: 9px 15px;
+          font-size: 12.5px;
         }
 
-        .ecosystem-link:hover {
-          background: rgba(56, 130, 246, 0.34);
-          border-color: rgba(125, 211, 252, 0.8);
-          transform: translateY(-2px);
+        .features-section,
+        .ecosystem-section,
+        .posts-section,
+        .video-showcase-section,
+        .about-section {
+          padding: 58px 7%;
         }
 
-        .ecosystem-grid {
+        .section-header {
+          max-width: 620px;
+          margin-bottom: 34px;
+        }
+
+        .section-header h2,
+        .ecosystem-header h2,
+        .posts-header h2,
+        .about-card h2 {
+          margin: 0 0 10px;
+          font-size: clamp(28px, 3.6vw, 40px);
+          font-weight: 800;
+          letter-spacing: -0.9px;
+          line-height: 1.15;
+          color: #ffffff;
+        }
+
+        .section-header p,
+        .ecosystem-header p,
+        .posts-header p,
+        .about-card p {
+          margin: 0;
+          color: #a9b9da;
+          font-size: 14.5px;
+          line-height: 1.7;
+        }
+
+        .features-grid {
           display: grid;
           grid-template-columns: repeat(3, minmax(0, 1fr));
-          gap: 18px;
+          gap: 20px;
         }
 
-        .eco-card {
-          position: relative;
-          min-height: 204px;
-          display: flex;
-          flex-direction: column;
-          padding: 22px;
-          overflow: hidden;
-          border: 1px solid rgba(148, 184, 255, 0.26);
+        .feature-card {
+          background: linear-gradient(160deg, rgba(20, 32, 72, 0.9), rgba(11, 19, 46, 0.95));
+          border: 1px solid rgba(138, 165, 255, 0.16);
           border-radius: 18px;
-          background: linear-gradient(
-            155deg,
-            rgba(38, 66, 122, 0.92),
-            rgba(18, 33, 68, 0.98)
-          );
-          color: inherit;
-          text-decoration: none;
-          box-shadow: 0 12px 26px rgba(2, 8, 24, 0.3);
-          transition:
-            transform 0.25s ease,
-            border-color 0.25s ease,
-            box-shadow 0.25s ease,
-            background 0.25s ease;
+          padding: 26px;
         }
 
-        .eco-card:hover {
-          transform: translateY(-5px);
-          background: linear-gradient(
-            155deg,
-            rgba(48, 82, 148, 0.97),
-            rgba(22, 40, 82, 0.99)
-          );
-          box-shadow: 0 18px 36px rgba(2, 8, 24, 0.42);
-        }
-
-        .eco-card-top {
-          display: flex;
-          align-items: center;
-          justify-content: flex-start;
+        .feature-icon {
+          width: 44px;
+          height: 44px;
+          border-radius: 12px;
+          background: rgba(92, 124, 255, 0.16);
+          border: 1px solid rgba(138, 165, 255, 0.25);
+          display: grid;
+          place-items: center;
+          font-size: 20px;
           margin-bottom: 18px;
         }
 
-        .eco-icon-box {
-          width: 52px;
-          height: 52px;
-          display: grid;
-          place-items: center;
-          border-radius: 14px;
-          color: #ffffff;
-          font-size: 24px;
-          line-height: 1;
-          border: 1px solid rgba(255, 255, 255, 0.28);
-        }
-
-        .eco-tone-0 .eco-icon-box {
-          background: linear-gradient(145deg, #36b9ff, #1763e9);
-          box-shadow: 0 8px 22px rgba(34, 134, 255, 0.34);
-        }
-
-        .eco-tone-1 .eco-icon-box {
-          background: linear-gradient(145deg, #bd78ff, #7041e9);
-          box-shadow: 0 8px 22px rgba(145, 72, 255, 0.34);
-        }
-
-        .eco-tone-2 .eco-icon-box {
-          background: linear-gradient(145deg, #32dce9, #137dbd);
-          box-shadow: 0 8px 22px rgba(24, 188, 224, 0.32);
-        }
-
-        .eco-tone-3 .eco-icon-box {
-          background: linear-gradient(145deg, #559fff, #2458d8);
-          box-shadow: 0 8px 22px rgba(42, 122, 255, 0.32);
-        }
-
-        .eco-tone-4 .eco-icon-box {
-          background: linear-gradient(145deg, #f472b6, #9d174d);
-          box-shadow: 0 8px 22px rgba(244, 114, 182, 0.32);
-        }
-
-        .eco-tone-5 .eco-icon-box {
-          background: linear-gradient(145deg, #fbbf24, #b45309);
-          box-shadow: 0 8px 22px rgba(251, 191, 36, 0.32);
-        }
-
-        .eco-card-content {
-          flex: 1;
-        }
-
-        .eco-module-tag {
-          display: inline-block;
-          font-size: 9.5px;
-          font-weight: 800;
-          letter-spacing: 1.4px;
-          margin-bottom: 6px;
-        }
-
-        .eco-card h3 {
+        .feature-card h3 {
           margin: 0 0 8px;
-          color: #ffffff;
-          font-size: 19px;
+          font-size: 18px;
           font-weight: 750;
-          letter-spacing: -0.4px;
+          color: #ffffff;
         }
 
-        .eco-card p {
-          max-width: 300px;
+        .feature-card p {
           margin: 0;
-          color: #c2d2ec;
-          font-size: 13px;
+          color: #a9b9da;
+          font-size: 13.5px;
           line-height: 1.65;
         }
 
-        .eco-card-bottom {
+        .ecosystem-header,
+        .posts-header {
           display: flex;
           justify-content: space-between;
-          align-items: center;
-          margin-top: 18px;
-          padding-top: 12px;
-          border-top: 1px solid rgba(160, 192, 240, 0.16);
-          color: #b8cef0;
-          font-size: 11px;
-          font-weight: 700;
-          letter-spacing: 0.3px;
-        }
-
-        .ecosystem-footer {
-          display: flex;
-          justify-content: center;
-          align-items: center;
-          gap: 9px;
-          margin-top: 26px;
-          color: #93abd2;
-          font-size: 9px;
-          font-weight: 800;
-          letter-spacing: 2.5px;
-        }
-
-        .ecosystem-footer-dot {
-          width: 6px;
-          height: 6px;
-          border-radius: 50%;
-          background: #39c7ed;
-          box-shadow: 0 0 10px rgba(57, 199, 237, 0.85);
-        }
-
-        /* LATEST POSTS */
-
-        .home-posts-section {
-          position: relative;
-          background: linear-gradient(180deg,#eef2fb 0%,#e8eefb 62%,#dfe7f8 100%);
-          color: #131c36;
-          padding: 48px 24px 44px;
-          border-radius: 26px 26px 0 0;
-          box-shadow: 0 -16px 40px rgba(4,9,28,.35);
-        }
-
-        .home-posts-inner {
-          max-width: 1220px;
-          margin: 0 auto;
-        }
-
-        .home-posts-header {
-          display: flex;
-          justify-content: space-between;
-          align-items: flex-start;
+          align-items: flex-end;
           gap: 20px;
           flex-wrap: wrap;
           margin-bottom: 24px;
         }
 
-        .home-posts-heading-copy {
-          max-width: 680px;
-        }
-
-        .home-posts-kicker {
-          color: #4b5ce6;
-          font-size: 10px;
-          font-weight: 850;
-          letter-spacing: 1.5px;
-          display: inline-block;
-        }
-
-        .home-posts-header h2 {
-          color: #0e1733;
-          font-size: clamp(28px,3.4vw,39px);
-          font-weight: 850;
-          letter-spacing: -.8px;
-          line-height: 1.15;
-          margin: 7px 0;
-        }
-
-        .home-posts-header h2 span {
-          color: #4f63ff;
-        }
-
-        .home-posts-header p {
-          color: #526080;
-          font-size: 13px;
-          line-height: 1.7;
-          margin: 0;
-        }
-
-        .view-all-link {
+        :global(.eco-link) {
+          color: #9ec0ff;
+          text-decoration: none;
+          font-size: 13.5px;
+          font-weight: 700;
           display: inline-flex;
           align-items: center;
-          gap: 8px;
-          color: #1a264a;
-          font-size: 12px;
-          font-weight: 750;
-          text-decoration: none;
-          padding: 10px 15px;
-          background: #fff;
-          border: 1px solid #cfd8ee;
-          border-radius: 11px;
-          white-space: nowrap;
-          box-shadow: 0 4px 12px rgba(18,30,74,.06);
-          transition: transform .2s ease, border-color .2s ease;
+          gap: 6px;
         }
 
-        .view-all-link:hover {
-          border-color: #4f63ff;
-          transform: translateY(-2px);
-        }
-
-        .hub-bento-grid {
+        .ecosystem-grid {
           display: grid;
-          grid-template-columns: minmax(0,1.05fr) minmax(0,1.15fr) minmax(0,1fr);
-          gap: 18px;
-          align-items: start;
+          grid-template-columns: repeat(3, minmax(0, 1fr));
+          gap: 16px;
         }
 
-        .hub-featured-card {
-          position: relative;
-          min-height: 360px;
-          border-radius: 18px;
-          overflow: hidden;
-          background: #0d1a40;
-          border: 1px solid #d2dcf0;
-          box-shadow: 0 12px 28px rgba(17,29,69,.12);
+        .eco-card {
+          min-height: 228px;
           display: flex;
           flex-direction: column;
-          justify-content: flex-end;
+          text-decoration: none;
+          padding: 22px;
+          border: 1px solid rgba(148, 184, 255, 0.26);
+          border-radius: 16px;
+          background: linear-gradient(155deg, rgba(38, 66, 122, 0.92), rgba(18, 33, 68, 0.98));
+          box-shadow: 0 12px 26px rgba(2, 8, 24, 0.3);
+          transition: transform 0.25s ease, border-color 0.25s ease;
         }
 
-        .hub-featured-bg {
-          position: absolute;
-          inset: 0;
-          width: 100%;
-          height: 100%;
-          object-fit: cover;
+        .eco-card:hover {
+          transform: translateY(-4px);
+          border-color: rgba(148, 184, 255, 0.55);
         }
 
-        .hub-featured-scrim {
-          position: absolute;
-          inset: 0;
-          background: linear-gradient(
-            180deg,
-            rgba(8,16,44,.25) 0%,
-            rgba(8,16,44,.72) 55%,
-            rgba(7,13,36,.94) 100%
-          );
-        }
-
-        .hub-featured-content {
-          position: relative;
-          z-index: 2;
-          padding: 20px;
-          color: #fff;
-        }
-
-        .hub-featured-pill {
-          display: inline-flex;
-          align-items: center;
-          gap: 5px;
-          background: rgba(114,92,255,.92);
-          color: #fff;
-          font-size: 11px;
-          font-weight: 750;
-          padding: 5px 10px;
-          border-radius: 999px;
-          margin-bottom: 12px;
-        }
-
-        .hub-featured-content h3 {
-          margin: 0 0 8px;
-          font-size: 22px;
-          font-weight: 850;
-          line-height: 1.25;
-          color: #fff;
-          overflow-wrap: anywhere;
-        }
-
-        .hub-featured-content p {
-          margin: 0 0 14px;
-          font-size: 12px;
-          line-height: 1.6;
-          color: #d6e0f7;
-          display: -webkit-box;
-          -webkit-line-clamp: 2;
-          -webkit-box-orient: vertical;
-          overflow: hidden;
-        }
-
-        .hub-featured-brand {
-          display: inline-flex;
-          align-items: center;
-          gap: 7px;
-          font-size: 12px;
-          font-weight: 750;
-          color: #eef3ff;
-        }
-
-        .hub-mini-mark {
-          width: 21px;
-          height: 21px;
-          border-radius: 6px;
-          background: linear-gradient(135deg,#4b6bff,#13c8b5);
-          color: #fff;
-          font-size: 11px;
-          font-weight: 850;
+        .eco-icon {
+          width: 48px;
+          height: 48px;
           display: grid;
           place-items: center;
+          margin-bottom: 16px;
+          border-radius: 13px;
+          color: #ffffff;
+          font-size: 21px;
+          border: 1px solid rgba(255, 255, 255, 0.28);
         }
 
-        .hub-spotlight-card {
-          min-width: 0;
-          background: #fff;
-          border: 1px solid #d8e1f3;
-          border-radius: 18px;
-          padding: 18px;
-          box-shadow: 0 10px 24px rgba(17,29,69,.07);
-          color: #15203d;
+        .eco-tone-0 .eco-icon { background: linear-gradient(145deg, #36b9ff, #1763e9); }
+        .eco-tone-1 .eco-icon { background: linear-gradient(145deg, #bd78ff, #7041e9); }
+        .eco-tone-2 .eco-icon { background: linear-gradient(145deg, #32dce9, #137dbd); }
+        .eco-tone-3 .eco-icon { background: linear-gradient(145deg, #559fff, #2458d8); }
+        .eco-tone-4 .eco-icon { background: linear-gradient(145deg, #f472b6, #9d174d); }
+        .eco-tone-5 .eco-icon { background: linear-gradient(145deg, #fbbf24, #b45309); }
+
+        .eco-code {
+          font-size: 9.5px;
+          font-weight: 800;
+          letter-spacing: 1.4px;
+          color: #82b4ff;
+          margin-bottom: 6px;
         }
 
-        .home-post-top {
-          display: flex;
-          justify-content: space-between;
-          align-items: center;
-          gap: 10px;
-          flex-wrap: wrap;
-          padding-bottom: 12px;
-          border-bottom: 1px solid #eaeff9;
-        }
-
-        .home-company-info {
-          display: flex;
-          align-items: center;
-          gap: 10px;
-          min-width: 0;
-        }
-
-        .home-company-info img,
-        .home-company-avatar {
-          width: 38px;
-          height: 38px;
-          border-radius: 50%;
-          object-fit: cover;
-          flex-shrink: 0;
-        }
-
-        .home-company-avatar {
-          display: grid;
-          place-items: center;
-          background: linear-gradient(135deg,#1b2f6e,#4f63ff);
-          color: #fff;
-          font-size: 14px;
+        .eco-card h3 {
+          margin: 0 0 4px;
+          color: #ffffff;
+          font-size: 19px;
           font-weight: 800;
         }
 
-        .home-company-info strong {
-          display: inline-flex;
-          align-items: center;
-          gap: 4px;
-          color: #111b38;
-          font-size: 13px;
-          font-weight: 750;
-        }
-
-        .verified-check {
-          display: inline-grid;
-          place-items: center;
-          width: 15px;
-          height: 15px;
-          border-radius: 50%;
-          background: #3b82f6;
-          color: #fff;
-          font-size: 9px;
-        }
-
-        .home-company-info small {
-          display: block;
-          color: #6b7896;
-          font-size: 11px;
-          margin-top: 2px;
-        }
-
-        .home-post-badge {
-          background: #eef2ff;
-          color: #3b5bdb;
-          border: 1px solid #d4ddff;
-          padding: 5px 10px;
-          border-radius: 8px;
-          font-size: 10px;
-          font-weight: 750;
-        }
-
-        .home-post-body {
-          padding: 14px 0 6px;
-        }
-
-        .home-post-body h3 {
+        .eco-tagline {
           margin: 0 0 8px;
-          font-size: 17px;
-          font-weight: 850;
-          line-height: 1.4;
-          color: #101935;
-          overflow-wrap: anywhere;
-        }
-
-        .home-post-body p {
-          margin: 0;
-          color: #4d5b7a;
-          font-size: 12px;
-          line-height: 1.7;
-          white-space: pre-wrap;
-          overflow-wrap: anywhere;
-        }
-
-        .home-video-box {
-          margin-top: 12px;
-          border-radius: 12px;
-          overflow: hidden;
-          background: #09132e;
-          border: 1px solid #d6dfef;
-        }
-
-        .home-video-player {
-          display: block;
-          width: 100%;
-          max-height: 280px;
-          background: #09132e;
-        }
-
-        .home-video-footer {
-          display: flex;
-          align-items: center;
-          justify-content: space-between;
-          gap: 10px;
-          padding: 9px 12px;
-          background: #14224a;
-          color: #eef3ff;
-          font-size: 11px;
+          color: #e2ecff;
+          font-size: 13px;
           font-weight: 650;
         }
 
-        .home-video-caption {
-          overflow-wrap: anywhere;
+        .eco-desc {
+          margin: 0;
+          color: #b4c6e7;
+          font-size: 12.5px;
+          line-height: 1.58;
+          flex: 1;
         }
 
-        .home-video-footer a {
-          color: #8ab4ff;
-          text-decoration: none;
-          font-size: 11px;
-          font-weight: 750;
-          flex-shrink: 0;
-        }
-
-        .home-images-grid {
-          margin-top: 12px;
-          display: grid;
-          gap: 8px;
-        }
-
-        .home-images-grid.single {
-          grid-template-columns: 1fr;
-        }
-
-        .home-images-grid.multi {
-          grid-template-columns: repeat(2,minmax(0,1fr));
-        }
-
-        .home-image-card {
-          min-width: 0;
-          border-radius: 10px;
-          overflow: hidden;
-          background: #f5f8fe;
-          border: 1px solid #dce4f4;
-        }
-
-        .home-image-card img {
-          display: block;
-          width: 100%;
-          max-height: 220px;
-          object-fit: cover;
-        }
-
-        .home-image-bar {
-          display: flex;
+        .eco-cta {
+          margin-top: 16px;
+          padding-top: 10px;
+          border-top: 1px solid rgba(160, 192, 240, 0.16);
+          display: inline-flex;
           align-items: center;
-          justify-content: space-between;
-          gap: 8px;
-          padding: 7px 10px;
-          background: #f8faff;
-          color: #263457;
-          border-top: 1px solid #e4eaf7;
-        }
-
-        .home-image-caption {
-          font-size: 11px;
-          line-height: 1.35;
-          overflow-wrap: anywhere;
-        }
-
-        .home-image-comment-btn {
-          border: 1px solid #cfd8ee;
-          background: #fff;
-          color: #1b284d;
-          border-radius: 7px;
-          padding: 4px 8px;
+          gap: 6px;
+          color: #7dd3fc;
           font-size: 12px;
+          font-weight: 750;
+        }
+
+        .home-filter-bar {
+          display: flex;
+          gap: 8px;
+          flex-wrap: wrap;
+          margin-bottom: 20px;
+        }
+
+        .home-filter-pill {
+          border: 1px solid rgba(148, 184, 255, 0.24);
+          background: rgba(15, 25, 58, 0.85);
+          color: #c8d7f5;
+          padding: 7px 14px;
+          border-radius: 999px;
+          font-size: 12px;
+          font-weight: 700;
           cursor: pointer;
-          flex-shrink: 0;
         }
 
-        .home-image-comment-btn:hover {
-          background: #eef2ff;
-          border-color: #4f63ff;
+        .home-filter-pill.active {
+          background: linear-gradient(110deg, #4b6bff, #7854ff);
+          border-color: transparent;
+          color: #ffffff;
         }
 
-        .hub-side-stack {
+        .posts-grid,
+        .video-showcase-grid {
+          display: grid;
+          grid-template-columns: repeat(3, minmax(0, 1fr));
+          gap: 20px;
+        }
+
+        .post-card,
+        .video-showcase-card {
+          background: linear-gradient(160deg, rgba(20, 32, 72, 0.92), rgba(11, 19, 46, 0.96));
+          border: 1px solid rgba(138, 165, 255, 0.18);
+          border-radius: 18px;
+          overflow: hidden;
           display: flex;
           flex-direction: column;
-          gap: 12px;
         }
 
-        .hub-side-item {
-          display: flex;
-          align-items: center;
-          gap: 12px;
-          background: #fff;
-          border: 1px solid #d8e1f3;
-          border-radius: 14px;
-          padding: 10px 12px;
-          text-decoration: none;
-          color: #131d38;
-          box-shadow: 0 6px 18px rgba(17,29,69,.05);
-          transition: transform .2s ease, border-color .2s ease;
+        .post-cover-wrap,
+        .post-video-thumb,
+        .video-showcase-thumb {
+          position: relative;
+          height: 190px;
+          background: #070d24;
+          overflow: hidden;
         }
 
-        .hub-side-item:hover {
-          transform: translateY(-2px);
-          border-color: #6b7cff;
-        }
-
-        .hub-side-thumb {
-          width: 66px;
-          height: 66px;
-          border-radius: 10px;
+        .post-cover-img,
+        .post-cover-video {
+          width: 100%;
+          height: 100%;
           object-fit: cover;
-          flex-shrink: 0;
-          background: #e6ecf9;
+          display: block;
         }
 
-        .hub-side-body {
-          flex: 1;
-          min-width: 0;
+        .post-multi-badge {
+          position: absolute;
+          right: 10px;
+          bottom: 10px;
+          background: rgba(6, 11, 34, 0.85);
+          color: #ffffff;
+          font-size: 11px;
+          font-weight: 700;
+          padding: 4px 9px;
+          border-radius: 999px;
         }
 
-        .hub-side-body h4 {
-          margin: 0 0 6px;
-          font-size: 13px;
+        .post-video-overlay {
+          position: absolute;
+          inset: 0;
+          background: linear-gradient(180deg, rgba(6, 11, 34, 0.2), rgba(6, 11, 34, 0.78));
+          display: flex;
+          align-items: flex-end;
+          justify-content: space-between;
+          padding: 12px;
+        }
+
+        .post-video-tag {
+          background: rgba(19, 200, 181, 0.22);
+          border: 1px solid rgba(19, 200, 181, 0.5);
+          color: #9ff5eb;
+          font-size: 10px;
+          font-weight: 800;
+          padding: 4px 8px;
+          border-radius: 6px;
+        }
+
+        .post-video-play-btn {
+          border: none;
+          background: linear-gradient(110deg, #4b6bff, #7854ff);
+          color: #ffffff;
+          font-size: 11.5px;
           font-weight: 750;
-          line-height: 1.4;
-          color: #121c38;
+          padding: 7px 12px;
+          border-radius: 8px;
+          cursor: pointer;
+        }
+
+        .post-video-play-btn.small {
+          padding: 6px 10px;
+          font-size: 11px;
+        }
+
+        .post-card-body,
+        .video-showcase-body {
+          padding: 20px;
+          display: flex;
+          flex-direction: column;
+          gap: 10px;
+          flex: 1;
+        }
+
+        .post-meta-top {
+          display: flex;
+          justify-content: space-between;
+          align-items: center;
+          gap: 8px;
+        }
+
+        .post-badge {
+          background: rgba(92, 124, 255, 0.18);
+          color: #9ec0ff;
+          font-size: 11px;
+          font-weight: 750;
+          padding: 4px 10px;
+          border-radius: 999px;
+        }
+
+        .post-date {
+          color: #8ea3cc;
+          font-size: 11.5px;
+        }
+
+        .post-card-body h3,
+        .video-showcase-body h3 {
+          margin: 0;
+          font-size: 17px;
+          font-weight: 750;
+          color: #ffffff;
+          line-height: 1.35;
+        }
+
+        .post-video-caption-line,
+        .video-cap-text {
+          margin: 0;
+          font-size: 12px;
+          color: #7dd3fc;
+          font-weight: 600;
+        }
+
+        .post-excerpt {
+          margin: 0;
+          color: #b4c6e7;
+          font-size: 13px;
+          line-height: 1.6;
           display: -webkit-box;
-          -webkit-line-clamp: 2;
+          -webkit-line-clamp: 3;
           -webkit-box-orient: vertical;
           overflow: hidden;
         }
 
-        .hub-side-meta {
+        .post-author-row {
           display: flex;
           align-items: center;
-          gap: 8px;
-          flex-wrap: wrap;
+          gap: 9px;
+          margin-top: auto;
+          padding-top: 8px;
         }
 
-        .hub-side-time {
-          font-size: 10px;
-          color: #687694;
+        .post-author-avatar {
+          width: 28px;
+          height: 28px;
+          border-radius: 8px;
+          background: rgba(92, 124, 255, 0.25);
+          color: #ffffff;
+          font-size: 12px;
+          font-weight: 800;
+          display: grid;
+          place-items: center;
+        }
+
+        .post-author-name {
+          font-size: 12.5px;
           font-weight: 650;
+          color: #dce7ff;
         }
 
-        .hub-side-tag {
-          font-size: 10px;
-          font-weight: 750;
-          padding: 3px 8px;
-          border-radius: 6px;
-          background: #e9f7ef;
-          color: #1f7a4c;
-        }
-
-        .hub-side-chevron {
-          color: #8a97b5;
-          font-size: 19px;
-          font-weight: 700;
-          flex-shrink: 0;
-        }
-
-        .join-cta-banner {
-          margin-top: 25px;
-          background: linear-gradient(110deg,#1b2d7a,#3c349c 60%,#1c3d82);
-          border: 1px solid rgba(138,165,255,.35);
-          border-radius: 18px;
-          padding: 21px 26px;
+        .post-actions-bar {
           display: flex;
           align-items: center;
           justify-content: space-between;
-          gap: 16px;
-          flex-wrap: wrap;
-          color: #fff;
-          box-shadow: 0 12px 28px rgba(14,24,66,.16);
+          gap: 8px;
+          padding-top: 12px;
+          border-top: 1px solid rgba(138, 165, 255, 0.14);
         }
 
-        .join-cta-left {
+        .post-action-btn {
+          background: rgba(255, 255, 255, 0.06);
+          border: 1px solid rgba(138, 165, 255, 0.2);
+          color: #dce7ff;
+          padding: 6px 11px;
+          border-radius: 8px;
+          font-size: 12px;
+          font-weight: 700;
+          cursor: pointer;
+          display: inline-flex;
+          align-items: center;
+          gap: 5px;
+        }
+
+        .post-action-btn.liked {
+          background: rgba(244, 63, 94, 0.18);
+          border-color: rgba(244, 63, 94, 0.45);
+          color: #fda4af;
+        }
+
+        :global(.post-read-link) {
+          color: #8ab4ff;
+          text-decoration: none;
+          font-size: 12px;
+          font-weight: 700;
+          margin-left: auto;
+        }
+
+        .home-thread-box {
+          margin-top: 8px;
+          padding-top: 10px;
+          border-top: 1px solid rgba(138, 165, 255, 0.14);
+          color: #131c36;
+        }
+
+        .posts-empty {
+          background: rgba(15, 25, 58, 0.72);
+          border: 1px solid rgba(138, 165, 255, 0.16);
+          border-radius: 16px;
+          padding: 36px 20px;
+          text-align: center;
           display: flex;
+          flex-direction: column;
           align-items: center;
           gap: 14px;
         }
 
-        .join-cta-icon {
-          width: 46px;
-          height: 46px;
-          border-radius: 13px;
-          background: rgba(255,255,255,.14);
+        .video-link-placeholder {
+          width: 100%;
+          height: 100%;
           display: grid;
           place-items: center;
-          font-size: 20px;
-          flex-shrink: 0;
-        }
-
-        .join-cta-banner h3 {
-          margin: 0 0 4px;
-          font-size: 18px;
-          font-weight: 850;
-          color: #fff;
-        }
-
-        .join-cta-banner p {
-          margin: 0;
-          font-size: 12px;
-          color: #cdd8f8;
-        }
-
-        .join-cta-btn {
-          background: linear-gradient(110deg,#5677ff,#7c58ff);
-          color: #fff;
-          text-decoration: none;
-          font-size: 12px;
-          font-weight: 750;
-          padding: 11px 18px;
-          border-radius: 10px;
-          white-space: nowrap;
-          transition: transform .2s ease;
-        }
-
-        .join-cta-btn:hover {
-          transform: translateY(-2px);
-        }
-
-        .home-posts-empty {
-          background: #fff;
-          border: 1px solid #d8e1f3;
-          border-radius: 16px;
-          padding: 38px 24px;
-          text-align: center;
-          color: #526080;
-        }
-
-        .home-posts-empty h3 {
-          color: #121c38;
-          margin: 10px 0 6px;
-          font-size: 19px;
-        }
-
-        .home-posts-empty p {
+          color: #9ec0ff;
           font-size: 13px;
-          margin: 0 0 16px;
+          font-weight: 700;
         }
 
-        .empty-icon {
-          font-size: 28px;
-          color: #4f63ff;
-        }
-
-        .loading-orb {
-          width: 28px;
-          height: 28px;
-          margin: 0 auto 12px;
-          border: 3px solid rgba(79,99,255,.2);
-          border-top-color: #4f63ff;
+        .video-center-play {
+          position: absolute;
+          left: 50%;
+          top: 50%;
+          transform: translate(-50%, -50%);
+          width: 48px;
+          height: 48px;
           border-radius: 50%;
-          animation: loadingSpin .8s linear infinite;
+          border: none;
+          background: rgba(75, 107, 255, 0.92);
+          color: #ffffff;
+          font-size: 16px;
+          cursor: pointer;
+          display: grid;
+          place-items: center;
         }
 
-        @keyframes loadingSpin {
-          to { transform: rotate(360deg); }
+        .video-card-footer {
+          display: flex;
+          align-items: center;
+          justify-content: space-between;
+          font-size: 11.5px;
+          color: #9cb0d9;
+          margin-top: auto;
         }
 
-        .footer {
+        .about-card {
+          background: linear-gradient(145deg, rgba(22, 36, 82, 0.92), rgba(11, 19, 46, 0.96));
+          border: 1px solid rgba(138, 165, 255, 0.2);
+          border-radius: 22px;
+          padding: 36px;
+          max-width: 920px;
+        }
+
+        .site-footer {
           text-align: center;
-          padding: 30px 20px;
+          padding: 34px 20px;
           background: #050a20;
           color: #96a8d0;
-          border-top: 1px solid rgba(138,165,255,.14);
+          border-top: 1px solid rgba(138, 165, 255, 0.14);
         }
 
-        .footer-logo {
-          color: #fff;
-          font-size: 23px;
+        .footer-brand {
+          color: #ffffff;
+          font-size: 24px;
           font-weight: 850;
-          letter-spacing: .4px;
         }
 
-        .footer p {
-          margin: 7px 0 5px;
-          font-size: 13px;
+        .site-footer p {
+          margin: 8px 0 6px;
+          font-size: 13.5px;
           color: #d9e4ff;
         }
 
-        .footer small {
-          font-size: 11px;
+        .site-footer small {
+          font-size: 11.5px;
         }
 
-        /* RESPONSIVE */
-
-        @media (max-width: 1024px) {
-          .hub-bento-grid {
-            grid-template-columns: 1fr;
-          }
-
-          .hub-side-stack {
-            display: grid;
-            grid-template-columns: repeat(2,minmax(0,1fr));
-          }
+        .video-modal-backdrop {
+          position: fixed;
+          inset: 0;
+          background: rgba(3, 7, 22, 0.84);
+          backdrop-filter: blur(6px);
+          z-index: 60;
+          display: grid;
+          place-items: center;
+          padding: 20px;
         }
 
-        @media (max-width: 900px) {
-          .navbar {
-            flex-wrap: wrap;
-            justify-content: center;
-          }
+        .video-modal-box {
+          width: 100%;
+          max-width: 720px;
+          background: #0d1838;
+          border: 1px solid rgba(138, 165, 255, 0.28);
+          border-radius: 18px;
+          padding: 22px;
+          display: flex;
+          flex-direction: column;
+          gap: 14px;
+        }
 
-          .hero {
-            grid-template-columns: 1fr;
-            padding-top: 36px;
-          }
+        .video-modal-top {
+          display: flex;
+          justify-content: space-between;
+          align-items: flex-start;
+          gap: 12px;
+        }
 
-          .hero-content {
-            text-align: center;
-          }
+        .video-modal-top h3 {
+          margin: 6px 0 0;
+          font-size: 19px;
+          color: #ffffff;
+        }
 
-          .hero-content > p {
-            margin-left: auto;
-            margin-right: auto;
-          }
+        .video-modal-close {
+          border: none;
+          background: rgba(255, 255, 255, 0.08);
+          color: #ffffff;
+          width: 34px;
+          height: 34px;
+          border-radius: 9px;
+          font-size: 15px;
+          cursor: pointer;
+        }
 
-          .hero-actions,
-          .hero-stats-strip {
-            justify-content: center;
-          }
+        .video-modal-player-wrap {
+          border-radius: 12px;
+          overflow: hidden;
+          background: #050919;
+          aspect-ratio: 16 / 9;
+        }
 
-          .hero-visual {
-            min-height: 340px;
-          }
+        .video-modal-player,
+        .video-modal-iframe {
+          width: 100%;
+          height: 100%;
+          border: none;
+          display: block;
+        }
 
-          .ecosystem-shell {
-            padding: 28px;
-          }
+        .video-modal-external-box {
+          height: 100%;
+          display: flex;
+          flex-direction: column;
+          align-items: center;
+          justify-content: center;
+          gap: 12px;
+          padding: 20px;
+          text-align: center;
+        }
 
-          .ecosystem-grid {
+        .video-modal-caption {
+          margin: 0;
+          color: #c7d6f5;
+          font-size: 13px;
+          line-height: 1.6;
+        }
+
+        @media (max-width: 960px) {
+          .features-grid,
+          .ecosystem-grid,
+          .posts-grid,
+          .video-showcase-grid {
             grid-template-columns: repeat(2, minmax(0, 1fr));
           }
-
-          .ecosystem-topbar {
-            align-items: flex-start;
-            flex-direction: column;
-          }
         }
 
-        @media (max-width: 540px) {
-          .navbar {
-            padding: 12px 16px;
-          }
-
-          .navbar nav {
-            flex-wrap: wrap;
-            justify-content: center;
-            gap: 12px;
-          }
-
-          .navbar nav a {
-            font-size: 11px;
-          }
-
-          .nav-right-actions {
+        @media (max-width: 640px) {
+          .top-nav {
             flex-wrap: wrap;
             justify-content: center;
           }
 
-          .hero {
-            padding: 32px 17px 30px;
-          }
-
-          .hero h1 {
-            font-size: 39px;
-          }
-
-          .hero p {
-            font-size: 13px;
-          }
-
-          .hero-visual {
-            min-height: 265px;
-          }
-
-          .hero-ambient-glow {
-            width: 280px;
-            height: 210px;
-          }
-
-          .orbit-label {
-            font-size: 8px;
-            padding: 5px 8px;
-          }
-
-          .platform-section {
-            padding: 18px 14px 40px;
-          }
-
-          .ecosystem-shell {
-            padding: 21px 15px;
-            border-radius: 20px;
-          }
-
-          .ecosystem-title h2 {
-            font-size: 23px;
-          }
-
-          .ecosystem-subtitle {
-            margin-left: 16px;
-            font-size: 12px;
-          }
-
-          .ecosystem-grid {
-            grid-template-columns: 1fr;
-            gap: 12px;
-          }
-
-          .eco-card {
-            min-height: 180px;
-            padding: 20px;
-          }
-
-          .eco-card-top {
-            margin-bottom: 16px;
-          }
-
-          .eco-card h3 {
-            font-size: 18px;
-          }
-
-          .ecosystem-link {
-            width: 100%;
+          .nav-links {
+            flex-wrap: wrap;
             justify-content: center;
+            gap: 10px 14px;
           }
 
-          .ecosystem-footer {
-            font-size: 8px;
-            letter-spacing: 1.5px;
-          }
-
-          .home-posts-section {
-            padding: 36px 14px;
-            border-radius: 20px 20px 0 0;
-          }
-
-          .home-posts-header h2 {
-            font-size: 28px;
-          }
-
-          .hub-side-stack {
+          .features-grid,
+          .ecosystem-grid,
+          .posts-grid,
+          .video-showcase-grid {
             grid-template-columns: 1fr;
-          }
-
-          .hub-featured-card {
-            min-height: 300px;
-          }
-
-          .hub-spotlight-card {
-            padding: 14px;
-          }
-
-          .home-images-grid.multi {
-            grid-template-columns: repeat(2,minmax(0,1fr));
-          }
-
-          .join-cta-banner {
-            padding: 18px 16px;
-          }
-
-          .join-cta-left {
-            align-items: flex-start;
-          }
-        }
-
-        @media (max-width: 380px) {
-          .hero-stats-strip {
-            gap: 18px;
-          }
-
-          .hero-stat-item strong {
-            font-size: 17px;
-          }
-        }
-
-        @media (prefers-reduced-motion: reduce) {
-          .home-page *,
-          .home-page *::before,
-          .home-page *::after {
-            animation-duration: .01ms !important;
-            animation-iteration-count: 1 !important;
-            transition-duration: .01ms !important;
           }
         }
       `}</style>
