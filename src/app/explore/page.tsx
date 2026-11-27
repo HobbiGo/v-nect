@@ -1,47 +1,47 @@
 "use client";
 
-import React, { useState, useEffect, useMemo, Suspense } from "react";
+import React, { Suspense, useEffect, useMemo, useState } from "react";
 import Link from "next/link";
-import { useSearchParams, useRouter } from "next/navigation";
+import { useRouter, useSearchParams } from "next/navigation";
+import { createClient } from "@/lib/supabase";
+import { AccountAuthModal } from "@/components/AccountAuthModal";
 
-type ModuleCategory = "Communication" | "Workspace" | "Network & Feed" | "Commerce";
+type ModuleCategory = "All" | "Communication" | "Workspace" | "Network & Feed";
 
-interface EcosystemModule {
+type ExploreModule = {
   id: string;
   code: string;
   icon: string;
-  tag: string;
   accent: string;
   border: string;
   name: string;
-  category: ModuleCategory;
+  category: Exclude<ModuleCategory, "All">;
   tagline: string;
   description: string;
   keywords: string[];
-  highlights: string[];
+  features: string[];
   href: string;
-}
+};
 
 const BRAND_LOGO_SRC = "/images/V-NECT-logo.png";
 
-const modules: EcosystemModule[] = [
+const EXPLORE_MODULES: ExploreModule[] = [
   {
     id: "v-chat",
     code: "01 · CHAT & MESSAGING",
     icon: "💬",
-    tag: "CHAT & MESSAGING",
-    accent: "#36b9ff",
-    border: "rgba(54, 185, 255, 0.34)",
+    accent: "#38bdf8",
+    border: "rgba(56, 189, 248, 0.34)",
     name: "v-chat",
     category: "Communication",
     tagline: "Connect and communicate.",
     description:
-      "Direct and group messaging panel for partners, teams, and suppliers across time zones.",
-    keywords: ["chat", "message", "dm", "inbox", "komunikasi", "pesan"],
-    highlights: [
-      "Real-time direct threads",
-      "Share product & deal links",
-      "Instant notifications",
+      "Real-time direct and group conversations for partners, teams, and business contacts.",
+    keywords: ["chat", "message", "pesan", "grup", "real-time", "komunikasi"],
+    features: [
+      "Direct & group messaging",
+      "Fast business coordination",
+      "Partner & team threads",
     ],
     href: "/business-feed",
   },
@@ -49,19 +49,18 @@ const modules: EcosystemModule[] = [
     id: "v-meet",
     code: "02 · LIVE MEETINGS",
     icon: "🎥",
-    tag: "LIVE MEETINGS",
-    accent: "#bd78ff",
-    border: "rgba(189, 120, 255, 0.34)",
+    accent: "#c084fc",
+    border: "rgba(192, 132, 252, 0.34)",
     name: "v-meet",
     category: "Communication",
     tagline: "Voice & video meetings.",
     description:
-      "Host pitches, partner alignment calls, and cross-border discussions without leaving the ecosystem.",
-    keywords: ["meet", "video", "call", "voice", "rapat", "pitching", "conference"],
-    highlights: [
-      "HD voice & video rooms",
-      "Quick workspace invites",
-      "Meeting notes ready",
+      "Host live discussions, pitches, and cross-border partner meetings directly inside v-nect.",
+    keywords: ["meet", "video", "voice", "rapat", "pitch", "meeting", "live"],
+    features: [
+      "Live voice & video sessions",
+      "Cross-border partner calls",
+      "Direct pitch & sync rooms",
     ],
     href: "/v-meet",
   },
@@ -69,19 +68,18 @@ const modules: EcosystemModule[] = [
     id: "v-hub",
     code: "03 · IDENTITY HUB",
     icon: "✣",
-    tag: "IDENTITY HUB",
-    accent: "#32dce9",
-    border: "rgba(50, 220, 233, 0.34)",
+    accent: "#22d3ee",
+    border: "rgba(34, 211, 238, 0.34)",
     name: "v-hub",
     category: "Workspace",
     tagline: "Build your professional identity.",
     description:
-      "Central workspace dashboard to manage profile completion, hub positioning, and recent activity.",
-    keywords: ["hub", "profile", "workspace", "dashboard", "identity", "profil"],
-    highlights: [
-      "Personal & company identity",
-      "Profile progress tracking",
-      "Quick module shortcuts",
+      "Central workspace dashboard to manage profile completion, positioning, and ecosystem activity.",
+    keywords: ["hub", "identity", "profil", "dashboard", "workspace", "identitas"],
+    features: [
+      "Profile & identity overview",
+      "Ecosystem activity tracking",
+      "Quick module launcher",
     ],
     href: "/v-hub",
   },
@@ -89,19 +87,18 @@ const modules: EcosystemModule[] = [
     id: "v-business-feed",
     code: "04 · BUSINESS FEED",
     icon: "▤",
-    tag: "BUSINESS FEED",
-    accent: "#559fff",
-    border: "rgba(85, 159, 255, 0.34)",
+    accent: "#60a5fa",
+    border: "rgba(96, 165, 250, 0.34)",
     name: "v-business feed",
     category: "Network & Feed",
     tagline: "Business updates & opportunities.",
     description:
-      "Publish company announcements, product launches, and partnership opportunities to the network.",
-    keywords: ["feed", "post", "news", "updates", "launch", "announcement", "peluang"],
-    highlights: [
-      "Launch & promo updates",
-      "Community discussions",
-      "Direct lead engagement",
+      "Share announcements, product launches, and discussions with businesses and community members.",
+    keywords: ["feed", "berita", "pengumuman", "update", "bisnis", "post", "diskusi"],
+    features: [
+      "Company updates & launches",
+      "Likes & threaded comments",
+      "Video & media highlights",
     ],
     href: "/business-feed",
   },
@@ -109,19 +106,27 @@ const modules: EcosystemModule[] = [
     id: "v-circle",
     code: "05 · NETWORK CIRCLE",
     icon: "👥",
-    tag: "NETWORK CIRCLE",
     accent: "#f472b6",
     border: "rgba(244, 114, 182, 0.34)",
     name: "v-circle",
     category: "Network & Feed",
     tagline: "Grow your network.",
     description:
-      "Discover founders, decision-makers, and regional collaborators to build trusted business circles.",
-    keywords: ["circle", "network", "people", "founder", "partner", "koneksi", "jejaring"],
-    highlights: [
+      "Discover founders, professionals, and companies to expand trusted business connections.",
+    keywords: [
+      "circle",
+      "network",
+      "people",
+      "partner",
+      "koneksi",
+      "jejaring",
+      "community",
+      "komunitas",
+    ],
+    features: [
       "Follow profiles & companies",
-      "Partner discovery",
-      "Direct circle connections",
+      "Join circles & discussions",
+      "Connection notes & sync",
     ],
     href: "/v-circle",
   },
@@ -129,284 +134,326 @@ const modules: EcosystemModule[] = [
     id: "v-market",
     code: "06 · MARKETPLACE",
     icon: "🛒",
-    tag: "MARKETPLACE",
     accent: "#fbbf24",
     border: "rgba(251, 191, 36, 0.34)",
     name: "v-market",
-    category: "Commerce",
+    category: "Workspace",
     tagline: "Products & suppliers.",
     description:
-      "Browse company products, services, and verified suppliers, inspect feature photos, and request info.",
-    keywords: ["market", "marketplace", "product", "service", "supplier", "produk", "quote"],
-    highlights: [
-      "Products, services & suppliers",
-      "Feature photo preview",
-      "Request Info & chat",
+      "Explore company products, services, and suppliers, inspect feature photos, and request info.",
+    keywords: ["market", "produk", "jasa", "supplier", "katalog", "toko", "commerce"],
+    features: [
+      "Products & supplier directory",
+      "Feature gallery inspection",
+      "Direct info requests",
     ],
     href: "/v-market",
   },
 ];
 
-const categories = [
+const CATEGORIES: ModuleCategory[] = [
   "All",
-  "Workspace",
   "Communication",
+  "Workspace",
   "Network & Feed",
-  "Commerce",
-] as const;
+];
 
 function ExploreContent() {
-  const searchParams = useSearchParams();
   const router = useRouter();
+  const searchParams = useSearchParams();
+  const [supabase] = useState(() => createClient());
 
-  const initialQuery = searchParams.get("q") || "";
-  const [searchQuery, setSearchQuery] = useState<string>(initialQuery);
-  const [selectedCategory, setSelectedCategory] = useState<string>("All");
-  const [selectedModule, setSelectedModule] = useState<EcosystemModule | null>(null);
+  const [query, setQuery] = useState<string>(() => searchParams.get("q") || "");
+  const [selectedCategory, setSelectedCategory] =
+    useState<ModuleCategory>("All");
+  const [userName, setUserName] = useState<string | null>(null);
+  const [authModalOpen, setAuthModalOpen] = useState(false);
 
   useEffect(() => {
-    setSearchQuery(searchParams.get("q") || "");
+    const paramQ = searchParams.get("q");
+    if (paramQ !== null && paramQ !== query) {
+      setQuery(paramQ);
+    }
+    // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [searchParams]);
 
-  const handleSearchChange = (value: string) => {
-    setSearchQuery(value);
+  async function loadUser() {
+    const {
+      data: { user },
+    } = await supabase.auth.getUser();
+
+    if (!user) {
+      setUserName(null);
+      return;
+    }
+
+    const displayName =
+      (user.user_metadata?.full_name as string | undefined)?.trim() ||
+      user.email?.split("@")[0] ||
+      "Member";
+    setUserName(displayName);
+  }
+
+  useEffect(() => {
+    let active = true;
+    loadUser();
+
+    const {
+      data: { subscription },
+    } = supabase.auth.onAuthStateChange((_event, session) => {
+      if (!active) return;
+      const user = session?.user;
+      if (!user) {
+        setUserName(null);
+      } else {
+        const displayName =
+          (user.user_metadata?.full_name as string | undefined)?.trim() ||
+          user.email?.split("@")[0] ||
+          "Member";
+        setUserName(displayName);
+      }
+    });
+
+    return () => {
+      active = false;
+      subscription.unsubscribe();
+    };
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [supabase]);
+
+  function handleQueryChange(nextValue: string) {
+    setQuery(nextValue);
+    const trimmed = nextValue.trim();
     const params = new URLSearchParams(searchParams.toString());
-    if (value.trim()) {
-      params.set("q", value);
+    if (trimmed) {
+      params.set("q", nextValue);
     } else {
       params.delete("q");
     }
     const qs = params.toString();
     router.replace(qs ? `/explore?${qs}` : "/explore", { scroll: false });
-  };
+  }
 
   const filteredModules = useMemo(() => {
-    const query = searchQuery.trim().toLowerCase();
+    const q = query.trim().toLowerCase();
 
-    return modules.filter((mod) => {
-      const matchesCategory =
-        selectedCategory === "All" || mod.category === selectedCategory;
+    return EXPLORE_MODULES.filter((mod) => {
+      if (selectedCategory !== "All" && mod.category !== selectedCategory) {
+        return false;
+      }
+      if (!q) return true;
 
-      if (!query) return matchesCategory;
-
-      const matchesText =
-        mod.name.toLowerCase().includes(query) ||
-        mod.tagline.toLowerCase().includes(query) ||
-        mod.description.toLowerCase().includes(query) ||
-        mod.tag.toLowerCase().includes(query) ||
-        mod.keywords.some((kw) => kw.includes(query));
-
-      return matchesCategory && matchesText;
+      return (
+        mod.name.toLowerCase().includes(q) ||
+        mod.tagline.toLowerCase().includes(q) ||
+        mod.description.toLowerCase().includes(q) ||
+        mod.category.toLowerCase().includes(q) ||
+        mod.keywords.some((kw) => kw.toLowerCase().includes(q)) ||
+        mod.features.some((ft) => ft.toLowerCase().includes(q))
+      );
     });
-  }, [searchQuery, selectedCategory]);
-
-  const handleReset = () => {
-    handleSearchChange("");
-    setSelectedCategory("All");
-  };
+  }, [query, selectedCategory]);
 
   return (
     <main className="explore-page">
-      {/* Top Navbar */}
-      <header className="navbar">
-        <Link className="logo" href="/">
-          <span className="logo-mark-wrap">
-            <img src={BRAND_LOGO_SRC} alt="v-nect logo" className="logo-mark" />
+      <header className="top-nav">
+        <Link href="/" className="brand-logo">
+          <span className="brand-logo-mark">
+            <img src={BRAND_LOGO_SRC} alt="v-nect logo" />
           </span>
-          <span className="logo-text-wrap">
-            <span className="logo-main">
+          <span className="brand-text-group">
+            <span className="brand-wordmark">
               v<span>-nect</span>
             </span>
-            <small>GLOBAL BUSINESS ECOSYSTEM</small>
+            <small className="brand-tagline">GLOBAL BUSINESS ECOSYSTEM</small>
           </span>
         </Link>
 
-        <nav>
+        <nav className="nav-links" aria-label="Explore Navigation">
           <Link href="/">Home</Link>
-          <Link href="/explore" className="active-link">
+          <Link href="/explore" className="is-active">
             Explore
           </Link>
-          <Link href="/v-circle">Community</Link>
+          <Link href="/v-circle?tab=discussions">Community</Link>
           <Link href="/v-hub">Business</Link>
-          <Link className="nav-button" href="/business-feed">
+          <Link href="/business-feed" className="nav-cta">
             Business Feed →
           </Link>
         </nav>
 
-        <div className="nav-right-actions">
-          <Link href="/v-hub" className="nav-ghost-btn">
-            Open v-hub
-          </Link>
+        <div className="nav-actions">
+          {userName ? (
+            <span className="user-chip">● {userName}</span>
+          ) : (
+            <button
+              type="button"
+              className="btn-ghost"
+              onClick={() => setAuthModalOpen(true)}
+            >
+              Sign In
+            </button>
+          )}
         </div>
       </header>
 
-      {/* Main Content */}
-      <section className="explore-container">
-        {/* Hero Search Card */}
-        <div className="explore-hero-box">
-          <span className="explore-eyebrow">THE V-NECT PLATFORM · EXPLORE</span>
-          <h1>Discover Every Module in One Ecosystem.</h1>
+      <section className="explore-hero">
+        <div className="explore-hero-inner">
+          <span className="eyebrow">ECOSYSTEM DIRECTORY</span>
+          <h1>
+            Explore the <span>v-nect</span> Platform.
+          </h1>
           <p>
-            Search and jump directly into any v-nect tool — from live meetings and
-            workspace identity to B2B marketplace and business feeds.
+            Temukan seluruh modul ekosistem v-nect—mulai dari komunikasi, rapat
+            video, ruang kerja bisnis, jejaring &amp; komunitas, hingga
+            marketplace produk dan supplier.
           </p>
 
-          <div className="search-bar-wrap">
+          <div className="search-box-wrap">
             <span className="search-icon" aria-hidden="true">
               🔍
             </span>
             <input
-              type="text"
-              value={searchQuery}
-              onChange={(e) => handleSearchChange(e.target.value)}
-              placeholder="Search modules (e.g. v-market, supplier, video meeting, feed, circle)..."
+              type="search"
+              value={query}
+              onChange={(e) => handleQueryChange(e.target.value)}
+              placeholder="Cari modul atau fitur (misal: chat, meet, hub, market, circle, feed, community)..."
+              className="search-input"
+              aria-label="Cari modul v-nect"
             />
-            {searchQuery && (
+            {query && (
               <button
                 type="button"
-                className="clear-search-btn"
-                onClick={() => handleSearchChange("")}
-                aria-label="Clear search"
+                className="clear-btn"
+                onClick={() => handleQueryChange("")}
               >
-                ✕
+                Reset
               </button>
             )}
           </div>
-        </div>
 
-        {/* Category Filter Bar */}
-        <div className="filter-bar">
-          <div className="category-pills">
-            {categories.map((cat) => (
+          <div
+            className="filter-pills"
+            role="tablist"
+            aria-label="Filter Kategori Modul"
+          >
+            {CATEGORIES.map((category) => (
               <button
-                key={cat}
+                key={category}
                 type="button"
-                onClick={() => setSelectedCategory(cat)}
-                className={selectedCategory === cat ? "pill active" : "pill"}
+                role="tab"
+                aria-selected={selectedCategory === category}
+                className={
+                  selectedCategory === category
+                    ? "filter-pill active"
+                    : "filter-pill"
+                }
+                onClick={() => setSelectedCategory(category)}
               >
-                {cat}
+                {category}
               </button>
             ))}
           </div>
+        </div>
+      </section>
 
-          <span className="result-count">
-            Showing <strong>{filteredModules.length}</strong> of {modules.length} modules
+      <section className="modules-section">
+        <div className="modules-meta">
+          <span>
+            Menampilkan <strong>{filteredModules.length}</strong> dari{" "}
+            <strong>{EXPLORE_MODULES.length}</strong> modul ekosistem
+            {query.trim() ? ` untuk "${query.trim()}"` : ""}
           </span>
+          <Link href="/" className="back-home-link">
+            ← Kembali ke Beranda
+          </Link>
         </div>
 
-        {/* Module Cards Grid */}
-        {filteredModules.length > 0 ? (
-          <div className="ecosystem-grid">
-            {filteredModules.map((mod, idx) => (
+        {filteredModules.length === 0 ? (
+          <div className="empty-state">
+            <h3>Modul tidak ditemukan</h3>
+            <p>
+              Coba kata kunci lain seperti <strong>v-chat</strong>,{" "}
+              <strong>v-meet</strong>, <strong>v-hub</strong>,{" "}
+              <strong>v-circle</strong>, atau <strong>v-market</strong>.
+            </p>
+            <button
+              type="button"
+              className="btn-primary"
+              onClick={() => {
+                handleQueryChange("");
+                setSelectedCategory("All");
+              }}
+            >
+              Tampilkan Semua Modul
+            </button>
+          </div>
+        ) : (
+          <div className="modules-grid">
+            {filteredModules.map((mod) => (
               <article
                 key={mod.id}
-                className={`eco-card eco-tone-${idx % 6}`}
+                className="module-card"
                 style={{ borderColor: mod.border }}
               >
-                <div className="eco-card-top">
-                  <div className="eco-icon-box" aria-hidden="true">
-                    {mod.icon}
-                  </div>
-                  <button
-                    type="button"
-                    className="quick-info-btn"
-                    onClick={() => setSelectedModule(mod)}
+                <div className="module-top">
+                  <div
+                    className="module-icon"
+                    style={{
+                      background: `color-mix(in srgb, ${mod.accent} 18%, transparent)`,
+                      borderColor: mod.border,
+                    }}
                   >
-                    Quick info
-                  </button>
+                    <span>{mod.icon}</span>
+                  </div>
+                  <span className="module-category">{mod.category}</span>
                 </div>
 
-                <div className="eco-card-content">
-                  <span className="eco-module-tag" style={{ color: mod.accent }}>
-                    {mod.tag}
-                  </span>
-                  <h3>{mod.name}</h3>
-                  <p className="eco-tagline">{mod.tagline}</p>
-                  <p className="eco-desc">{mod.description}</p>
-                </div>
+                <span className="module-code" style={{ color: mod.accent }}>
+                  {mod.code}
+                </span>
+                <h2>{mod.name}</h2>
+                <p className="module-tagline">{mod.tagline}</p>
+                <p className="module-desc">{mod.description}</p>
 
-                <div className="eco-card-bottom">
-                  <Link href={mod.href} className="explore-module-link">
-                    Explore module <span>↗</span>
+                <ul className="module-features">
+                  {mod.features.map((feat) => (
+                    <li key={feat}>✓ {feat}</li>
+                  ))}
+                </ul>
+
+                <div className="module-actions">
+                  <Link href={mod.href} className="module-open-btn">
+                    Buka {mod.name} <span>→</span>
                   </Link>
+                  {mod.id === "v-circle" && (
+                    <Link
+                      href="/v-circle?tab=discussions"
+                      className="module-sub-link"
+                    >
+                      Discussions
+                    </Link>
+                  )}
                 </div>
               </article>
             ))}
           </div>
-        ) : (
-          <div className="empty-state">
-            <h3>No modules found for &ldquo;{searchQuery}&rdquo;</h3>
-            <p>
-              Try searching with another keyword such as <strong>market</strong>,{" "}
-              <strong>meet</strong>, <strong>hub</strong>, or <strong>circle</strong>.
-            </p>
-            <button type="button" className="reset-btn" onClick={handleReset}>
-              Reset Search &amp; Filters
-            </button>
-          </div>
         )}
       </section>
 
-      {/* Quick Preview Modal */}
-      {selectedModule && (
-        <div
-          className="modal-backdrop"
-          onClick={() => setSelectedModule(null)}
-          role="dialog"
-          aria-modal="true"
-        >
-          <div className="modal-card" onClick={(e) => e.stopPropagation()}>
-            <div className="modal-top">
-              <span
-                className="eco-module-tag"
-                style={{ color: selectedModule.accent }}
-              >
-                {selectedModule.code}
-              </span>
-              <button
-                type="button"
-                className="modal-close"
-                onClick={() => setSelectedModule(null)}
-              >
-                ✕
-              </button>
-            </div>
-
-            <h2>{selectedModule.name}</h2>
-            <p className="modal-desc">{selectedModule.description}</p>
-
-            <div className="modal-highlights">
-              <h4>KEY CAPABILITIES</h4>
-              <ul>
-                {selectedModule.highlights.map((item) => (
-                  <li key={item}>✦ {item}</li>
-                ))}
-              </ul>
-            </div>
-
-            <div className="modal-actions">
-              <button
-                type="button"
-                className="nav-ghost-btn"
-                onClick={() => setSelectedModule(null)}
-              >
-                Close
-              </button>
-              <Link href={selectedModule.href} className="nav-button">
-                Open {selectedModule.name} →
-              </Link>
-            </div>
-          </div>
-        </div>
-      )}
-
-      <footer className="footer">
-        <div className="footer-logo">
+      <footer className="site-footer">
+        <div className="footer-brand">
           v<span>-nect</span>
         </div>
         <p>Connect Beyond Boundaries.</p>
         <small>© 2026 v-nect. All rights reserved.</small>
       </footer>
+
+      <AccountAuthModal
+        open={authModalOpen}
+        initialMode="login"
+        onClose={() => setAuthModalOpen(false)}
+        onSuccess={() => loadUser()}
+      />
 
       <style jsx>{`
         .explore-page {
@@ -414,12 +461,20 @@ function ExploreContent() {
           color: #f3f7ff;
           font-family: var(--font-sans), Arial, sans-serif;
           background:
-            radial-gradient(circle at 78% 12%, rgba(78, 108, 255, 0.28), transparent 36%),
-            radial-gradient(circle at 18% 30%, rgba(28, 63, 184, 0.22), transparent 42%),
+            radial-gradient(
+              circle at 78% 12%,
+              rgba(78, 108, 255, 0.32),
+              transparent 36%
+            ),
+            radial-gradient(
+              circle at 20% 30%,
+              rgba(28, 63, 184, 0.24),
+              transparent 42%
+            ),
             linear-gradient(180deg, #060b24 0%, #091338 55%, #060b24 100%);
         }
 
-        .navbar {
+        .top-nav {
           min-height: 72px;
           padding: 10px 6%;
           background: rgba(6, 11, 34, 0.9);
@@ -434,8 +489,8 @@ function ExploreContent() {
           z-index: 30;
         }
 
-        .logo {
-          color: #fff;
+        .brand-logo {
+          color: #ffffff;
           text-decoration: none;
           display: inline-flex;
           align-items: center;
@@ -443,7 +498,7 @@ function ExploreContent() {
           flex-shrink: 0;
         }
 
-        .logo-mark-wrap {
+        .brand-logo-mark {
           width: 36px;
           height: 36px;
           display: grid;
@@ -451,520 +506,414 @@ function ExploreContent() {
           overflow: hidden;
         }
 
-        .logo-mark {
+        .brand-logo-mark img {
           width: 100%;
           height: 100%;
           object-fit: contain;
+          display: block;
         }
 
-        .logo-text-wrap {
+        .brand-text-group {
           display: inline-flex;
           flex-direction: column;
         }
 
-        .logo-main {
+        .brand-wordmark {
           font-size: 21px;
           font-weight: 850;
+          letter-spacing: -0.4px;
           line-height: 1.05;
+          color: #ffffff;
         }
 
-        .logo-main span,
-        .footer-logo span {
+        .brand-wordmark span,
+        .explore-hero h1 span,
+        .footer-brand span {
           color: #8ab4ff;
         }
 
-        .logo small {
+        .brand-tagline {
           font-size: 9px;
           font-weight: 700;
           letter-spacing: 1.2px;
           color: #9cb0d9;
+          text-transform: uppercase;
           margin-top: 4px;
         }
 
-        .navbar nav {
+        .nav-links {
           display: flex;
           align-items: center;
           gap: 20px;
         }
 
-        .navbar nav :global(a) {
+        .nav-links :global(a) {
           color: #d9e4ff;
           text-decoration: none;
           font-size: 13px;
           font-weight: 600;
-          transition: color 0.2s ease;
+          padding: 6px 10px;
+          border-radius: 8px;
         }
 
-        .navbar nav :global(a:hover),
-        .navbar nav :global(a.active-link) {
-          color: #7dd3fc;
+        .nav-links :global(a:hover),
+        .nav-links :global(a.is-active) {
+          color: #ffffff;
+          background: rgba(138, 180, 255, 0.14);
         }
 
-        :global(.nav-button) {
+        .nav-links :global(a.nav-cta) {
           background: linear-gradient(110deg, #4b6bff, #7854ff);
-          color: #fff !important;
+          color: #ffffff;
           padding: 10px 16px;
           border-radius: 11px;
           font-size: 12px;
           font-weight: 750;
-          text-decoration: none;
-          display: inline-flex;
-          align-items: center;
-          gap: 6px;
-          box-shadow: 0 7px 20px rgba(75, 107, 255, 0.25);
         }
 
-        :global(.nav-ghost-btn) {
+        .nav-actions {
+          display: flex;
+          align-items: center;
+          gap: 10px;
+        }
+
+        .user-chip {
+          background: rgba(138, 180, 255, 0.14);
+          border: 1px solid rgba(138, 180, 255, 0.35);
+          color: #c7dcff;
+          padding: 7px 12px;
+          border-radius: 999px;
+          font-size: 12px;
+          font-weight: 700;
+        }
+
+        .btn-ghost {
           background: rgba(255, 255, 255, 0.06);
           border: 1px solid rgba(154, 178, 255, 0.28);
           color: #eef3ff;
-          padding: 9px 14px;
+          padding: 8px 14px;
           border-radius: 10px;
           font-size: 12px;
           font-weight: 700;
-          text-decoration: none;
           cursor: pointer;
-          transition: 0.2s ease;
         }
 
-        :global(.nav-ghost-btn:hover) {
-          border-color: #8ab4ff;
-          background: rgba(138, 180, 255, 0.14);
+        .explore-hero {
+          padding: 56px 7% 28px;
         }
 
-        .explore-container {
-          max-width: 1240px;
-          margin: 0 auto;
-          padding: 36px 24px 70px;
+        .explore-hero-inner {
+          max-width: 820px;
         }
 
-        .explore-hero-box {
-          padding: 36px;
-          border-radius: 24px;
-          border: 1px solid rgba(130, 184, 255, 0.24);
-          background:
-            radial-gradient(circle at 10% 0%, rgba(56, 189, 248, 0.2), transparent 45%),
-            linear-gradient(150deg, #1a2f63 0%, #12224a 55%, #0e1a3a 100%);
-          box-shadow: 0 20px 50px rgba(2, 8, 26, 0.42);
-          margin-bottom: 28px;
-        }
-
-        .explore-eyebrow {
+        .eyebrow {
           display: inline-block;
-          color: #7dd3fc;
-          font-size: 10px;
+          color: #79a6ff;
+          font-size: 10.5px;
           font-weight: 800;
-          letter-spacing: 2.4px;
+          letter-spacing: 2.6px;
+          text-transform: uppercase;
           margin-bottom: 10px;
         }
 
-        .explore-hero-box h1 {
-          margin: 0 0 10px;
-          font-size: clamp(26px, 3.6vw, 40px);
+        .explore-hero h1 {
+          margin: 0 0 14px;
+          font-size: clamp(34px, 5vw, 54px);
           font-weight: 850;
-          letter-spacing: -0.8px;
-          background: linear-gradient(105deg, #ffffff 0%, #93c5fd 55%, #67e8f9 100%);
-          background-clip: text;
-          -webkit-background-clip: text;
-          color: transparent;
+          line-height: 1.08;
+          letter-spacing: -1.4px;
         }
 
-        .explore-hero-box p {
+        .explore-hero p {
           margin: 0 0 24px;
-          max-width: 640px;
-          color: #c2d3f0;
-          font-size: 14px;
+          color: #b8c7e6;
+          font-size: 15px;
           line-height: 1.7;
+          max-width: 660px;
         }
 
-        .search-bar-wrap {
-          position: relative;
-          max-width: 680px;
+        .search-box-wrap {
           display: flex;
           align-items: center;
+          gap: 10px;
+          background: rgba(15, 25, 58, 0.9);
+          border: 1px solid rgba(148, 184, 255, 0.32);
+          border-radius: 14px;
+          padding: 6px 10px 6px 14px;
+          margin-bottom: 16px;
         }
 
         .search-icon {
-          position: absolute;
-          left: 16px;
           font-size: 15px;
-          pointer-events: none;
         }
 
-        .search-bar-wrap input {
-          width: 100%;
-          padding: 14px 44px;
-          border-radius: 13px;
-          border: 1px solid rgba(138, 165, 255, 0.34);
-          background: rgba(6, 11, 34, 0.85);
-          color: #fff;
-          font-size: 14px;
-          outline: none;
-          transition: border-color 0.2s ease, box-shadow 0.2s ease;
-        }
-
-        .search-bar-wrap input::placeholder {
-          color: #8fa4cf;
-        }
-
-        .search-bar-wrap input:focus {
-          border-color: #67e8f9;
-          box-shadow: 0 0 0 3px rgba(103, 232, 249, 0.16);
-        }
-
-        .clear-search-btn {
-          position: absolute;
-          right: 14px;
-          background: transparent;
+        .search-input {
+          flex: 1;
           border: none;
-          color: #9cb0d9;
+          background: transparent;
+          color: #ffffff;
           font-size: 14px;
+          padding: 8px 4px;
+          outline: none;
+        }
+
+        .clear-btn {
+          border: 1px solid rgba(148, 184, 255, 0.28);
+          background: rgba(255, 255, 255, 0.06);
+          color: #d9e4ff;
+          padding: 6px 12px;
+          border-radius: 9px;
+          font-size: 12px;
+          font-weight: 700;
           cursor: pointer;
-          padding: 4px 6px;
         }
 
-        .clear-search-btn:hover {
-          color: #fff;
-        }
-
-        .filter-bar {
+        .filter-pills {
           display: flex;
-          align-items: center;
-          justify-content: space-between;
-          gap: 16px;
-          flex-wrap: wrap;
-          margin-bottom: 24px;
-        }
-
-        .category-pills {
-          display: flex;
-          align-items: center;
           gap: 8px;
           flex-wrap: wrap;
         }
 
-        .pill {
-          padding: 8px 16px;
-          border-radius: 999px;
+        .filter-pill {
           border: 1px solid rgba(148, 184, 255, 0.24);
-          background: rgba(18, 33, 68, 0.75);
-          color: #c7d6f4;
+          background: rgba(15, 25, 58, 0.8);
+          color: #c8d7f5;
+          padding: 7px 14px;
+          border-radius: 999px;
           font-size: 12px;
           font-weight: 700;
           cursor: pointer;
-          transition: all 0.2s ease;
         }
 
-        .pill:hover {
-          border-color: rgba(125, 211, 252, 0.6);
-          color: #fff;
-        }
-
-        .pill.active {
+        .filter-pill.active {
           background: linear-gradient(110deg, #4b6bff, #7854ff);
           border-color: transparent;
-          color: #fff;
-          box-shadow: 0 6px 18px rgba(75, 107, 255, 0.32);
+          color: #ffffff;
         }
 
-        .result-count {
-          font-size: 12px;
-          color: #9cb0d9;
+        .modules-section {
+          padding: 16px 7% 68px;
         }
 
-        .result-count strong {
-          color: #fff;
+        .modules-meta {
+          display: flex;
+          align-items: center;
+          justify-content: space-between;
+          gap: 12px;
+          flex-wrap: wrap;
+          margin-bottom: 20px;
+          font-size: 13px;
+          color: #a9b9da;
         }
 
-        .ecosystem-grid {
+        .back-home-link {
+          color: #9ec0ff;
+          text-decoration: none;
+          font-weight: 700;
+        }
+
+        .modules-grid {
           display: grid;
           grid-template-columns: repeat(3, minmax(0, 1fr));
           gap: 18px;
         }
 
-        .eco-card {
-          min-height: 235px;
-          display: flex;
-          flex-direction: column;
-          padding: 22px;
-          border: 1px solid rgba(148, 184, 255, 0.26);
-          border-radius: 18px;
+        .module-card {
           background: linear-gradient(
             155deg,
-            rgba(38, 66, 122, 0.92),
-            rgba(18, 33, 68, 0.98)
+            rgba(32, 54, 104, 0.9),
+            rgba(14, 25, 56, 0.96)
           );
-          box-shadow: 0 12px 26px rgba(2, 8, 24, 0.3);
-          transition: transform 0.25s ease, box-shadow 0.25s ease;
+          border: 1px solid rgba(148, 184, 255, 0.25);
+          border-radius: 18px;
+          padding: 22px;
+          display: flex;
+          flex-direction: column;
         }
 
-        .eco-card:hover {
-          transform: translateY(-4px);
-          box-shadow: 0 18px 36px rgba(2, 8, 24, 0.45);
-        }
-
-        .eco-card-top {
+        .module-top {
           display: flex;
           align-items: center;
           justify-content: space-between;
-          margin-bottom: 18px;
+          gap: 10px;
+          margin-bottom: 14px;
         }
 
-        .eco-icon-box {
-          width: 50px;
-          height: 50px;
+        .module-icon {
+          width: 46px;
+          height: 46px;
+          border-radius: 12px;
+          border: 1px solid;
           display: grid;
           place-items: center;
-          border-radius: 14px;
-          color: #ffffff;
-          font-size: 22px;
-          border: 1px solid rgba(255, 255, 255, 0.28);
+          font-size: 20px;
         }
 
-        .eco-tone-0 .eco-icon-box {
-          background: linear-gradient(145deg, #36b9ff, #1763e9);
-        }
-        .eco-tone-1 .eco-icon-box {
-          background: linear-gradient(145deg, #bd78ff, #7041e9);
-        }
-        .eco-tone-2 .eco-icon-box {
-          background: linear-gradient(145deg, #32dce9, #137dbd);
-        }
-        .eco-tone-3 .eco-icon-box {
-          background: linear-gradient(145deg, #559fff, #2458d8);
-        }
-        .eco-tone-4 .eco-icon-box {
-          background: linear-gradient(145deg, #f472b6, #9d174d);
-        }
-        .eco-tone-5 .eco-icon-box {
-          background: linear-gradient(145deg, #fbbf24, #b45309);
-        }
-
-        .quick-info-btn {
-          background: rgba(255, 255, 255, 0.06);
-          border: 1px solid rgba(148, 184, 255, 0.25);
-          color: #c2d2ec;
-          padding: 5px 10px;
-          border-radius: 8px;
+        .module-category {
           font-size: 11px;
-          font-weight: 650;
-          cursor: pointer;
-          transition: 0.2s ease;
+          font-weight: 700;
+          color: #c8d7f5;
+          background: rgba(255, 255, 255, 0.06);
+          padding: 4px 10px;
+          border-radius: 999px;
         }
 
-        .quick-info-btn:hover {
-          color: #fff;
-          border-color: #7dd3fc;
-        }
-
-        .eco-card-content {
-          flex: 1;
-        }
-
-        .eco-module-tag {
-          display: inline-block;
-          font-size: 9.5px;
+        .module-code {
+          font-size: 10px;
           font-weight: 800;
-          letter-spacing: 1.4px;
+          letter-spacing: 1.3px;
           margin-bottom: 6px;
         }
 
-        .eco-card h3 {
+        .module-card h2 {
           margin: 0 0 4px;
-          color: #ffffff;
           font-size: 20px;
           font-weight: 800;
+          color: #ffffff;
         }
 
-        .eco-tagline {
+        .module-tagline {
           margin: 0 0 8px;
-          color: #e2ecff;
           font-size: 13px;
           font-weight: 650;
+          color: #e2ecff;
         }
 
-        .eco-desc {
-          margin: 0;
-          color: #b4c6e7;
+        .module-desc {
+          margin: 0 0 14px;
           font-size: 12.5px;
           line-height: 1.6;
+          color: #b4c6e7;
         }
 
-        .eco-card-bottom {
-          margin-top: 18px;
+        .module-features {
+          list-style: none;
+          padding: 0;
+          margin: 0 0 18px;
+          display: flex;
+          flex-direction: column;
+          gap: 6px;
+          font-size: 12px;
+          color: #c7d6f5;
+          flex: 1;
+        }
+
+        .module-actions {
+          display: flex;
+          align-items: center;
+          gap: 8px;
           padding-top: 12px;
           border-top: 1px solid rgba(160, 192, 240, 0.16);
         }
 
-        :global(.explore-module-link) {
+        .module-open-btn {
+          flex: 1;
+          text-decoration: none;
+          background: rgba(255, 255, 255, 0.08);
+          border: 1px solid rgba(148, 184, 255, 0.28);
+          color: #ffffff;
+          padding: 9px 14px;
+          border-radius: 10px;
+          font-size: 12.5px;
+          font-weight: 750;
           display: inline-flex;
           align-items: center;
-          gap: 6px;
-          color: #7dd3fc;
-          font-size: 12px;
-          font-weight: 750;
-          text-decoration: none;
+          justify-content: space-between;
         }
 
-        :global(.explore-module-link:hover) {
-          text-decoration: underline;
+        .module-open-btn:hover {
+          background: linear-gradient(110deg, #4b6bff, #7854ff);
+          border-color: transparent;
+        }
+
+        .module-sub-link {
+          text-decoration: none;
+          font-size: 11.5px;
+          font-weight: 700;
+          color: #7dd3fc;
+          padding: 8px 10px;
+          border-radius: 9px;
+          background: rgba(125, 211, 252, 0.1);
+          border: 1px solid rgba(125, 211, 252, 0.28);
         }
 
         .empty-state {
-          padding: 48px 24px;
-          text-align: center;
-          border-radius: 20px;
+          background: rgba(15, 25, 58, 0.82);
           border: 1px solid rgba(148, 184, 255, 0.2);
-          background: rgba(18, 33, 68, 0.7);
+          border-radius: 16px;
+          padding: 40px 24px;
+          text-align: center;
+          display: flex;
+          flex-direction: column;
+          align-items: center;
+          gap: 12px;
         }
 
         .empty-state h3 {
-          margin: 0 0 8px;
-          font-size: 19px;
-          color: #fff;
+          margin: 0;
+          font-size: 20px;
         }
 
         .empty-state p {
-          margin: 0 0 20px;
-          font-size: 13px;
+          margin: 0;
           color: #b4c6e7;
+          font-size: 13.5px;
         }
 
-        .reset-btn {
+        .btn-primary {
           background: linear-gradient(110deg, #4b6bff, #7854ff);
-          color: #fff;
+          color: #ffffff;
           border: none;
-          padding: 10px 18px;
-          border-radius: 10px;
-          font-size: 12px;
+          padding: 11px 18px;
+          border-radius: 11px;
+          font-size: 13px;
           font-weight: 750;
           cursor: pointer;
         }
 
-        .modal-backdrop {
-          position: fixed;
-          inset: 0;
-          z-index: 50;
-          background: rgba(3, 7, 22, 0.78);
-          backdrop-filter: blur(6px);
-          display: grid;
-          place-items: center;
-          padding: 20px;
-        }
-
-        .modal-card {
-          width: 100%;
-          max-width: 480px;
-          background: linear-gradient(160deg, #162854, #0d1836);
-          border: 1px solid rgba(125, 211, 252, 0.35);
-          border-radius: 20px;
-          padding: 26px;
-          box-shadow: 0 24px 60px rgba(0, 0, 0, 0.55);
-        }
-
-        .modal-top {
-          display: flex;
-          align-items: center;
-          justify-content: space-between;
-          margin-bottom: 6px;
-        }
-
-        .modal-close {
-          background: transparent;
-          border: none;
-          color: #9cb0d9;
-          font-size: 16px;
-          cursor: pointer;
-        }
-
-        .modal-card h2 {
-          margin: 0 0 10px;
-          font-size: 24px;
-          font-weight: 850;
-          color: #fff;
-        }
-
-        .modal-desc {
-          margin: 0 0 18px;
-          font-size: 13px;
-          line-height: 1.65;
-          color: #c5d5f2;
-        }
-
-        .modal-highlights {
-          background: rgba(6, 11, 34, 0.75);
-          border: 1px solid rgba(148, 184, 255, 0.18);
-          border-radius: 14px;
-          padding: 14px 16px;
-          margin-bottom: 20px;
-        }
-
-        .modal-highlights h4 {
-          margin: 0 0 10px;
-          font-size: 10px;
-          letter-spacing: 1.6px;
-          color: #7dd3fc;
-        }
-
-        .modal-highlights ul {
-          margin: 0;
-          padding: 0;
-          list-style: none;
-          display: flex;
-          flex-direction: column;
-          gap: 7px;
-          font-size: 13px;
-          color: #e6eeff;
-        }
-
-        .modal-actions {
-          display: flex;
-          align-items: center;
-          justify-content: flex-end;
-          gap: 10px;
-        }
-
-        .footer {
+        .site-footer {
           text-align: center;
-          padding: 30px 20px;
+          padding: 34px 20px;
           background: #050a20;
           color: #96a8d0;
           border-top: 1px solid rgba(138, 165, 255, 0.14);
         }
 
-        .footer-logo {
-          color: #fff;
-          font-size: 23px;
+        .footer-brand {
+          color: #ffffff;
+          font-size: 24px;
           font-weight: 850;
         }
 
-        .footer p {
-          margin: 7px 0 5px;
-          font-size: 13px;
+        .site-footer p {
+          margin: 8px 0 6px;
+          font-size: 13.5px;
           color: #d9e4ff;
         }
 
-        .footer small {
-          font-size: 11px;
+        .site-footer small {
+          font-size: 11.5px;
         }
 
-        @media (max-width: 900px) {
-          .navbar {
-            flex-wrap: wrap;
-            justify-content: center;
-          }
-
-          .ecosystem-grid {
+        @media (max-width: 960px) {
+          .modules-grid {
             grid-template-columns: repeat(2, minmax(0, 1fr));
           }
         }
 
-        @media (max-width: 540px) {
-          .explore-hero-box {
-            padding: 24px 18px;
+        @media (max-width: 640px) {
+          .top-nav {
+            flex-wrap: wrap;
+            justify-content: center;
           }
 
-          .ecosystem-grid {
+          .nav-links {
+            flex-wrap: wrap;
+            justify-content: center;
+            gap: 8px 12px;
+          }
+
+          .modules-grid {
             grid-template-columns: 1fr;
           }
         }
@@ -985,7 +934,7 @@ export default function ExplorePage() {
             padding: "40px",
           }}
         >
-          Loading Explore...
+          Loading v-nect Explore...
         </div>
       }
     >
