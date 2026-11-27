@@ -2,6 +2,7 @@
 
 import { useEffect, useState } from "react";
 import Link from "next/link";
+import { usePathname } from "next/navigation";
 import { createClient } from "@/lib/supabase";
 import { AccountAuthModal } from "@/components/AccountAuthModal";
 
@@ -10,10 +11,12 @@ type BusinessFeedNavbarProps = {
 };
 
 export function BusinessFeedNavbar({
-  activePath = "/business-feed",
+  activePath,
 }: BusinessFeedNavbarProps) {
-  const supabase = createClient();
+  const pathname = usePathname();
+  const currentPath = activePath || pathname || "/business-feed";
 
+  const [supabase] = useState(() => createClient());
   const [accountLabel, setAccountLabel] = useState<string | null>(null);
   const [authModalOpen, setAuthModalOpen] = useState(false);
 
@@ -64,7 +67,7 @@ export function BusinessFeedNavbar({
       subscription.unsubscribe();
     };
     // eslint-disable-next-line react-hooks/exhaustive-deps
-  }, []);
+  }, [supabase]);
 
   async function handleSignOut() {
     await supabase.auth.signOut();
@@ -94,26 +97,68 @@ export function BusinessFeedNavbar({
 
           <nav className="bf-topbar-nav" aria-label="Business Feed Navigation">
             <Link
+              href="/explore"
+              className={
+                currentPath === "/explore" ? "bf-nav-item active" : "bf-nav-item"
+              }
+            >
+              Explore
+            </Link>
+            <Link
               href="/business-feed"
               className={
-                activePath === "/business-feed" ? "bf-nav-item active" : "bf-nav-item"
+                currentPath === "/business-feed"
+                  ? "bf-nav-item active"
+                  : "bf-nav-item"
               }
             >
               Business Feed
             </Link>
             <Link
+              href="/v-hub"
+              className={
+                currentPath === "/v-hub" ? "bf-nav-item active" : "bf-nav-item"
+              }
+            >
+              v-hub
+            </Link>
+            <Link
+              href="/v-circle"
+              className={
+                currentPath === "/v-circle"
+                  ? "bf-nav-item active"
+                  : "bf-nav-item"
+              }
+            >
+              v-circle
+            </Link>
+            <Link
+              href="/v-market"
+              className={
+                currentPath === "/v-market"
+                  ? "bf-nav-item active"
+                  : "bf-nav-item"
+              }
+            >
+              v-market
+            </Link>
+            <Link
               href="/v-meet"
               className={
-                activePath === "/v-meet" ? "bf-nav-item active" : "bf-nav-item"
+                currentPath === "/v-meet" ? "bf-nav-item active" : "bf-nav-item"
               }
             >
               v-meet
             </Link>
-            <Link href="/personal" className="bf-nav-item">
-              Personal
-            </Link>
-            <Link href="/company-dashboard" className="bf-nav-item">
-              Company Dashboard
+            <Link
+              href="/dashboard"
+              className={
+                currentPath === "/dashboard"
+                  ? "bf-nav-item active"
+                  : "bf-nav-item"
+              }
+            >
+              Dashboard
             </Link>
 
             {accountLabel ? (
@@ -215,15 +260,15 @@ export function BusinessFeedNavbar({
           .bf-topbar-nav {
             display: flex;
             align-items: center;
-            gap: 10px;
+            gap: 8px;
             flex-wrap: wrap;
           }
 
           .bf-nav-item {
-            padding: 8px 13px;
+            padding: 7px 12px;
             border-radius: 8px;
             color: #d6e2f0;
-            font-size: 13px;
+            font-size: 12.5px;
             font-weight: 600;
             text-decoration: none;
             background: rgba(255, 255, 255, 0.05);
