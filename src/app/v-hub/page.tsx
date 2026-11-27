@@ -93,7 +93,7 @@ const WORKSPACE_CARDS: WorkspaceCardItem[] = [
       "Discover active businesses, compare industries, and reach out to partner companies in v-circle.",
     ctaLabel: "Check now",
     href: "/v-circle",
-    accent: "linear-gradient(135deg, #12355b, #1a6d7c)",
+    accent: "linear-gradient(135deg, #273c8a, #4b6bff)",
   },
   {
     id: "ws-partners",
@@ -103,7 +103,7 @@ const WORKSPACE_CARDS: WorkspaceCardItem[] = [
       "Connect with founders, decision-makers, and regional collaborators across the v-nect network.",
     ctaLabel: "Find now",
     href: "/v-circle",
-    accent: "linear-gradient(135deg, #1b2c59, #2b5876)",
+    accent: "linear-gradient(135deg, #2d2a7a, #6948ff)",
   },
   {
     id: "ws-dataroom",
@@ -113,7 +113,7 @@ const WORKSPACE_CARDS: WorkspaceCardItem[] = [
       "Manage your hub headline, positioning summary, core focus areas, and recent session activity.",
     ctaLabel: "Get In",
     scrollTargetId: "hub-positioning-section",
-    accent: "linear-gradient(135deg, #103b49, #197278)",
+    accent: "linear-gradient(135deg, #1f357a, #3b5bdb)",
   },
   {
     id: "ws-market",
@@ -123,7 +123,7 @@ const WORKSPACE_CARDS: WorkspaceCardItem[] = [
       "Browse products, services, and verified suppliers, inspect photos, comment, and request info.",
     ctaLabel: "Open Market",
     href: "/v-market",
-    accent: "linear-gradient(135deg, #18365e, #2563eb)",
+    accent: "linear-gradient(135deg, #2a2875, #7854ff)",
   },
   {
     id: "ws-launch",
@@ -133,7 +133,7 @@ const WORKSPACE_CARDS: WorkspaceCardItem[] = [
       "Share product launches, promo updates, and company news directly to the business feed.",
     ctaLabel: "Create Post",
     href: "/business-feed",
-    accent: "linear-gradient(135deg, #114357, #13bcae)",
+    accent: "linear-gradient(135deg, #1d3680, #4b6bff)",
   },
   {
     id: "ws-company",
@@ -143,7 +143,7 @@ const WORKSPACE_CARDS: WorkspaceCardItem[] = [
       "Configure company identity, linked workspace mode, and active business details.",
     ctaLabel: "Manage Now",
     href: "/company",
-    accent: "linear-gradient(135deg, #1e293b, #0f766e)",
+    accent: "linear-gradient(135deg, #252b6e, #5c4dff)",
   },
   {
     id: "ws-activity",
@@ -153,7 +153,7 @@ const WORKSPACE_CARDS: WorkspaceCardItem[] = [
       "Track published business posts, follow updates, and recent actions in one timeline.",
     ctaLabel: "View Activity",
     scrollTargetId: "hub-activity-section",
-    accent: "linear-gradient(135deg, #16324f, #1d4ed8)",
+    accent: "linear-gradient(135deg, #1c2f73, #4263eb)",
   },
   {
     id: "ws-outreach",
@@ -163,7 +163,7 @@ const WORKSPACE_CARDS: WorkspaceCardItem[] = [
       "Follow personal profiles or companies and jump straight into their connected workspace.",
     ctaLabel: "Start Outreach",
     scrollTargetId: "hub-follow-section",
-    accent: "linear-gradient(135deg, #0f2942, #0d9488)",
+    accent: "linear-gradient(135deg, #2b277a, #7048e8)",
   },
 ];
 
@@ -880,21 +880,36 @@ export default function VHubPage() {
       <style jsx>{`
         .hub-page {
           min-height: 100vh;
-          background: #07111f;
-          color: #eef4fb;
+          color: #f3f7ff;
           font-family: var(--font-sans), Arial, sans-serif;
+          background:
+            radial-gradient(
+              circle at 78% 14%,
+              rgba(78, 108, 255, 0.32),
+              transparent 36%
+            ),
+            radial-gradient(
+              circle at 22% 32%,
+              rgba(120, 84, 255, 0.22),
+              transparent 42%
+            ),
+            linear-gradient(180deg, #060b24 0%, #091338 55%, #060b24 100%);
         }
 
         .hub-navbar {
           min-height: 74px;
           padding: 12px 6%;
-          background: #07111f;
-          border-bottom: 1px solid rgba(255, 255, 255, 0.08);
+          background: rgba(6, 11, 36, 0.88);
+          backdrop-filter: blur(12px);
+          border-bottom: 1px solid rgba(138, 165, 255, 0.14);
           display: flex;
           align-items: center;
           justify-content: space-between;
           gap: 14px;
           flex-wrap: wrap;
+          position: sticky;
+          top: 0;
+          z-index: 30;
         }
 
         .hub-nav-left,
@@ -909,7 +924,7 @@ export default function VHubPage() {
           color: #ffffff;
           text-decoration: none;
           font-size: 21px;
-          font-weight: 800;
+          font-weight: 850;
           display: inline-flex;
           align-items: baseline;
           gap: 8px;
@@ -917,14 +932,14 @@ export default function VHubPage() {
 
         .hub-brand span,
         .hub-welcome-bar h1 span {
-          color: #13c8b5;
+          color: #8ab4ff;
         }
 
         .hub-brand small {
           font-size: 10px;
           font-weight: 800;
           letter-spacing: 1.3px;
-          color: #9cb0c9;
+          color: #96a8d0;
         }
 
         .hub-nav-links {
@@ -935,14 +950,14 @@ export default function VHubPage() {
         }
 
         .hub-nav-links a {
-          color: #d2deed;
+          color: #c8d7f5;
           text-decoration: none;
           font-size: 13px;
           font-weight: 600;
         }
 
         .hub-nav-links a:hover {
-          color: #13c8b5;
+          color: #ffffff;
         }
 
         .hub-search-box {
@@ -950,27 +965,35 @@ export default function VHubPage() {
           max-width: 100%;
           padding: 7px 12px;
           border-radius: 9px;
-          border: 1px solid rgba(255, 255, 255, 0.16);
-          background: #0d1e34;
-          color: #ffffff;
+          border: 1px solid rgba(138, 165, 255, 0.24);
+          background: #081029;
+          color: #f3f7ff;
           font-size: 12px;
           outline: none;
+        }
+
+        .hub-search-box::placeholder {
+          color: #889bc2;
+        }
+
+        .hub-search-box:focus {
+          border-color: #7854ff;
         }
 
         .hub-user-pill {
           padding: 6px 12px;
           border-radius: 999px;
-          background: rgba(19, 200, 181, 0.16);
-          border: 1px solid rgba(19, 200, 181, 0.45);
-          color: #7ee8dc;
+          background: rgba(92, 124, 255, 0.18);
+          border: 1px solid rgba(138, 180, 255, 0.38);
+          color: #c7dcff;
           font-size: 12px;
           font-weight: 700;
         }
 
         .hub-ghost-btn {
           background: rgba(255, 255, 255, 0.06);
-          border: 1px solid rgba(255, 255, 255, 0.22);
-          color: #eef4fb;
+          border: 1px solid rgba(138, 165, 255, 0.28);
+          color: #eef3ff;
           padding: 7px 13px;
           border-radius: 9px;
           font-size: 12px;
@@ -985,8 +1008,12 @@ export default function VHubPage() {
         }
 
         .hub-welcome-bar {
-          background: linear-gradient(125deg, #102b4d, #134a66);
-          border: 1px solid rgba(126, 232, 220, 0.2);
+          background: linear-gradient(
+            125deg,
+            rgba(22, 36, 82, 0.94),
+            rgba(13, 24, 62, 0.98)
+          );
+          border: 1px solid rgba(138, 165, 255, 0.24);
           border-radius: 18px;
           padding: 28px 30px;
           display: flex;
@@ -994,25 +1021,28 @@ export default function VHubPage() {
           align-items: center;
           gap: 24px;
           flex-wrap: wrap;
+          box-shadow: 0 14px 32px rgba(3, 8, 24, 0.36);
         }
 
         .hub-eyebrow {
           display: inline-block;
-          color: #13c8b5;
+          color: #79a6ff;
           font-size: 11px;
           font-weight: 800;
           letter-spacing: 1.5px;
+          text-transform: uppercase;
         }
 
         .hub-welcome-bar h1 {
           margin: 6px 0;
           font-size: 36px;
-          font-weight: 800;
+          font-weight: 850;
+          color: #ffffff;
         }
 
         .hub-welcome-bar p {
           margin: 0;
-          color: #d2e2f3;
+          color: #b8c7e6;
           font-size: 14px;
           line-height: 1.6;
           max-width: 620px;
@@ -1020,8 +1050,8 @@ export default function VHubPage() {
 
         .hub-completion-box {
           min-width: 190px;
-          background: rgba(7, 17, 31, 0.55);
-          border: 1px solid rgba(126, 232, 220, 0.22);
+          background: rgba(8, 16, 41, 0.75);
+          border: 1px solid rgba(138, 165, 255, 0.24);
           border-radius: 12px;
           padding: 14px 16px;
         }
@@ -1035,29 +1065,29 @@ export default function VHubPage() {
 
         .hub-completion-top span {
           font-size: 12px;
-          color: #b7c8dd;
+          color: #b8c7e6;
         }
 
         .hub-completion-top strong {
           font-size: 24px;
-          color: #7ee8dc;
+          color: #8ab4ff;
         }
 
         .hub-completion-top small {
           font-size: 11px;
-          color: #9cb2cc;
+          color: #9cb0d9;
         }
 
         .hub-progress-track {
           height: 7px;
           border-radius: 999px;
-          background: rgba(255, 255, 255, 0.12);
+          background: rgba(138, 165, 255, 0.16);
           overflow: hidden;
         }
 
         .hub-progress-fill {
           height: 100%;
-          background: linear-gradient(90deg, #347cf0, #13c8b5);
+          background: linear-gradient(90deg, #4b6bff, #7854ff);
           border-radius: 999px;
         }
 
@@ -1065,19 +1095,20 @@ export default function VHubPage() {
           margin-top: 18px;
           padding: 12px 16px;
           border-radius: 10px;
-          background: rgba(19, 200, 181, 0.14);
-          border: 1px solid rgba(19, 200, 181, 0.4);
-          color: #9ff5eb;
+          background: rgba(92, 124, 255, 0.18);
+          border: 1px solid rgba(138, 180, 255, 0.42);
+          color: #dce7ff;
           font-size: 13px;
           display: flex;
           align-items: center;
           justify-content: space-between;
+          gap: 12px;
         }
 
         .hub-banner button {
           border: none;
           background: transparent;
-          color: #9ff5eb;
+          color: #dce7ff;
           cursor: pointer;
         }
 
@@ -1088,12 +1119,17 @@ export default function VHubPage() {
         }
 
         .hub-ws-card {
-          background: #0d1e34;
-          border: 1px solid rgba(255, 255, 255, 0.09);
-          border-radius: 14px;
+          background: linear-gradient(
+            160deg,
+            rgba(20, 32, 72, 0.92),
+            rgba(11, 19, 46, 0.96)
+          );
+          border: 1px solid rgba(138, 165, 255, 0.18);
+          border-radius: 16px;
           overflow: hidden;
           display: flex;
           flex-direction: column;
+          box-shadow: 0 10px 24px rgba(3, 8, 24, 0.25);
         }
 
         .hub-ws-thumb {
@@ -1110,8 +1146,9 @@ export default function VHubPage() {
           letter-spacing: 1px;
           padding: 4px 9px;
           border-radius: 999px;
-          background: rgba(7, 17, 31, 0.65);
-          color: #e6f4ff;
+          background: rgba(6, 11, 36, 0.72);
+          border: 1px solid rgba(138, 180, 255, 0.25);
+          color: #e6f0ff;
         }
 
         .hub-ws-body {
@@ -1124,14 +1161,14 @@ export default function VHubPage() {
         .hub-ws-body h3 {
           margin: 0 0 6px;
           font-size: 16px;
-          font-weight: 700;
+          font-weight: 750;
           color: #ffffff;
         }
 
         .hub-ws-body p {
           margin: 0 0 14px;
           font-size: 12px;
-          color: #b4c5da;
+          color: #b8c7e6;
           line-height: 1.55;
         }
 
@@ -1144,10 +1181,10 @@ export default function VHubPage() {
           align-items: center;
           justify-content: center;
           border: none;
-          background: linear-gradient(110deg, #347cf0, #13bcae);
+          background: linear-gradient(110deg, #4b6bff, #7854ff);
           color: #ffffff;
           padding: 8px 14px;
-          border-radius: 8px;
+          border-radius: 9px;
           font-size: 12px;
           font-weight: 700;
           text-decoration: none;
@@ -1155,11 +1192,11 @@ export default function VHubPage() {
         }
 
         .hub-btn-following {
-          border: 1px solid rgba(19, 200, 181, 0.45);
-          background: rgba(19, 200, 181, 0.16);
-          color: #7ee8dc;
+          border: 1px solid rgba(138, 180, 255, 0.5);
+          background: rgba(92, 124, 255, 0.24);
+          color: #ffffff;
           padding: 8px 14px;
-          border-radius: 8px;
+          border-radius: 9px;
           font-size: 12px;
           font-weight: 700;
           cursor: pointer;
@@ -1174,16 +1211,22 @@ export default function VHubPage() {
 
         .hub-card,
         .hub-follow-card {
-          background: #0d1e34;
-          border: 1px solid rgba(255, 255, 255, 0.09);
-          border-radius: 14px;
+          background: linear-gradient(
+            160deg,
+            rgba(20, 32, 72, 0.92),
+            rgba(11, 19, 46, 0.96)
+          );
+          border: 1px solid rgba(138, 165, 255, 0.18);
+          border-radius: 16px;
           padding: 22px;
+          box-shadow: 0 10px 24px rgba(3, 8, 24, 0.25);
         }
 
         .hub-card h2 {
           margin: 6px 0 16px;
           font-size: 20px;
-          font-weight: 700;
+          font-weight: 750;
+          color: #ffffff;
         }
 
         .hub-profile-row {
@@ -1197,7 +1240,8 @@ export default function VHubPage() {
           width: 48px;
           height: 48px;
           border-radius: 12px;
-          background: linear-gradient(135deg, #1b3f6b, #145b79);
+          background: linear-gradient(110deg, #4b6bff, #7854ff);
+          color: #ffffff;
           display: grid;
           place-items: center;
           font-size: 18px;
@@ -1207,12 +1251,13 @@ export default function VHubPage() {
         .hub-profile-row strong {
           display: block;
           font-size: 15px;
+          color: #ffffff;
         }
 
         .hub-profile-row small {
           display: block;
           font-size: 12px;
-          color: #9cb2cc;
+          color: #9cb0d9;
         }
 
         .hub-meta-list {
@@ -1227,18 +1272,19 @@ export default function VHubPage() {
           align-items: center;
           padding: 10px 12px;
           border-radius: 9px;
-          background: rgba(255, 255, 255, 0.04);
+          background: rgba(8, 16, 41, 0.72);
+          border: 1px solid rgba(138, 165, 255, 0.14);
           font-size: 13px;
         }
 
         .hub-meta-list span {
-          color: #9cb2cc;
+          color: #9cb0d9;
         }
 
         .hub-guest-box p,
         .hub-muted {
           margin: 0 0 14px;
-          color: #b7c8dd;
+          color: #b8c7e6;
           font-size: 14px;
           line-height: 1.65;
         }
@@ -1255,7 +1301,7 @@ export default function VHubPage() {
           gap: 6px;
           font-size: 12px;
           font-weight: 700;
-          color: #c5d5e8;
+          color: #c8d7f5;
         }
 
         .hub-form input,
@@ -1263,13 +1309,18 @@ export default function VHubPage() {
           width: 100%;
           box-sizing: border-box;
           padding: 10px 12px;
-          border-radius: 8px;
-          border: 1px solid rgba(255, 255, 255, 0.16);
-          background: #081526;
-          color: #ffffff;
+          border-radius: 9px;
+          border: 1px solid rgba(138, 165, 255, 0.24);
+          background: #081029;
+          color: #f3f7ff;
           font: inherit;
           font-size: 13px;
           outline: none;
+        }
+
+        .hub-form input:focus,
+        .hub-form textarea:focus {
+          border-color: #7854ff;
         }
 
         .hub-section {
@@ -1289,6 +1340,7 @@ export default function VHubPage() {
           margin: 4px 0 0;
           font-size: 23px;
           font-weight: 800;
+          color: #ffffff;
         }
 
         .hub-filter-group {
@@ -1298,9 +1350,9 @@ export default function VHubPage() {
         }
 
         .hub-chip {
-          border: 1px solid rgba(255, 255, 255, 0.14);
-          background: #0d1e34;
-          color: #c8d7ea;
+          border: 1px solid rgba(138, 165, 255, 0.22);
+          background: rgba(14, 24, 58, 0.85);
+          color: #c8d7f5;
           padding: 6px 12px;
           border-radius: 999px;
           font-size: 12px;
@@ -1309,9 +1361,9 @@ export default function VHubPage() {
         }
 
         .hub-chip.active {
-          background: rgba(19, 200, 181, 0.2);
-          border-color: #13c8b5;
-          color: #7ee8dc;
+          background: linear-gradient(110deg, #4b6bff, #7854ff);
+          border-color: transparent;
+          color: #ffffff;
         }
 
         .hub-follow-grid {
@@ -1334,32 +1386,38 @@ export default function VHubPage() {
           font-weight: 800;
           padding: 3px 9px;
           border-radius: 999px;
-          background: rgba(52, 124, 240, 0.2);
-          color: #8cc0ff;
+          background: rgba(92, 124, 255, 0.2);
+          border: 1px solid rgba(138, 180, 255, 0.28);
+          color: #9ec0ff;
         }
 
         .hub-follow-top small {
-          color: #9cb2cc;
+          color: #9cb0d9;
           font-size: 12px;
         }
 
         .hub-follow-card h3 {
           margin: 8px 0 4px;
           font-size: 17px;
+          color: #ffffff;
         }
 
         .hub-follow-card p {
           margin: 0 0 12px;
           font-size: 12px;
-          color: #b4c5da;
+          color: #b8c7e6;
           line-height: 1.55;
         }
 
         .hub-connect-link {
-          color: #7ee8dc;
+          color: #8ab4ff;
           text-decoration: none;
           font-size: 12px;
           font-weight: 700;
+        }
+
+        .hub-connect-link:hover {
+          text-decoration: underline;
         }
 
         .hub-activity-list {
@@ -1374,7 +1432,8 @@ export default function VHubPage() {
         .hub-activity-list li {
           padding: 10px 12px;
           border-radius: 9px;
-          background: rgba(255, 255, 255, 0.04);
+          background: rgba(8, 16, 41, 0.72);
+          border: 1px solid rgba(138, 165, 255, 0.14);
           font-size: 13px;
           display: flex;
           flex-direction: column;
@@ -1382,17 +1441,17 @@ export default function VHubPage() {
         }
 
         .hub-activity-list small {
-          color: #9cb2cc;
+          color: #9cb0d9;
           font-size: 11px;
         }
 
         .hub-footer {
           text-align: center;
-          padding: 26px 20px;
-          background: #050d18;
-          color: #8fa4bf;
+          padding: 28px 20px;
+          background: #050a20;
+          color: #96a8d0;
           font-size: 12px;
-          border-top: 1px solid rgba(255, 255, 255, 0.06);
+          border-top: 1px solid rgba(138, 165, 255, 0.14);
         }
 
         @media (max-width: 1060px) {
