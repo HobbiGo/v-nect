@@ -28,6 +28,7 @@ interface CommentCountRow {
 }
 
 const BRAND_LOGO_SRC = "/images/V-NECT-logo.png";
+const HERO_GLOBE_SRC = "/images/logonew-voinnect.png";
 
 function getPostImages(post: BusinessPost): string[] {
   const list: string[] = [];
@@ -38,7 +39,11 @@ function getPostImages(post: BusinessPost): string[] {
       }
     }
   }
-  if (post.image_url && post.image_url.trim() && !list.includes(post.image_url.trim())) {
+  if (
+    post.image_url &&
+    post.image_url.trim() &&
+    !list.includes(post.image_url.trim())
+  ) {
     list.push(post.image_url.trim());
   }
   return list;
@@ -63,7 +68,9 @@ function extractVideoCaption(content: string): string {
 }
 
 function extractExternalVideoLink(content: string): string {
-  const match = (content || "").match(/^\s*Link Video:\s*(https?:\/\/\S+)\s*$/im);
+  const match = (content || "").match(
+    /^\s*Link Video:\s*(https?:\/\/\S+)\s*$/im
+  );
   return match ? match[1].trim() : "";
 }
 
@@ -120,13 +127,17 @@ export default function HomePage() {
 
   const [likedPostIds, setLikedPostIds] = useState<string[]>([]);
   const [likeCounts, setLikeCounts] = useState<Record<string, number>>({});
-  const [commentCounts, setCommentCounts] = useState<Record<string, number>>({});
+  const [commentCounts, setCommentCounts] = useState<Record<string, number>>(
+    {}
+  );
   const [openCommentsPostIds, setOpenCommentsPostIds] = useState<string[]>([]);
   const [commentFocusTriggerByPost, setCommentFocusTriggerByPost] = useState<
     Record<string, number>
   >({});
 
-  const [activeVideoPost, setActiveVideoPost] = useState<BusinessPost | null>(null);
+  const [activeVideoPost, setActiveVideoPost] = useState<BusinessPost | null>(
+    null
+  );
 
   useEffect(() => {
     fetchPublishedPosts();
@@ -383,23 +394,35 @@ export default function HomePage() {
       </header>
 
       <section className="hero-section">
-        <div className="hero-content">
-          <span className="eyebrow">THE V-NECT PLATFORM</span>
-          <h1>
-            Connect Beyond <span>Boundaries.</span>
-          </h1>
-          <p className="hero-sub">
-            v-nect is the next-generation business ecosystem for communication,
-            video meetings, community engagement, and commercial growth.
-          </p>
+        <div className="hero-grid">
+          <div className="hero-content">
+            <span className="eyebrow">THE V-NECT PLATFORM</span>
+            <h1>
+              Connect Beyond <span>Boundaries.</span>
+            </h1>
+            <p className="hero-sub">
+              v-nect is the next-generation business ecosystem for
+              communication, video meetings, community engagement, and
+              commercial growth.
+            </p>
 
-          <div className="hero-buttons">
-            <Link href="/explore" className="btn-primary">
-              Explore Platform →
-            </Link>
-            <Link href="/business-feed" className="btn-secondary">
-              Open Business Feed
-            </Link>
+            <div className="hero-buttons">
+              <Link href="/explore" className="btn-primary hero-explore-btn">
+                Explore Platform →
+              </Link>
+              <Link href="/business-feed" className="btn-secondary">
+                Open Business Feed
+              </Link>
+            </div>
+          </div>
+
+          <div className="hero-visual">
+            <div className="hero-visual-glow" aria-hidden="true" />
+            <img
+              src={HERO_GLOBE_SRC}
+              alt="v-nect global network globe"
+              className="hero-globe-img"
+            />
           </div>
         </div>
       </section>
@@ -606,7 +629,9 @@ export default function HomePage() {
               const isCommentsOpen = openCommentsPostIds.includes(post.id);
               const mediaList = getPostImages(post);
               const primaryMedia = mediaList[0] || null;
-              const primaryIsVideo = primaryMedia ? isVideoUrl(primaryMedia) : false;
+              const primaryIsVideo = primaryMedia
+                ? isVideoUrl(primaryMedia)
+                : false;
               const externalLink = extractExternalVideoLink(post.content);
               const videoCaption = extractVideoCaption(post.content);
               const cleanTitle = formatCleanTitle(post.title);
@@ -758,7 +783,8 @@ export default function HomePage() {
 
           <div className="video-showcase-grid">
             {videoPosts.slice(0, 3).map((vPost) => {
-              const vUrl = getPostImages(vPost).find((u) => isVideoUrl(u)) || null;
+              const vUrl =
+                getPostImages(vPost).find((u) => isVideoUrl(u)) || null;
               const vLink = extractExternalVideoLink(vPost.content);
               const vCap = extractVideoCaption(vPost.content);
 
@@ -892,9 +918,11 @@ export default function HomePage() {
               ) : null}
             </div>
 
-            {(activeModalCaption || formatCleanExcerpt(activeVideoPost.content)) && (
+            {(activeModalCaption ||
+              formatCleanExcerpt(activeVideoPost.content)) && (
               <p className="video-modal-caption">
-                {activeModalCaption || formatCleanExcerpt(activeVideoPost.content)}
+                {activeModalCaption ||
+                  formatCleanExcerpt(activeVideoPost.content)}
               </p>
             )}
           </div>
@@ -914,8 +942,16 @@ export default function HomePage() {
           color: #f3f7ff;
           font-family: var(--font-sans), Arial, sans-serif;
           background:
-            radial-gradient(circle at 78% 14%, rgba(78, 108, 255, 0.34), transparent 36%),
-            radial-gradient(circle at 22% 32%, rgba(28, 63, 184, 0.24), transparent 42%),
+            radial-gradient(
+              circle at 78% 14%,
+              rgba(78, 108, 255, 0.34),
+              transparent 36%
+            ),
+            radial-gradient(
+              circle at 22% 32%,
+              rgba(28, 63, 184, 0.24),
+              transparent 42%
+            ),
             linear-gradient(180deg, #060b24 0%, #091338 55%, #060b24 100%);
         }
 
@@ -1051,17 +1087,35 @@ export default function HomePage() {
         }
 
         .hero-section {
-          min-height: 70vh;
-          padding: 64px 7% 54px;
+          min-height: 68vh;
+          padding: 52px 7% 48px;
           display: flex;
           align-items: center;
           background:
-            radial-gradient(circle at 76% 42%, rgba(92, 124, 255, 0.32), transparent 36%),
-            radial-gradient(circle at 82% 24%, rgba(145, 92, 255, 0.22), transparent 34%);
+            radial-gradient(
+              circle at 76% 42%,
+              rgba(92, 124, 255, 0.32),
+              transparent 36%
+            ),
+            radial-gradient(
+              circle at 82% 24%,
+              rgba(145, 92, 255, 0.22),
+              transparent 34%
+            );
+        }
+
+        .hero-grid {
+          width: 100%;
+          max-width: 1240px;
+          margin: 0 auto;
+          display: grid;
+          grid-template-columns: minmax(0, 1.05fr) minmax(0, 0.95fr);
+          align-items: center;
+          gap: 36px;
         }
 
         .hero-content {
-          max-width: 680px;
+          max-width: 580px;
         }
 
         .eyebrow,
@@ -1077,25 +1131,25 @@ export default function HomePage() {
 
         .hero-content h1 {
           margin: 0 0 18px;
-          font-size: clamp(42px, 6vw, 68px);
+          font-size: clamp(40px, 5.5vw, 62px);
           font-weight: 850;
-          line-height: 1.03;
-          letter-spacing: -1.8px;
+          line-height: 1.05;
+          letter-spacing: -1.6px;
           color: #ffffff;
         }
 
         .hero-sub {
-          margin: 0 0 30px;
+          margin: 0 0 28px;
           color: #b8c7e6;
-          font-size: 16px;
+          font-size: 15.5px;
           line-height: 1.72;
-          max-width: 560px;
+          max-width: 540px;
         }
 
         .hero-buttons {
           display: flex;
           align-items: center;
-          gap: 14px;
+          gap: 12px;
           flex-wrap: wrap;
         }
 
@@ -1103,9 +1157,9 @@ export default function HomePage() {
           background: linear-gradient(110deg, #4b6bff, #7854ff);
           color: #ffffff;
           text-decoration: none;
-          padding: 13px 22px;
-          border-radius: 12px;
-          font-size: 13.5px;
+          padding: 11px 18px;
+          border-radius: 11px;
+          font-size: 13px;
           font-weight: 750;
           display: inline-flex;
           align-items: center;
@@ -1113,6 +1167,8 @@ export default function HomePage() {
           border: none;
           cursor: pointer;
           box-shadow: 0 10px 24px rgba(75, 107, 255, 0.28);
+          width: auto;
+          max-width: fit-content;
         }
 
         :global(.btn-secondary) {
@@ -1120,13 +1176,56 @@ export default function HomePage() {
           border: 1px solid rgba(154, 178, 255, 0.32);
           color: #eef3ff;
           text-decoration: none;
-          padding: 13px 22px;
-          border-radius: 12px;
-          font-size: 13.5px;
+          padding: 11px 18px;
+          border-radius: 11px;
+          font-size: 13px;
           font-weight: 700;
           display: inline-flex;
           align-items: center;
           gap: 8px;
+          width: auto;
+          max-width: fit-content;
+        }
+
+        .hero-visual {
+          position: relative;
+          display: flex;
+          align-items: center;
+          justify-content: center;
+          border-radius: 22px;
+          padding: 14px;
+          background: radial-gradient(
+            circle at center,
+            rgba(75, 107, 255, 0.2),
+            rgba(9, 19, 56, 0.35) 70%
+          );
+          border: 1px solid rgba(138, 165, 255, 0.2);
+          overflow: hidden;
+        }
+
+        .hero-visual-glow {
+          position: absolute;
+          width: 72%;
+          height: 72%;
+          border-radius: 50%;
+          background: radial-gradient(
+            circle,
+            rgba(120, 84, 255, 0.28),
+            transparent 70%
+          );
+          pointer-events: none;
+        }
+
+        .hero-globe-img {
+          position: relative;
+          z-index: 1;
+          width: 100%;
+          max-width: 480px;
+          height: auto;
+          object-fit: contain;
+          border-radius: 16px;
+          display: block;
+          mix-blend-mode: lighten;
         }
 
         .small-btn {
@@ -1176,7 +1275,11 @@ export default function HomePage() {
         }
 
         .feature-card {
-          background: linear-gradient(160deg, rgba(20, 32, 72, 0.9), rgba(11, 19, 46, 0.95));
+          background: linear-gradient(
+            160deg,
+            rgba(20, 32, 72, 0.9),
+            rgba(11, 19, 46, 0.95)
+          );
           border: 1px solid rgba(138, 165, 255, 0.16);
           border-radius: 18px;
           padding: 26px;
@@ -1242,7 +1345,11 @@ export default function HomePage() {
           padding: 22px;
           border: 1px solid rgba(148, 184, 255, 0.26);
           border-radius: 16px;
-          background: linear-gradient(155deg, rgba(38, 66, 122, 0.92), rgba(18, 33, 68, 0.98));
+          background: linear-gradient(
+            155deg,
+            rgba(38, 66, 122, 0.92),
+            rgba(18, 33, 68, 0.98)
+          );
           box-shadow: 0 12px 26px rgba(2, 8, 24, 0.3);
           transition: transform 0.25s ease, border-color 0.25s ease;
         }
@@ -1264,12 +1371,24 @@ export default function HomePage() {
           border: 1px solid rgba(255, 255, 255, 0.28);
         }
 
-        .eco-tone-0 .eco-icon { background: linear-gradient(145deg, #36b9ff, #1763e9); }
-        .eco-tone-1 .eco-icon { background: linear-gradient(145deg, #bd78ff, #7041e9); }
-        .eco-tone-2 .eco-icon { background: linear-gradient(145deg, #32dce9, #137dbd); }
-        .eco-tone-3 .eco-icon { background: linear-gradient(145deg, #559fff, #2458d8); }
-        .eco-tone-4 .eco-icon { background: linear-gradient(145deg, #f472b6, #9d174d); }
-        .eco-tone-5 .eco-icon { background: linear-gradient(145deg, #fbbf24, #b45309); }
+        .eco-tone-0 .eco-icon {
+          background: linear-gradient(145deg, #36b9ff, #1763e9);
+        }
+        .eco-tone-1 .eco-icon {
+          background: linear-gradient(145deg, #bd78ff, #7041e9);
+        }
+        .eco-tone-2 .eco-icon {
+          background: linear-gradient(145deg, #32dce9, #137dbd);
+        }
+        .eco-tone-3 .eco-icon {
+          background: linear-gradient(145deg, #559fff, #2458d8);
+        }
+        .eco-tone-4 .eco-icon {
+          background: linear-gradient(145deg, #f472b6, #9d174d);
+        }
+        .eco-tone-5 .eco-icon {
+          background: linear-gradient(145deg, #fbbf24, #b45309);
+        }
 
         .eco-code {
           font-size: 9.5px;
@@ -1346,7 +1465,11 @@ export default function HomePage() {
 
         .post-card,
         .video-showcase-card {
-          background: linear-gradient(160deg, rgba(20, 32, 72, 0.92), rgba(11, 19, 46, 0.96));
+          background: linear-gradient(
+            160deg,
+            rgba(20, 32, 72, 0.92),
+            rgba(11, 19, 46, 0.96)
+          );
           border: 1px solid rgba(138, 165, 255, 0.18);
           border-radius: 18px;
           overflow: hidden;
@@ -1386,7 +1509,11 @@ export default function HomePage() {
         .post-video-overlay {
           position: absolute;
           inset: 0;
-          background: linear-gradient(180deg, rgba(6, 11, 34, 0.2), rgba(6, 11, 34, 0.78));
+          background: linear-gradient(
+            180deg,
+            rgba(6, 11, 34, 0.2),
+            rgba(6, 11, 34, 0.78)
+          );
           display: flex;
           align-items: flex-end;
           justify-content: space-between;
@@ -1596,7 +1723,11 @@ export default function HomePage() {
         }
 
         .about-card {
-          background: linear-gradient(145deg, rgba(22, 36, 82, 0.92), rgba(11, 19, 46, 0.96));
+          background: linear-gradient(
+            145deg,
+            rgba(22, 36, 82, 0.92),
+            rgba(11, 19, 46, 0.96)
+          );
           border: 1px solid rgba(138, 165, 255, 0.2);
           border-radius: 22px;
           padding: 36px;
@@ -1708,6 +1839,15 @@ export default function HomePage() {
         }
 
         @media (max-width: 960px) {
+          .hero-grid {
+            grid-template-columns: 1fr;
+            gap: 28px;
+          }
+
+          .hero-globe-img {
+            max-width: 380px;
+          }
+
           .features-grid,
           .ecosystem-grid,
           .posts-grid,
