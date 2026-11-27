@@ -150,23 +150,23 @@ export default function HomePage() {
 
   return (
     <main className="home">
-      {/* ===== TOPNAV BARU - HOME JELAS ===== */}
+      {/* ===== TOPNAV BARU - SEMUA JADI TOMBOL PILL, MENARIK ===== */}
       <header className="topnav">
         <div className="top-left">
           <Link href="/" className="brand">v<span>-nect</span></Link>
-          {/* HOME - TOMBOL PILL PUTIH, PALING MENONJOL */}
-          <button onClick={()=>setMainTab("jelajahi")} className="home-pill" title="Kembali ke Beranda">
+          <button onClick={()=>setMainTab("jelajahi")} className="home-pill">
             <span className="home-icon">⌂</span>
             <span>{lang==="id" ? "Beranda" : lang==="en" ? "Home" : lang==="zh" ? "首页" : lang==="ja" ? "ホーム" : "Home"}</span>
             <span className="home-dot">●</span>
           </button>
         </div>
-        <nav className="nav-desktop">
-          <button onClick={()=>setMainTab("jelajahi")} className={mainTab==="jelajahi"?"nav-tab active":"nav-tab"}>▦ {t("explore", lang)}</button>
-          <button onClick={()=>setMainTab("feed")} className={mainTab==="feed"?"nav-tab active":"nav-tab"}>▶ {t("feed", lang)}</button>
-          <Link href="/v-circle" className="nav-link">👥 {t("community", lang)}</Link>
-          <Link href="/v-market" className="nav-link">🛒 {t("market", lang)}</Link>
-          <Link href="/v-meet" className="nav-link">🎥 {t("meet", lang)}</Link>
+        {/* MENU ATAS - SEMUA PILL, NGGAK ADA LAGI TEKS POLOS + UNDERLINE */}
+        <nav className="nav-pills">
+          <button onClick={()=>setMainTab("jelajahi")} className={mainTab==="jelajahi" ? "pill active" : "pill"}><span>▦</span> {t("explore", lang)}</button>
+          <button onClick={()=>setMainTab("feed")} className={mainTab==="feed" ? "pill active" : "pill"}><span>▶</span> {t("feed", lang)}</button>
+          <Link href="/v-circle" className="pill"><span>👥</span> {t("community", lang)}</Link>
+          <Link href="/v-market" className="pill"><span>🛒</span> {t("market", lang)}</Link>
+          <Link href="/v-meet" className="pill"><span>🎥</span> {t("meet", lang)}</Link>
         </nav>
         <div style={{ display: "flex", alignItems: "center", gap: 10 }}>
           <LanguageSwitcher />
@@ -184,7 +184,7 @@ export default function HomePage() {
 
       {mainTab==="jelajahi" && (
       <div id="jelajahi">
-      {/* ===== FEATURE + COMMUNITY - GRADASI DIHAPUS, JADI SOLID NAVY ===== */}
+      {/* ===== FEATURE + COMMUNITY - FIX BIRU NABRAK: SOLID GELAP TOTAL ===== */}
       <section id="feature-community" className="feature-community">
         <div className="fc-grid">
           <div className="fc-feature">
@@ -197,10 +197,10 @@ export default function HomePage() {
               ))}
             </div>
           </div>
-          {/* COMMUNITY CARD - SOLID, BUKAN GRADASI LAGI */}
+          {/* COMMUNITY - FIX: NAVY GELAP, TEKS PUTIH JELAS, NGGAK ADA BIRU TERANG LAGI */}
           <Link href="/v-circle" className="fc-community">
             <span className="eyebrow">COMMUNITY</span>
-            <div className="comm-head"><span className="comm-icon">👥</span><div><h2>v-circle {t("community", lang)}</h2><p>Grow your network.</p></div></div>
+            <div className="comm-head"><span className="comm-icon">👥</span><div><h2>v-circle Community</h2><p>Grow your network.</p></div></div>
             <p className="comm-desc">Founder, profesional & perusahaan. Diskusi, tanya produk, cari partner — di satu circle.</p>
             <div className="comm-stats">
               <div><b>{posts.length || "0"}</b><span>Post terbaru</span></div>
@@ -290,7 +290,6 @@ export default function HomePage() {
 
       <footer className="footer"><b>v<span>-nect</span></b><p>Connect Beyond Boundaries.</p><small>© 2026 v-nect</small></footer>
 
-      {/* BOTTOM NAV - HOME JUGA JELAS DI SINI */}
       <nav className="bottom-nav">
         <button onClick={()=>setMainTab("jelajahi")} className="bnav bnav-home">⌂<small>{lang==="id"?"Beranda":"Home"}</small></button><a href="/v-market" className="bnav">🛒<small>{t("market", lang)}</small></a><button onClick={()=>setMainTab("feed")} className="bnav plus">+<small></small></button><a href="/v-circle?tab=messages" className="bnav">✉️<small>Kotak Masuk</small></a><a href="/v-hub" className="bnav">●<small>Profil</small></a>
       </nav>
@@ -299,17 +298,18 @@ export default function HomePage() {
 
       <style jsx>{`
         .home{background:#060b24;color:#f3f7ff;font-family:var(--font-sans),Arial,sans-serif;padding-bottom:70px;overflow-x:hidden}
-        .topnav{position:sticky;top:0;z-index:30;display:flex;justify-content:space-between;align-items:center;gap:12px;padding:12px 6%;background:#060B24;border-bottom:1px solid rgba(138,165,255,.15)}
-        .top-left{display:flex;align-items:center;gap:12px}
+        /* TOPNAV BARU - SEMUA PILL */
+        .topnav{position:sticky;top:0;z-index:30;display:flex;justify-content:space-between;align-items:center;gap:12px;padding:12px 4%;background:#060B24;border-bottom:1px solid rgba(138,165,255,.15)}
+        .top-left{display:flex;align-items:center;gap:10px;flex-shrink:0}
         .brand{font-size:21px;font-weight:850;color:#fff;text-decoration:none;white-space:nowrap}.brand span,.footer span{color:#8ab4ff}
-        /* HOME PILL - BARU, MENARIK & JELAS */
-        .home-pill{display:flex;align-items:center;gap:7px;background:#ffffff;color:#060B24;border:2px solid #ffffff;padding:8px 16px;border-radius:999px;font-size:13.5px;font-weight:800;cursor:pointer;box-shadow:0 6px 18px rgba(255,255,255,.18);white-space:nowrap}
-        .home-icon{font-size:17px;line-height:1}
-        .home-dot{color:#0CAA91;font-size:9px}
-        .home-pill:hover{background:#E8EEFF;transform:translateY(-1px)}
-        .nav-desktop{display:flex;gap:8px;align-items:center}.nav-desktop a{color:#d9e4ff;text-decoration:none;font-size:13px;font-weight:600}
-        .nav-link{padding:8px 12px;border-radius:999px;white-space:nowrap}.nav-link:hover{background:rgba(255,255,255,.08)}
-        .nav-tab{background:rgba(255,255,255,.06);border:1px solid rgba(154,178,255,.25);color:#d9e4ff;padding:8px 16px;border-radius:999px;font-size:13px;font-weight:700;cursor:pointer;white-space:nowrap}.nav-tab.active{background:#fff;color:#060b24;border-color:#fff}
+        .home-pill{display:flex;align-items:center;gap:7px;background:#ffffff;color:#060B24;border:2px solid #ffffff;padding:8px 15px;border-radius:999px;font-size:13.5px;font-weight:800;cursor:pointer;box-shadow:0 6px 18px rgba(255,255,255,.18);white-space:nowrap}
+        .home-icon{font-size:17px;line-height:1}.home-dot{color:#0CAA91;font-size:9px}
+        /* NAV PILLS - INI YANG BIKIN ATAS JADI MENARIK */
+        .nav-pills{display:flex;gap:6px;align-items:center;flex-wrap:nowrap}
+        .pill{display:flex;align-items:center;gap:6px;background:rgba(255,255,255,.07);border:1px solid rgba(154,178,255,.28);color:#E2ECFF;padding:8px 14px;border-radius:999px;font-size:13px;font-weight:700;cursor:pointer;text-decoration:none;white-space:nowrap}
+        .pill span{font-size:13px}
+        .pill:hover{background:rgba(255,255,255,.14);border-color:rgba(154,178,255,.5)}
+        .pill.active{background:#ffffff;color:#060B24;border-color:#ffffff;box-shadow:0 4px 14px rgba(255,255,255,.18)}
         .chip{background:rgba(138,180,255,.14);border:1px solid rgba(138,180,255,.35);padding:7px 12px;border-radius:999px;font-size:12px;font-weight:700;white-space:nowrap}
         .btn-ghost{background:rgba(255,255,255,.06);border:1px solid rgba(154,178,255,.28);color:#eef3ff;padding:8px 14px;border-radius:10px;font-size:12px;font-weight:700;cursor:pointer}
         .btn-primary{background:#4B6BFF;color:#fff;text-decoration:none;padding:12px 20px;border-radius:11px;font-size:13px;font-weight:750;display:inline-flex;gap:8px;border:none;cursor:pointer}
@@ -322,12 +322,12 @@ export default function HomePage() {
         .explore,.more{padding:28px 7%;max-width:1100px;margin:0 auto}.feed-section{padding:28px 7%;max-width:560px;margin:0 auto}
         .hero-btns{display:flex;gap:10px;flex-wrap:wrap}
         .feature-community{padding:10px 7% 10px;max-width:1100px;margin:0 auto}.fc-grid{display:grid;grid-template-columns:1.1fr 0.9fr;gap:16px;align-items:stretch}.fc-feature{background:#0E183A;border:1px solid rgba(138,165,255,.16);border-radius:20px;padding:24px}.fc-feature h2{margin:8px 0 6px;font-size:clamp(22px,3.5vw,30px)}.fc-sub{color:#a9b9da;font-size:13px;margin:0 0 16px}.feature-list{display:flex;flex-direction:column;gap:12px}.feature-row{display:flex;gap:12px;align-items:flex-start;background:rgba(255,255,255,.04);border:1px solid rgba(138,165,255,.12);border-radius:14px;padding:12px}.feature-row b{font-size:14px}.feature-row p{margin:3px 0 0;color:#b4c6e7;font-size:12.5px;line-height:1.5}.f-icon{width:40px;height:40px;flex-shrink:0;border-radius:11px;background:rgba(92,124,255,.18);display:grid;place-items:center;font-size:18px}
-        /* COMMUNITY - FIX UTAMA: SOLID NAVY, BUKAN GRADASI */
-        .fc-community{background:#0E183A;border:1px solid #4B6BFF;border-radius:20px;padding:24px;color:#fff;text-decoration:none;display:flex;flex-direction:column;gap:12px;overflow:hidden;min-width:0}
+        /* COMMUNITY - FIX BIRU NABRAK: SEMUA GELAP, TEKS PUTIH */
+        .fc-community{background:#0E183A !important;background-image:none !important;border:1px solid rgba(138,165,255,.35);border-radius:20px;padding:24px;color:#fff;text-decoration:none;display:flex;flex-direction:column;gap:12px;overflow:hidden;min-width:0}
         .fc-community .eyebrow{color:#8AB4FF}
-        .comm-head{display:flex;gap:12px;align-items:center;min-width:0}.comm-icon{width:52px;height:52px;flex-shrink:0;border-radius:16px;background:#1A2A5A;display:grid;place-items:center;font-size:24px}.comm-head h2{margin:0;font-size:21px;line-height:1.2;word-break:break-word}.comm-head p{margin:2px 0 0;color:#B4C6E7;font-size:13px}
-        .comm-desc{margin:0;line-height:1.6;font-size:13.5px;color:#E2ECFF;word-break:break-word}
-        .comm-stats{display:grid;grid-template-columns:repeat(3,1fr);gap:10px;margin:6px 0}.comm-stats div{background:#16224F;border:1px solid rgba(138,165,255,.2);border-radius:12px;padding:12px 6px;text-align:center;display:flex;flex-direction:column;min-width:0}.comm-stats b{font-size:20px;color:#fff}.comm-stats span{font-size:11px;color:#B4C6E7}
+        .comm-head{display:flex;gap:12px;align-items:center;min-width:0}.comm-icon{width:52px;height:52px;flex-shrink:0;border-radius:16px;background:#1A2A5A !important;display:grid;place-items:center;font-size:24px;border:1px solid rgba(138,165,255,.3)}.comm-head h2{margin:0;font-size:21px;line-height:1.2;word-break:break-word;color:#FFFFFF}.comm-head p{margin:2px 0 0;color:#B4C6E7;font-size:13px}
+        .comm-desc{margin:0;line-height:1.6;font-size:13.5px;color:#FFFFFF;word-break:break-word}
+        .comm-stats{display:grid;grid-template-columns:repeat(3,1fr);gap:10px;margin:6px 0}.comm-stats div{background:#16224F !important;border:1px solid rgba(138,165,255,.2);border-radius:12px;padding:12px 6px;text-align:center;display:flex;flex-direction:column;min-width:0}.comm-stats b{font-size:20px;color:#fff}.comm-stats span{font-size:11px;color:#B4C6E7}
         .eco-note{color:#a9b9da;font-size:13px;margin:8px 0 0;max-width:620px;line-height:1.6}
         .tiktok-tabs{display:flex;gap:4px;background:rgba(255,255,255,.06);padding:4px;border-radius:999px}.tiktok-tabs .tab{background:transparent;border:none;color:#a9b9da;padding:7px 14px;border-radius:999px;font-size:12.5px;font-weight:700;cursor:pointer}.tiktok-tabs .tab.active{background:#fff;color:#060b24}.feed-tabs{margin-bottom:16px;justify-content:center}
         .sec-head{display:flex;justify-content:space-between;align-items:flex-end;gap:16px;margin-bottom:18px}.sec-head h2{margin:6px 0 0;font-size:clamp(24px,4vw,32px)}.sec-head p{color:#a9b9da;font-size:13px;margin:6px 0 0}.link{color:#9ec0ff;text-decoration:none;font-size:13px;font-weight:700;white-space:nowrap}
@@ -347,7 +347,7 @@ export default function HomePage() {
         .footer{text-align:center;padding:28px;color:#96a8d0}.footer b{color:#fff;font-size:22px}
         .bottom-nav{display:none}.bottom-nav button{background:none;border:none;cursor:pointer}
         @media(max-width:640px){
-          .nav-desktop{display:none}.fc-grid{grid-template-columns:1fr}.module-grid{grid-template-columns:repeat(2,1fr);gap:10px}.module-card{padding:14px}.hero{padding:26px 5% 18px}.explore,.feed-section,.more{padding:22px 5%}
+          .nav-pills{display:none}.fc-grid{grid-template-columns:1fr}.module-grid{grid-template-columns:repeat(2,1fr);gap:10px}.module-card{padding:14px}.hero{padding:26px 5% 18px}.explore,.feed-section,.more{padding:22px 5%}
           .tiktok-media{aspect-ratio:9/16;max-height:none;border-radius:18px}.more-grid{grid-template-columns:1fr}
           .topnav{padding:10px 4%}
           .home-pill{padding:7px 12px;font-size:12.5px}
