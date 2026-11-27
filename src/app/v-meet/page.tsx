@@ -8,10 +8,21 @@ import { VMeetPanel } from "@/components/VMeetPanel";
 import { AccountAuthModal } from "@/components/AccountAuthModal";
 
 export default function VMeetPage() {
-  const supabase = createClient();
+  const [supabase] = useState(() => createClient());
 
   const [userName, setUserName] = useState<string | null>(null);
   const [authModalOpen, setAuthModalOpen] = useState(false);
+
+  function resolveUserDisplayName(user: {
+    user_metadata?: Record<string, unknown>;
+    email?: string | null;
+  }) {
+    const fullName =
+      typeof user.user_metadata?.full_name === "string"
+        ? user.user_metadata.full_name.trim()
+        : "";
+    return fullName || user.email?.split("@")[0] || "Member";
+  }
 
   async function loadUser() {
     const {
@@ -19,20 +30,39 @@ export default function VMeetPage() {
     } = await supabase.auth.getUser();
 
     if (user) {
-      const displayName =
-        (user.user_metadata?.full_name as string | undefined)?.trim() ||
-        user.email?.split("@")[0] ||
-        "Member";
-      setUserName(displayName);
+      setUserName(resolveUserDisplayName(user));
     } else {
       setUserName(null);
     }
   }
 
   useEffect(() => {
-    loadUser();
+    let active = true;
+
+    async function initSession() {
+      if (!active) return;
+      await loadUser();
+    }
+
+    initSession();
+
+    const {
+      data: { subscription },
+    } = supabase.auth.onAuthStateChange((_event, session) => {
+      if (!active) return;
+      if (session?.user) {
+        setUserName(resolveUserDisplayName(session.user));
+      } else {
+        setUserName(null);
+      }
+    });
+
+    return () => {
+      active = false;
+      subscription.unsubscribe();
+    };
     // eslint-disable-next-line react-hooks/exhaustive-deps
-  }, []);
+  }, [supabase]);
 
   return (
     <main className="vmeet-page">
@@ -43,6 +73,12 @@ export default function VMeetPage() {
           <div className="vmeet-nav-group">
             <Link href="/" className="vmeet-nav-btn primary">
               ← Back to Home
+            </Link>
+            <Link href="/explore" className="vmeet-nav-btn">
+              Explore
+            </Link>
+            <Link href="/v-hub" className="vmeet-nav-btn">
+              v-hub
             </Link>
             <Link href="/business-feed" className="vmeet-nav-btn">
               Business Feed
