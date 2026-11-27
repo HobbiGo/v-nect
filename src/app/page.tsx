@@ -1,6 +1,8 @@
 "use client";
 import React, { useEffect, useRef, useState } from "react";
 import Link from "next/link";
+// PENTING: kalau di src/lib/supabase/client.ts export-nya namanya createSupabaseClient,
+// ganti baris di bawah jadi: import { createSupabaseClient as createClient } from "@/lib/supabase/client";
 import { createClient } from "@/lib/supabase/client";
 import { AccountAuthModal } from "@/components/AccountAuthModal";
 import { PostThreadComments } from "@/components/PostThreadComments";
@@ -230,8 +232,8 @@ export default function HomePage() {
       )}
       {mainTab==="feed" && (
       <div id="feed">
-      <section id="explore" className="explore">
-        <div className="sec-head"><div><span className="eyebrow">EXPLORE</span><h2>Explore the v-nect Suite</h2></div><Link href="/explore" className="link">All modules ↗</Link></div>
+      <section id="explore-feed" className="explore">
+        <div className="sec-head"><div><span className="eyebrow">EXPLORE</span><h2>Explore the v-nect Suite</h2></div><Link href="/#explore" className="link">All modules ↗</Link></div>
         <div className="module-grid">
           {MODULES.map(m=>(
             <Link key={m.id} href={m.href} className="module-card">
