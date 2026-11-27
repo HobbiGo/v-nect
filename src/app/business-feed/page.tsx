@@ -308,6 +308,13 @@ export default function BusinessFeedPage() {
     }
   }
 
+  function scrollToVideoComposer() {
+    videoSectionRef.current?.scrollIntoView({
+      behavior: "smooth",
+      block: "center",
+    });
+  }
+
   async function handlePublishVideoBatch(items: QueuedVideoItem[], maxDurationSec: number) {
     const uploadedClips: PublishedVideoClip[] = [];
     let cloudSuccessCount = 0;
@@ -1031,13 +1038,26 @@ export default function BusinessFeedPage() {
             </Link>
           </div>
 
-          <button
-            type="button"
-            className={showVChat ? "vchat-toggle-btn active" : "vchat-toggle-btn"}
-            onClick={() => setShowVChat((v) => !v)}
-          >
-            💬 {showVChat ? "Tutup v-chat" : "Buka v-chat Live"}
-          </button>
+          <div className="top-strip-actions">
+            <button
+              type="button"
+              className="video-shortcut-btn"
+              onClick={scrollToVideoComposer}
+            >
+              🎬 Kirim Video
+            </button>
+
+            <button
+              type="button"
+              className={showVChat ? "vchat-toggle-btn active" : "vchat-toggle-btn"}
+              onClick={() => setShowVChat((v) => !v)}
+            >
+              <span className="vchat-icon-badge" aria-hidden="true">
+                💬
+              </span>
+              <span>{showVChat ? "Tutup v-chat" : "Buka v-chat Live"}</span>
+            </button>
+          </div>
         </div>
 
         <div className="hero">
@@ -1056,11 +1076,31 @@ export default function BusinessFeedPage() {
             </p>
           </div>
 
-          <div className="hero-icon">◈</div>
+          <div className="hero-icon">💬</div>
         </div>
 
         {showVChat && (
           <div className="vchat-drawer">
+            <div className="vchat-banner-strip">
+              <div className="vchat-banner-left">
+                <span className="vchat-bubble-ico" aria-hidden="true">
+                  💬
+                </span>
+                <div>
+                  <strong>Ruang Diskusi &amp; Kirim Video Langsung</strong>
+                  <small>
+                    Ngobrol real-time dengan tim atau kirim klip video highlight ke feed.
+                  </small>
+                </div>
+              </div>
+              <button
+                type="button"
+                className="vchat-send-video-pill"
+                onClick={scrollToVideoComposer}
+              >
+                🎬 Upload Video Klip
+              </button>
+            </div>
             <VChatPanel currentUserName={company?.company_name || "Member"} />
           </div>
         )}
@@ -1504,7 +1544,7 @@ export default function BusinessFeedPage() {
               </div>
             ) : filteredPosts.length === 0 ? (
               <div className="empty-state">
-                <div className="empty-icon">◈</div>
+                <div className="empty-icon">💬</div>
 
                 <h3>No posts yet</h3>
 
@@ -1696,7 +1736,7 @@ export default function BusinessFeedPage() {
                     />
 
                     <div className="post-footer">
-                      <span>◈ v-nect Business Feed</span>
+                      <span>💬 v-nect Business Feed</span>
 
                       {isOwner && (
                         <div className="post-actions">
@@ -1758,15 +1798,22 @@ export default function BusinessFeedPage() {
         .top-action-strip {
           margin-bottom: 18px;
           padding: 10px 14px;
-          border-radius: 14px;
-          background: rgba(13, 22, 54, 0.78);
-          border: 1px solid rgba(138, 165, 255, 0.2);
+          border-radius: 16px;
+          background: rgba(13, 22, 54, 0.82);
+          border: 1px solid rgba(138, 165, 255, 0.22);
           display: flex;
           align-items: center;
           justify-content: space-between;
           gap: 12px;
           flex-wrap: wrap;
           box-shadow: 0 8px 20px rgba(3, 8, 24, 0.24);
+        }
+
+        .top-strip-actions {
+          display: flex;
+          align-items: center;
+          gap: 10px;
+          flex-wrap: wrap;
         }
 
         .back-home-bar {
@@ -1796,16 +1843,38 @@ export default function BusinessFeedPage() {
           color: #ffffff;
         }
 
-        .vchat-toggle-btn {
-          border: 1px solid rgba(154, 178, 255, 0.34);
-          background: linear-gradient(110deg, #4b6bff, #7854ff);
-          color: #ffffff;
-          padding: 9px 16px;
+        .video-shortcut-btn {
+          border: 1px solid rgba(138, 180, 255, 0.34);
+          background: rgba(92, 124, 255, 0.18);
+          color: #e6f0ff;
+          padding: 9px 15px;
           border-radius: 999px;
           font-size: 12.5px;
           font-weight: 750;
           cursor: pointer;
-          box-shadow: 0 6px 18px rgba(75, 107, 255, 0.32);
+          transition: background 0.18s ease, transform 0.18s ease,
+            border-color 0.18s ease;
+        }
+
+        .video-shortcut-btn:hover {
+          background: rgba(120, 84, 255, 0.28);
+          border-color: rgba(168, 196, 255, 0.55);
+          transform: translateY(-1px);
+        }
+
+        .vchat-toggle-btn {
+          display: inline-flex;
+          align-items: center;
+          gap: 8px;
+          border: 1px solid rgba(168, 196, 255, 0.42);
+          background: linear-gradient(110deg, #4b6bff, #7854ff);
+          color: #ffffff;
+          padding: 9px 17px;
+          border-radius: 999px;
+          font-size: 12.5px;
+          font-weight: 800;
+          cursor: pointer;
+          box-shadow: 0 6px 18px rgba(75, 107, 255, 0.36);
           transition: transform 0.18s ease, box-shadow 0.18s ease,
             filter 0.18s ease;
         }
@@ -1817,12 +1886,96 @@ export default function BusinessFeedPage() {
 
         .vchat-toggle-btn.active {
           border-color: rgba(168, 196, 255, 0.65);
-          background: rgba(92, 124, 255, 0.24);
+          background: rgba(92, 124, 255, 0.26);
           box-shadow: none;
+        }
+
+        .vchat-icon-badge {
+          display: inline-grid;
+          place-items: center;
+          width: 22px;
+          height: 22px;
+          border-radius: 999px;
+          background: rgba(255, 255, 255, 0.2);
+          font-size: 12px;
         }
 
         .vchat-drawer {
           margin-top: 18px;
+          display: flex;
+          flex-direction: column;
+          gap: 12px;
+        }
+
+        .vchat-banner-strip {
+          padding: 14px 18px;
+          border-radius: 16px;
+          background: linear-gradient(
+            120deg,
+            rgba(75, 107, 255, 0.24),
+            rgba(120, 84, 255, 0.22)
+          );
+          border: 1px solid rgba(154, 184, 255, 0.36);
+          display: flex;
+          align-items: center;
+          justify-content: space-between;
+          gap: 14px;
+          flex-wrap: wrap;
+        }
+
+        .vchat-banner-left {
+          display: flex;
+          align-items: center;
+          gap: 12px;
+        }
+
+        .vchat-bubble-ico {
+          width: 40px;
+          height: 40px;
+          border-radius: 12px;
+          background: linear-gradient(135deg, #4b6bff, #7854ff);
+          border: 1px solid rgba(176, 200, 255, 0.45);
+          display: grid;
+          place-items: center;
+          font-size: 18px;
+          flex-shrink: 0;
+          box-shadow: 0 6px 16px rgba(75, 107, 255, 0.35);
+        }
+
+        .vchat-banner-left strong {
+          display: block;
+          font-size: 14px;
+          font-weight: 800;
+          color: #ffffff;
+        }
+
+        .vchat-banner-left small {
+          display: block;
+          margin-top: 2px;
+          font-size: 12px;
+          color: #c7d7f7;
+        }
+
+        .vchat-send-video-pill {
+          border: 1px solid rgba(176, 200, 255, 0.4);
+          background: linear-gradient(110deg, #4b6bff, #7854ff);
+          color: #ffffff;
+          padding: 8px 14px;
+          border-radius: 999px;
+          font-size: 12px;
+          font-weight: 750;
+          cursor: pointer;
+        }
+
+        .vchat-drawer :global(> div:last-child) {
+          border-radius: 18px !important;
+          border-color: rgba(148, 180, 255, 0.3) !important;
+          box-shadow: 0 14px 32px rgba(3, 8, 24, 0.34) !important;
+        }
+
+        .vchat-drawer :global(button[type="submit"]),
+        .vchat-drawer :global(button:last-of-type) {
+          border-radius: 10px;
         }
 
         .hero {
@@ -1883,10 +2036,20 @@ export default function BusinessFeedPage() {
         }
 
         .hero-icon {
-          font-size: 88px;
-          color: #8ab4ff;
-          opacity: 0.45;
+          font-size: 72px;
+          width: 112px;
+          height: 112px;
+          border-radius: 28px;
+          background: linear-gradient(
+            135deg,
+            rgba(75, 107, 255, 0.24),
+            rgba(120, 84, 255, 0.22)
+          );
+          border: 1px solid rgba(154, 184, 255, 0.3);
+          display: grid;
+          place-items: center;
           flex-shrink: 0;
+          box-shadow: 0 12px 28px rgba(75, 107, 255, 0.24);
         }
 
         .feed-layout {
@@ -1921,20 +2084,29 @@ export default function BusinessFeedPage() {
 
         .video-composer-shell :global(> div) {
           border-radius: 18px;
-          border-color: rgba(138, 165, 255, 0.26);
-          box-shadow: 0 12px 26px rgba(3, 8, 24, 0.28);
+          border-color: rgba(148, 180, 255, 0.3);
+          box-shadow: 0 12px 26px rgba(3, 8, 24, 0.32);
+        }
+
+        .video-composer-shell :global(input[type="file"]) {
+          padding: 10px 12px;
+          border-radius: 12px;
+          background: rgba(8, 16, 41, 0.85);
+          border: 1px dashed rgba(148, 184, 255, 0.45);
+          color: #dce7ff;
         }
 
         .video-composer-shell :global(input[type="file"]::file-selector-button) {
           background: linear-gradient(110deg, #4b6bff, #7854ff);
           color: #ffffff;
-          border: 1px solid rgba(176, 200, 255, 0.35);
-          border-radius: 8px;
-          padding: 7px 13px;
-          margin-right: 10px;
+          border: 1px solid rgba(176, 200, 255, 0.4);
+          border-radius: 999px;
+          padding: 8px 15px;
+          margin-right: 12px;
           font-size: 12px;
-          font-weight: 700;
+          font-weight: 750;
           cursor: pointer;
+          box-shadow: 0 4px 12px rgba(75, 107, 255, 0.32);
         }
 
         .panel-heading {
@@ -2688,7 +2860,10 @@ export default function BusinessFeedPage() {
           }
 
           .hero-icon {
-            font-size: 65px;
+            width: 84px;
+            height: 84px;
+            font-size: 48px;
+            border-radius: 20px;
           }
         }
 
@@ -2716,7 +2891,10 @@ export default function BusinessFeedPage() {
           }
 
           .hero-icon {
-            font-size: 45px;
+            width: 64px;
+            height: 64px;
+            font-size: 34px;
+            border-radius: 16px;
           }
 
           .left-panel,
