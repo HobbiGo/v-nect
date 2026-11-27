@@ -1274,16 +1274,28 @@ function VCircleContent() {
       <style jsx>{`
         .circle-page {
           min-height: 100vh;
-          background: #07111f;
-          color: #eef4fb;
+          color: #f3f7ff;
           font-family: var(--font-sans), Arial, sans-serif;
+          background:
+            radial-gradient(
+              circle at 78% 14%,
+              rgba(78, 108, 255, 0.32),
+              transparent 36%
+            ),
+            radial-gradient(
+              circle at 22% 32%,
+              rgba(120, 84, 255, 0.22),
+              transparent 42%
+            ),
+            linear-gradient(180deg, #060b24 0%, #091338 55%, #060b24 100%);
         }
 
         .circle-navbar {
           min-height: 74px;
           padding: 12px 7%;
-          background: #07111f;
-          border-bottom: 1px solid rgba(255, 255, 255, 0.08);
+          background: rgba(6, 11, 36, 0.88);
+          backdrop-filter: blur(12px);
+          border-bottom: 1px solid rgba(138, 165, 255, 0.14);
           display: flex;
           align-items: center;
           justify-content: space-between;
@@ -1306,7 +1318,7 @@ function VCircleContent() {
           color: #ffffff;
           text-decoration: none;
           font-size: 21px;
-          font-weight: 800;
+          font-weight: 850;
           display: inline-flex;
           align-items: baseline;
           gap: 8px;
@@ -1314,14 +1326,14 @@ function VCircleContent() {
 
         .circle-brand span,
         .circle-hero h1 span {
-          color: #13c8b5;
+          color: #8ab4ff;
         }
 
         .circle-brand small {
           font-size: 10px;
           font-weight: 800;
           letter-spacing: 1.3px;
-          color: #9cb0c9;
+          color: #96a8d0;
         }
 
         .circle-nav-links {
@@ -1332,7 +1344,7 @@ function VCircleContent() {
         }
 
         .circle-nav-links :global(a) {
-          color: #d2deed;
+          color: #c8d7f5;
           text-decoration: none;
           font-size: 13.5px;
           font-weight: 600;
@@ -1342,24 +1354,24 @@ function VCircleContent() {
 
         .circle-nav-links :global(a:hover),
         .circle-nav-links :global(a.is-current) {
-          color: #7ee8dc;
-          background: rgba(19, 200, 181, 0.12);
+          color: #ffffff;
+          background: rgba(92, 124, 255, 0.18);
         }
 
         .circle-user-pill {
           padding: 6px 12px;
           border-radius: 999px;
-          background: rgba(19, 200, 181, 0.16);
-          border: 1px solid rgba(19, 200, 181, 0.45);
-          color: #7ee8dc;
+          background: rgba(92, 124, 255, 0.18);
+          border: 1px solid rgba(138, 180, 255, 0.38);
+          color: #c7dcff;
           font-size: 12px;
           font-weight: 700;
         }
 
         .circle-ghost-btn {
           background: rgba(255, 255, 255, 0.06);
-          border: 1px solid rgba(255, 255, 255, 0.22);
-          color: #eef4fb;
+          border: 1px solid rgba(138, 165, 255, 0.28);
+          color: #eef3ff;
           padding: 8px 14px;
           border-radius: 9px;
           font-size: 13px;
@@ -1374,8 +1386,12 @@ function VCircleContent() {
         }
 
         .circle-hero {
-          background: linear-gradient(125deg, #102b4d, #134a66);
-          border: 1px solid rgba(126, 232, 220, 0.2);
+          background: linear-gradient(
+            125deg,
+            rgba(22, 36, 82, 0.94),
+            rgba(13, 24, 62, 0.98)
+          );
+          border: 1px solid rgba(138, 165, 255, 0.24);
           border-radius: 18px;
           padding: 34px 32px;
           display: flex;
@@ -1383,26 +1399,29 @@ function VCircleContent() {
           align-items: center;
           gap: 24px;
           flex-wrap: wrap;
+          box-shadow: 0 14px 32px rgba(3, 8, 24, 0.36);
         }
 
         .circle-eyebrow {
           display: inline-block;
-          color: #13c8b5;
+          color: #79a6ff;
           font-size: 11px;
           font-weight: 800;
-          letter-spacing: 1.5px;
+          letter-spacing: 1.8px;
+          text-transform: uppercase;
         }
 
         .circle-hero h1 {
           margin: 8px 0;
           font-size: 40px;
-          font-weight: 800;
+          font-weight: 850;
           line-height: 1.15;
+          color: #ffffff;
         }
 
         .circle-hero p {
           margin: 0;
-          color: #d2e2f3;
+          color: #b8c7e6;
           font-size: 15px;
           line-height: 1.65;
           max-width: 560px;
@@ -1415,8 +1434,8 @@ function VCircleContent() {
         }
 
         .circle-stat {
-          background: rgba(7, 17, 31, 0.55);
-          border: 1px solid rgba(126, 232, 220, 0.22);
+          background: rgba(6, 11, 36, 0.65);
+          border: 1px solid rgba(138, 180, 255, 0.24);
           border-radius: 12px;
           padding: 14px 18px;
           min-width: 105px;
@@ -1426,13 +1445,13 @@ function VCircleContent() {
         .circle-stat strong {
           display: block;
           font-size: 24px;
-          font-weight: 800;
-          color: #7ee8dc;
+          font-weight: 850;
+          color: #9ec0ff;
         }
 
         .circle-stat span {
           font-size: 12px;
-          color: #b5c7dd;
+          color: #9cb0d9;
         }
 
         .circle-mode-tabs {
@@ -1445,9 +1464,9 @@ function VCircleContent() {
         .circle-mode-tab {
           padding: 10px 18px;
           border-radius: 11px;
-          border: 1px solid rgba(255, 255, 255, 0.16);
-          background: #0d1e34;
-          color: #c8d7ea;
+          border: 1px solid rgba(138, 165, 255, 0.22);
+          background: rgba(14, 24, 58, 0.88);
+          color: #c8d7f5;
           font-size: 13px;
           font-weight: 750;
           cursor: pointer;
@@ -1455,19 +1474,19 @@ function VCircleContent() {
         }
 
         .circle-mode-tab.active {
-          background: linear-gradient(110deg, #347cf0, #13bcae);
+          background: linear-gradient(110deg, #4b6bff, #7854ff);
           border-color: transparent;
           color: #ffffff;
-          box-shadow: 0 8px 20px rgba(19, 200, 181, 0.22);
+          box-shadow: 0 8px 20px rgba(75, 107, 255, 0.28);
         }
 
         .circle-banner {
           margin-top: 16px;
           padding: 12px 16px;
           border-radius: 10px;
-          background: rgba(19, 200, 181, 0.14);
-          border: 1px solid rgba(19, 200, 181, 0.4);
-          color: #9ff5eb;
+          background: rgba(92, 124, 255, 0.18);
+          border: 1px solid rgba(138, 180, 255, 0.42);
+          color: #d6e6ff;
           font-size: 13px;
           font-weight: 600;
           display: flex;
@@ -1479,7 +1498,7 @@ function VCircleContent() {
         .circle-banner button {
           border: none;
           background: transparent;
-          color: #9ff5eb;
+          color: #d6e6ff;
           font-size: 14px;
           cursor: pointer;
         }
@@ -1501,16 +1520,27 @@ function VCircleContent() {
           margin: 4px 0 0;
           font-size: 26px;
           font-weight: 800;
+          color: #ffffff;
         }
 
         .circle-inline-btn {
           border: none;
           background: transparent;
-          color: #7ee8dc;
+          color: #8ab4ff;
           font-size: 13px;
           font-weight: 750;
           cursor: pointer;
           padding: 4px 0;
+        }
+
+        .circle-inline-btn:hover {
+          color: #c7dcff;
+        }
+
+        .circle-groups-grid,
+        .circle-person-card,
+        .circle-discussion-card {
+          /* shared styling below */
         }
 
         .circle-groups-grid {
@@ -1522,13 +1552,18 @@ function VCircleContent() {
         .circle-group-card,
         .circle-person-card,
         .circle-discussion-card {
-          background: #0d1e34;
-          border: 1px solid rgba(255, 255, 255, 0.09);
-          border-radius: 14px;
+          background: linear-gradient(
+            160deg,
+            rgba(20, 32, 72, 0.92),
+            rgba(11, 19, 46, 0.96)
+          );
+          border: 1px solid rgba(138, 165, 255, 0.18);
+          border-radius: 16px;
           padding: 20px;
           display: flex;
           flex-direction: column;
           gap: 10px;
+          box-shadow: 0 10px 24px rgba(3, 8, 24, 0.24);
         }
 
         .circle-group-top,
@@ -1548,8 +1583,9 @@ function VCircleContent() {
           font-weight: 800;
           padding: 4px 10px;
           border-radius: 999px;
-          background: rgba(52, 124, 240, 0.2);
-          color: #8cc0ff;
+          background: rgba(92, 124, 255, 0.2);
+          border: 1px solid rgba(138, 180, 255, 0.28);
+          color: #9ec0ff;
         }
 
         .circle-live-badge {
@@ -1557,8 +1593,9 @@ function VCircleContent() {
           font-weight: 800;
           padding: 2px 7px;
           border-radius: 999px;
-          background: rgba(19, 200, 181, 0.2);
-          color: #7ee8dc;
+          background: rgba(120, 84, 255, 0.26);
+          border: 1px solid rgba(168, 142, 255, 0.4);
+          color: #d6c8ff;
           margin-left: 6px;
           vertical-align: middle;
         }
@@ -1566,7 +1603,7 @@ function VCircleContent() {
         .circle-group-top small,
         .circle-person-foot small,
         .circle-disc-author small {
-          color: #9ab0ca;
+          color: #8ea3cc;
           font-size: 12px;
         }
 
@@ -1582,7 +1619,7 @@ function VCircleContent() {
         .circle-person-bio,
         .circle-disc-body {
           margin: 0;
-          color: #b7c8dd;
+          color: #b8c7e6;
           font-size: 13px;
           line-height: 1.65;
           white-space: pre-wrap;
@@ -1591,7 +1628,7 @@ function VCircleContent() {
         .circle-focus-pill {
           font-size: 12px;
           font-weight: 700;
-          color: #7ee8dc;
+          color: #8ab4ff;
         }
 
         .circle-toolbar {
@@ -1606,15 +1643,19 @@ function VCircleContent() {
           box-sizing: border-box;
           padding: 12px 15px;
           border-radius: 10px;
-          border: 1px solid rgba(255, 255, 255, 0.16);
-          background: #0d1e34;
-          color: #ffffff;
+          border: 1px solid rgba(138, 165, 255, 0.24);
+          background: #081029;
+          color: #f3f7ff;
           font-size: 14px;
           outline: none;
         }
 
+        .circle-search-input::placeholder {
+          color: #889bc2;
+        }
+
         .circle-search-input:focus {
-          border-color: #13c8b5;
+          border-color: #7854ff;
         }
 
         .circle-sector-list {
@@ -1624,9 +1665,9 @@ function VCircleContent() {
         }
 
         .circle-filter-chip {
-          border: 1px solid rgba(255, 255, 255, 0.14);
-          background: #0d1e34;
-          color: #c8d7ea;
+          border: 1px solid rgba(138, 165, 255, 0.22);
+          background: rgba(14, 24, 58, 0.85);
+          color: #c8d7f5;
           padding: 7px 13px;
           border-radius: 999px;
           font-size: 12px;
@@ -1635,9 +1676,9 @@ function VCircleContent() {
         }
 
         .circle-filter-chip.active {
-          background: rgba(19, 200, 181, 0.2);
-          border-color: #13c8b5;
-          color: #7ee8dc;
+          background: linear-gradient(110deg, #4b6bff, #7854ff);
+          border-color: transparent;
+          color: #ffffff;
         }
 
         .circle-people-grid {
@@ -1664,7 +1705,7 @@ function VCircleContent() {
           width: 46px;
           height: 46px;
           border-radius: 12px;
-          background: linear-gradient(135deg, #1b3f6b, #145b79);
+          background: linear-gradient(135deg, #4b6bff, #7854ff);
           color: #ffffff;
           font-weight: 800;
           font-size: 15px;
@@ -1686,8 +1727,8 @@ function VCircleContent() {
           width: 11px;
           height: 11px;
           border-radius: 50%;
-          background: #13c8b5;
-          border: 2px solid #0d1e34;
+          background: #8ab4ff;
+          border: 2px solid #0d183e;
         }
 
         .circle-person-identity strong,
@@ -1700,21 +1741,21 @@ function VCircleContent() {
         .circle-person-identity small {
           display: block;
           font-size: 12px;
-          color: #9cb2cc;
+          color: #9cb0d9;
           margin-top: 2px;
         }
 
         .circle-person-identity small span {
-          color: #7ee8dc;
+          color: #8ab4ff;
           font-weight: 600;
         }
 
         .circle-loc-pill {
           font-size: 11px;
           font-weight: 700;
-          color: #b7c8dd;
+          color: #b8c7e6;
           background: rgba(255, 255, 255, 0.06);
-          border: 1px solid rgba(255, 255, 255, 0.12);
+          border: 1px solid rgba(138, 165, 255, 0.2);
           padding: 4px 10px;
           border-radius: 999px;
         }
@@ -1727,8 +1768,8 @@ function VCircleContent() {
 
         .circle-tag {
           font-size: 11px;
-          color: #8eb8e8;
-          background: rgba(52, 124, 240, 0.12);
+          color: #9ec0ff;
+          background: rgba(92, 124, 255, 0.14);
           padding: 3px 9px;
           border-radius: 6px;
         }
@@ -1736,10 +1777,10 @@ function VCircleContent() {
         .circle-saved-note {
           padding: 9px 12px;
           border-radius: 8px;
-          background: rgba(19, 200, 181, 0.1);
-          border: 1px solid rgba(19, 200, 181, 0.25);
+          background: rgba(92, 124, 255, 0.14);
+          border: 1px solid rgba(138, 180, 255, 0.28);
           font-size: 12px;
-          color: #cdeff0;
+          color: #dce7ff;
         }
 
         .circle-note-box {
@@ -1748,8 +1789,8 @@ function VCircleContent() {
           gap: 8px;
           padding: 10px;
           border-radius: 10px;
-          background: #091627;
-          border: 1px solid rgba(255, 255, 255, 0.14);
+          background: #081029;
+          border: 1px solid rgba(138, 165, 255, 0.22);
         }
 
         .circle-note-box input {
@@ -1757,8 +1798,8 @@ function VCircleContent() {
           box-sizing: border-box;
           padding: 8px 10px;
           border-radius: 7px;
-          border: 1px solid rgba(255, 255, 255, 0.18);
-          background: #0d1e34;
+          border: 1px solid rgba(138, 165, 255, 0.24);
+          background: #0d193d;
           color: #ffffff;
           font-size: 12px;
           outline: none;
@@ -1782,7 +1823,7 @@ function VCircleContent() {
         .circle-thread-wrap {
           margin-top: 6px;
           padding-top: 12px;
-          border-top: 1px solid rgba(255, 255, 255, 0.08);
+          border-top: 1px solid rgba(138, 165, 255, 0.14);
           color: #131c36;
         }
 
@@ -1801,29 +1842,33 @@ function VCircleContent() {
 
         .circle-btn-primary {
           border: none;
-          background: linear-gradient(110deg, #347cf0, #13bcae);
+          background: linear-gradient(110deg, #4b6bff, #7854ff);
           color: #ffffff !important;
           padding: 8px 13px;
         }
 
         .circle-btn-secondary {
-          border: 1px solid rgba(255, 255, 255, 0.18);
+          border: 1px solid rgba(138, 165, 255, 0.26);
           background: rgba(255, 255, 255, 0.06);
-          color: #dce8f6 !important;
+          color: #dce7ff !important;
           padding: 8px 11px;
         }
 
         .circle-btn-joined {
-          border: 1px solid rgba(19, 200, 181, 0.45);
-          background: rgba(19, 200, 181, 0.16);
-          color: #7ee8dc !important;
+          border: 1px solid rgba(138, 180, 255, 0.5);
+          background: rgba(92, 124, 255, 0.24);
+          color: #ffffff !important;
           padding: 8px 13px;
         }
 
         .circle-empty {
-          background: #0d1e34;
-          border: 1px solid rgba(255, 255, 255, 0.1);
-          border-radius: 14px;
+          background: linear-gradient(
+            160deg,
+            rgba(20, 32, 72, 0.92),
+            rgba(11, 19, 46, 0.96)
+          );
+          border: 1px solid rgba(138, 165, 255, 0.18);
+          border-radius: 16px;
           padding: 36px 20px;
           text-align: center;
           display: flex;
@@ -1834,11 +1879,11 @@ function VCircleContent() {
 
         .circle-footer {
           text-align: center;
-          padding: 26px 20px;
-          background: #050d18;
-          color: #8fa4bf;
+          padding: 28px 20px;
+          background: #050a20;
+          color: #96a8d0;
           font-size: 12px;
-          border-top: 1px solid rgba(255, 255, 255, 0.06);
+          border-top: 1px solid rgba(138, 165, 255, 0.14);
         }
 
         @media (max-width: 900px) {
@@ -1859,8 +1904,8 @@ export default function VCirclePage() {
         <div
           style={{
             minHeight: "100vh",
-            background: "#07111f",
-            color: "#eef4fb",
+            background: "#060b24",
+            color: "#f3f7ff",
             padding: "40px",
           }}
         >
