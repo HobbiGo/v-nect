@@ -417,16 +417,11 @@ export default function HomePage() {
           </div>
 
           <div className="hero-visual">
-            <div className="hero-orbit-lines" aria-hidden="true" />
-            <span className="hero-corner-pill top-left">BUSINESS</span>
-            <span className="hero-corner-pill top-right">CONNECT</span>
             <img
               src={HERO_GLOBE_SRC}
               alt="v-nect global network globe"
               className="hero-globe-img"
             />
-            <span className="hero-corner-pill bottom-left">COMMUNITY</span>
-            <span className="hero-corner-pill bottom-right">GLOBAL</span>
           </div>
         </div>
       </section>
@@ -945,6 +940,7 @@ export default function HomePage() {
           min-height: 100vh;
           color: #f3f7ff;
           font-family: var(--font-sans), Arial, sans-serif;
+          overflow-x: hidden;
           background:
             radial-gradient(
               circle at 78% 14%,
@@ -1196,52 +1192,17 @@ export default function HomePage() {
           display: flex;
           align-items: center;
           justify-content: center;
-          min-height: 340px;
-          padding: 16px;
+          width: 100%;
+          min-height: 300px;
           background: transparent;
           border: none;
           box-shadow: none;
-          overflow: visible;
-        }[span_6](start_span)[span_6](end_span)[span_7](start_span)[span_7](end_span)
-
-        .hero-orbit-lines {
-          position: absolute;
-          inset: 12% 8%;
-          pointer-events: none;
-          background:
-            linear-gradient(
-              42deg,
-              transparent 49.4%,
-              rgba(138, 180, 255, 0.24) 49.9%,
-              rgba(138, 180, 255, 0.24) 50.3%,
-              transparent 50.8%
-            ),
-            linear-gradient(
-              -42deg,
-              transparent 49.4%,
-              rgba(138, 180, 255, 0.24) 49.9%,
-              rgba(138, 180, 255, 0.24) 50.3%,
-              transparent 50.8%
-            );
-          -webkit-mask-image: radial-gradient(
-            circle at center,
-            transparent 24%,
-            #000 62%,
-            transparent 95%
-          );
-          mask-image: radial-gradient(
-            circle at center,
-            transparent 24%,
-            #000 62%,
-            transparent 95%
-          );
-        }[span_8](start_span)[span_8](end_span)
+          overflow: hidden;
+        }
 
         .hero-globe-img {
-          position: relative;
-          z-index: 1;
           width: 100%;
-          max-width: 520px;
+          max-width: 500px;
           height: auto;
           object-fit: contain;
           display: block;
@@ -1259,40 +1220,6 @@ export default function HomePage() {
             rgba(0, 0, 0, 0.55) 74%,
             transparent 96%
           );
-        }[span_9](start_span)[span_9](end_span)[span_10](start_span)[span_10](end_span)
-
-        .hero-corner-pill {
-          position: absolute;
-          z-index: 2;
-          font-size: 9.5px;
-          font-weight: 800;
-          letter-spacing: 1.4px;
-          color: #cfe0ff;
-          background: rgba(13, 24, 58, 0.72);
-          border: 1px solid rgba(138, 180, 255, 0.28);
-          padding: 4px 10px;
-          border-radius: 6px;
-          pointer-events: none;
-        }[span_11](start_span)[span_11](end_span)
-
-        .hero-corner-pill.top-left {
-          top: 8%;
-          left: 2%;
-        }
-
-        .hero-corner-pill.top-right {
-          top: 8%;
-          right: 2%;
-        }
-
-        .hero-corner-pill.bottom-left {
-          bottom: 8%;
-          left: 2%;
-        }
-
-        .hero-corner-pill.bottom-right {
-          bottom: 8%;
-          right: 2%;
         }
 
         .small-btn {
@@ -1912,7 +1839,7 @@ export default function HomePage() {
           }
 
           .hero-visual {
-            min-height: 270px;
+            min-height: 250px;
           }
 
           .hero-globe-img {
