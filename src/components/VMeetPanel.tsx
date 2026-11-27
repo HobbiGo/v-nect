@@ -478,14 +478,19 @@ export function VMeetPanel({
       <style jsx>{`
         .vmeet-shell {
           font-family: var(--font-sans), Arial, sans-serif;
-          background: #0d1e34;
-          border: 1px solid rgba(126, 232, 220, 0.2);
+          background: linear-gradient(
+            160deg,
+            rgba(20, 32, 72, 0.92),
+            rgba(11, 19, 46, 0.96)
+          );
+          border: 1px solid rgba(138, 165, 255, 0.2);
           border-radius: 16px;
           padding: 22px;
-          color: #eef4fb;
+          color: #f3f7ff;
           display: flex;
           flex-direction: column;
           gap: 16px;
+          box-shadow: 0 10px 24px rgba(3, 8, 24, 0.25);
         }
 
         .vmeet-header-bar {
@@ -501,7 +506,7 @@ export function VMeetPanel({
           font-size: 11px;
           font-weight: 800;
           letter-spacing: 1.5px;
-          color: #13c8b5;
+          color: #79a6ff;
         }
 
         .vmeet-header-bar h2 {
@@ -514,13 +519,13 @@ export function VMeetPanel({
         .vmeet-sub {
           margin: 6px 0 0;
           font-size: 13px;
-          color: #b7c8de;
+          color: #b8c7e6;
         }
 
         .vmeet-link-btn {
           border: none;
           background: transparent;
-          color: #7ee8dc;
+          color: #8ab4ff;
           font-size: 12px;
           font-weight: 700;
           text-decoration: underline;
@@ -538,24 +543,34 @@ export function VMeetPanel({
         .vmeet-code-input {
           padding: 9px 12px;
           border-radius: 9px;
-          border: 1px solid rgba(255, 255, 255, 0.2);
-          background: #081526;
-          color: #ffffff;
+          border: 1px solid rgba(138, 165, 255, 0.24);
+          background: #081029;
+          color: #f3f7ff;
           font: inherit;
           font-size: 13px;
           width: 145px;
+          outline: none;
+        }
+
+        .vmeet-code-input:focus {
+          border-color: #7854ff;
         }
 
         .vmeet-secondary-btn {
           padding: 9px 13px;
           border-radius: 9px;
-          border: 1px solid rgba(126, 232, 220, 0.35);
-          background: rgba(19, 200, 181, 0.14);
-          color: #9ff5eb;
+          border: 1px solid rgba(138, 165, 255, 0.3);
+          background: rgba(92, 124, 255, 0.16);
+          color: #dce7ff;
           font-size: 12px;
           font-weight: 700;
           cursor: pointer;
           white-space: nowrap;
+        }
+
+        .vmeet-secondary-btn:hover {
+          border-color: rgba(138, 180, 255, 0.52);
+          color: #ffffff;
         }
 
         .vmeet-presets {
@@ -572,15 +587,19 @@ export function VMeetPanel({
           text-align: left;
           padding: 12px 14px;
           border-radius: 11px;
-          border: 1px solid rgba(255, 255, 255, 0.1);
-          background: #122742;
-          color: #e4eef9;
+          border: 1px solid rgba(138, 165, 255, 0.16);
+          background: rgba(8, 16, 41, 0.82);
+          color: #c8d7f5;
           cursor: pointer;
         }
 
         .vmeet-preset.active {
-          border-color: #13c8b5;
-          background: rgba(19, 200, 181, 0.16);
+          border-color: rgba(138, 180, 255, 0.48);
+          background: linear-gradient(
+            110deg,
+            rgba(75, 107, 255, 0.32),
+            rgba(120, 84, 255, 0.32)
+          );
         }
 
         .vmeet-preset strong {
@@ -593,22 +612,22 @@ export function VMeetPanel({
           display: block;
           margin-top: 2px;
           font-size: 11px;
-          color: #9cb2cc;
+          color: #9cb0d9;
         }
 
         .vmeet-preset span {
           font-size: 11px;
           font-weight: 700;
-          color: #7ee8dc;
+          color: #9ec0ff;
           white-space: nowrap;
         }
 
         .vmeet-notice {
           padding: 9px 13px;
           border-radius: 9px;
-          background: rgba(19, 200, 181, 0.14);
-          border: 1px solid rgba(19, 200, 181, 0.35);
-          color: #a7f7ed;
+          background: rgba(92, 124, 255, 0.16);
+          border: 1px solid rgba(138, 180, 255, 0.34);
+          color: #dce7ff;
           font-size: 12px;
         }
 
@@ -626,8 +645,8 @@ export function VMeetPanel({
         }
 
         .vmeet-stage {
-          background: #081526;
-          border: 1px solid rgba(255, 255, 255, 0.1);
+          background: #081029;
+          border: 1px solid rgba(138, 165, 255, 0.18);
           border-radius: 14px;
           padding: 14px;
           display: flex;
@@ -648,18 +667,19 @@ export function VMeetPanel({
           border-radius: 999px;
           font-size: 11px;
           font-weight: 800;
-          background: rgba(255, 255, 255, 0.08);
-          color: #b5c7dd;
+          background: rgba(255, 255, 255, 0.06);
+          color: #b8c7e6;
         }
 
         .vmeet-live-pill.on {
-          background: rgba(19, 200, 181, 0.2);
-          color: #7ee8dc;
+          background: rgba(92, 124, 255, 0.24);
+          border: 1px solid rgba(138, 180, 255, 0.45);
+          color: #ffffff;
         }
 
         .vmeet-room-title {
           font-size: 12px;
-          color: #9cb2cc;
+          color: #9cb0d9;
           font-weight: 600;
         }
 
@@ -667,8 +687,8 @@ export function VMeetPanel({
           position: relative;
           min-height: 250px;
           border-radius: 12px;
-          background: #050d18;
-          border: 1px solid rgba(255, 255, 255, 0.08);
+          background: #060b24;
+          border: 1px solid rgba(138, 165, 255, 0.14);
           display: grid;
           place-items: center;
           overflow: hidden;
@@ -700,7 +720,7 @@ export function VMeetPanel({
           font-size: 26px;
           font-weight: 800;
           color: #ffffff;
-          background: linear-gradient(120deg, #347cf0, #13bcae);
+          background: linear-gradient(110deg, #4b6bff, #7854ff);
         }
 
         .vmeet-avatar-stage h3 {
@@ -712,7 +732,7 @@ export function VMeetPanel({
         .vmeet-avatar-stage p {
           margin: 5px 0 0;
           font-size: 13px;
-          color: #9cb2cc;
+          color: #9cb0d9;
         }
 
         .vmeet-share-badge {
@@ -721,8 +741,8 @@ export function VMeetPanel({
           right: 10px;
           padding: 5px 10px;
           border-radius: 8px;
-          background: rgba(19, 200, 181, 0.9);
-          color: #051320;
+          background: linear-gradient(110deg, #4b6bff, #7854ff);
+          color: #ffffff;
           font-size: 11px;
           font-weight: 800;
         }
@@ -735,9 +755,9 @@ export function VMeetPanel({
         }
 
         .vmeet-ctrl-btn {
-          border: 1px solid rgba(255, 255, 255, 0.16);
-          background: #122640;
-          color: #e6effa;
+          border: 1px solid rgba(138, 165, 255, 0.22);
+          background: rgba(20, 32, 72, 0.85);
+          color: #dce7ff;
           padding: 9px 13px;
           border-radius: 9px;
           font-size: 12px;
@@ -746,9 +766,9 @@ export function VMeetPanel({
         }
 
         .vmeet-ctrl-btn.on {
-          border-color: #13c8b5;
-          background: rgba(19, 200, 181, 0.18);
-          color: #8af3e6;
+          border-color: rgba(138, 180, 255, 0.5);
+          background: rgba(92, 124, 255, 0.24);
+          color: #ffffff;
         }
 
         .vmeet-ctrl-btn.off {
@@ -760,7 +780,7 @@ export function VMeetPanel({
         .vmeet-join-btn {
           margin-left: auto;
           border: none;
-          background: linear-gradient(110deg, #347cf0, #13bcae);
+          background: linear-gradient(110deg, #4b6bff, #7854ff);
           color: #ffffff;
           padding: 9px 16px;
           border-radius: 9px;
@@ -774,8 +794,8 @@ export function VMeetPanel({
         }
 
         .vmeet-agenda-card {
-          background: #081526;
-          border: 1px solid rgba(255, 255, 255, 0.09);
+          background: #081029;
+          border: 1px solid rgba(138, 165, 255, 0.16);
           border-radius: 12px;
           padding: 12px 14px;
           display: flex;
@@ -786,20 +806,25 @@ export function VMeetPanel({
         .vmeet-agenda-card label {
           font-size: 12px;
           font-weight: 700;
-          color: #9cb2cc;
+          color: #9cb0d9;
         }
 
         .vmeet-agenda-card textarea {
           width: 100%;
           box-sizing: border-box;
           border-radius: 8px;
-          border: 1px solid rgba(255, 255, 255, 0.14);
-          background: #0d1e34;
-          color: #eef4fb;
+          border: 1px solid rgba(138, 165, 255, 0.2);
+          background: rgba(20, 32, 72, 0.72);
+          color: #f3f7ff;
           padding: 9px 11px;
           font: inherit;
           font-size: 13px;
           resize: vertical;
+          outline: none;
+        }
+
+        .vmeet-agenda-card textarea:focus {
+          border-color: #7854ff;
         }
 
         .vmeet-side-col {
@@ -809,8 +834,8 @@ export function VMeetPanel({
         }
 
         .vmeet-side-card {
-          background: #081526;
-          border: 1px solid rgba(255, 255, 255, 0.09);
+          background: #081029;
+          border: 1px solid rgba(138, 165, 255, 0.16);
           border-radius: 12px;
           padding: 13px;
           display: flex;
@@ -821,7 +846,7 @@ export function VMeetPanel({
         .vmeet-side-head h3 {
           margin: 0;
           font-size: 14px;
-          font-weight: 700;
+          font-weight: 750;
           color: #ffffff;
         }
 
@@ -840,7 +865,8 @@ export function VMeetPanel({
           align-items: center;
           padding: 8px 10px;
           border-radius: 9px;
-          background: #10243d;
+          background: rgba(20, 32, 72, 0.78);
+          border: 1px solid rgba(138, 165, 255, 0.12);
         }
 
         .vmeet-participant-item strong {
@@ -852,7 +878,7 @@ export function VMeetPanel({
         .vmeet-participant-item small {
           display: block;
           font-size: 11px;
-          color: #9cb2cc;
+          color: #9cb0d9;
         }
 
         .vmeet-badges {
@@ -872,24 +898,25 @@ export function VMeetPanel({
         .vmeet-chat-msg {
           padding: 8px 10px;
           border-radius: 8px;
-          background: #10243d;
+          background: rgba(20, 32, 72, 0.78);
+          border: 1px solid rgba(138, 165, 255, 0.12);
         }
 
         .vmeet-chat-meta {
           display: flex;
           justify-content: space-between;
           font-size: 11px;
-          color: #9cb2cc;
+          color: #9cb0d9;
         }
 
         .vmeet-chat-meta strong {
-          color: #7ee8dc;
+          color: #9ec0ff;
         }
 
         .vmeet-chat-msg p {
           margin: 4px 0 0;
           font-size: 13px;
-          color: #eef4fb;
+          color: #f3f7ff;
           line-height: 1.45;
         }
 
@@ -903,17 +930,22 @@ export function VMeetPanel({
           min-width: 0;
           padding: 8px 10px;
           border-radius: 8px;
-          border: 1px solid rgba(255, 255, 255, 0.15);
-          background: #0d1e34;
-          color: #ffffff;
+          border: 1px solid rgba(138, 165, 255, 0.22);
+          background: rgba(20, 32, 72, 0.72);
+          color: #f3f7ff;
           font: inherit;
           font-size: 12px;
+          outline: none;
+        }
+
+        .vmeet-chat-form input:focus {
+          border-color: #7854ff;
         }
 
         .vmeet-chat-form button {
           border: none;
           border-radius: 8px;
-          background: linear-gradient(110deg, #347cf0, #13bcae);
+          background: linear-gradient(110deg, #4b6bff, #7854ff);
           color: #ffffff;
           padding: 0 12px;
           font-size: 12px;
