@@ -1034,17 +1034,19 @@ export default function HomePage() {
         }
         .section-header p, .ecosystem-header p, .posts-header p, .about-card p { margin: 0; color: #a9b9da; font-size: 14.5px; line-height: 1.7; }
         .features-grid { display: grid; grid-template-columns: repeat(3, minmax(0, 1fr)); gap: 20px; }
-        .feature-card { background: linear-gradient(160deg, rgba(20, 32, 72, 0.9), rgba(11, 19, 46, 0.95)); border: 1px solid rgba(138, 165, 255, 0.16); border-radius: 18px; padding: 26px; display: flex; flex-direction: column; }
-        .feature-icon { width: 44px; height: 44px; border-radius: 12px; background: rgba(92, 124, 255, 0.16); border: 1px solid rgba(138, 165, 255, 0.25); display: grid; place-items: center; font-size: 20px; margin-bottom: 18px; }
+        .feature-card { position: relative; overflow: hidden; background: linear-gradient(180deg, rgba(24, 38, 84, 0.92), rgba(12, 22, 52, 0.98)); border: 1px solid rgba(138, 165, 255, 0.18); border-radius: 20px; padding: 30px 24px; display: flex; flex-direction: column; align-items: center; text-align: center; box-shadow: 0 14px 30px rgba(3, 8, 24, 0.28); }
+        .feature-card::before { content: ""; position: absolute; top: 0; left: 24px; right: 24px; height: 2px; background: linear-gradient(90deg, transparent, rgba(138, 180, 255, 0.9), transparent); }
+        .feature-icon { width: 64px; height: 64px; border-radius: 50%; background: rgba(92, 124, 255, 0.16); border: 1px solid rgba(138, 165, 255, 0.25); display: grid; place-items: center; font-size: 26px; margin-bottom: 18px; box-shadow: 0 0 24px rgba(120, 140, 255, 0.28); }
         .feature-card h3 { margin: 0 0 8px; font-size: 18px; font-weight: 750; color: #ffffff; }
         .feature-card p { margin: 0; color: #a9b9da; font-size: 13.5px; line-height: 1.65; }
         .ecosystem-header, .posts-header { display: flex; justify-content: space-between; align-items: flex-end; gap: 20px; flex-wrap: wrap; margin-bottom: 24px; }
         :global(.eco-link) { color: #9ec0ff; text-decoration: none; font-size: 13.5px; font-weight: 700; display: inline-flex; align-items: center; gap: 6px; transition: color 0.2s ease; }
         :global(.eco-link:hover) { color: #c5daff; }
         .ecosystem-grid { display: grid; grid-template-columns: repeat(3, minmax(0, 1fr)); gap: 18px; }
-        .eco-card { min-height: 228px; display: flex; flex-direction: column; text-decoration: none; padding: 22px; border: 1px solid rgba(148, 184, 255, 0.26); border-radius: 16px; background: linear-gradient(155deg, rgba(38, 66, 122, 0.92), rgba(18, 33, 68, 0.98)); box-shadow: 0 12px 26px rgba(2, 8, 24, 0.3); transition: transform 0.25s ease, border-color 0.25s ease; }
-        .eco-card:hover { transform: translateY(-4px); border-color: rgba(148, 184, 255, 0.55); }
-        .eco-icon { width: 48px; height: 48px; display: grid; place-items: center; margin-bottom: 16px; border-radius: 13px; color: #ffffff; font-size: 21px; border: 1px solid rgba(255, 255, 255, 0.28); }
+        .eco-card { position: relative; overflow: hidden; min-height: 260px; display: flex; flex-direction: column; align-items: center; text-align: center; text-decoration: none; padding: 30px 24px 24px; border: 1px solid rgba(148, 184, 255, 0.22); border-radius: 20px; background: linear-gradient(180deg, rgba(24, 38, 84, 0.92), rgba(12, 22, 52, 0.98)); box-shadow: 0 14px 30px rgba(3, 8, 24, 0.28); transition: transform 0.25s ease, border-color 0.25s ease, box-shadow 0.25s ease; }
+        .eco-card::before { content: ""; position: absolute; top: 0; left: 24px; right: 24px; height: 2px; background: linear-gradient(90deg, transparent, rgba(138, 180, 255, 0.9), transparent); border-radius: 999px; }
+        .eco-card:hover { transform: translateY(-5px); border-color: rgba(148, 184, 255, 0.5); box-shadow: 0 20px 40px rgba(3, 8, 24, 0.4), 0 0 0 1px rgba(148, 184, 255, 0.2); }
+        .eco-icon { width: 64px; height: 64px; display: grid; place-items: center; margin-bottom: 18px; border-radius: 50%; color: #ffffff; font-size: 26px; border: 1px solid rgba(255, 255, 255, 0.28); box-shadow: 0 0 24px rgba(120, 140, 255, 0.28); }
         .eco-tone-0 .eco-icon { background: linear-gradient(145deg, #36b9ff, #1763e9); }
         .eco-tone-1 .eco-icon { background: linear-gradient(145deg, #bd78ff, #7041e9); }
         .eco-tone-2 .eco-icon { background: linear-gradient(145deg, #32dce9, #137dbd); }
@@ -1055,7 +1057,7 @@ export default function HomePage() {
         .eco-card h3 { margin: 0 0 4px; color: #ffffff; font-size: 19px; font-weight: 800; }
         .eco-tagline { margin: 0 0 8px; color: #e2ecff; font-size: 13px; font-weight: 650; }
         .eco-desc { margin: 0; color: #b4c6e7; font-size: 12.5px; line-height: 1.58; flex: 1; }
-        .eco-cta { margin-top: 16px; padding-top: 10px; border-top: 1px solid rgba(160, 192, 240, 0.16); display: inline-flex; align-items: center; gap: 6px; color: #7dd3fc; font-size: 12px; font-weight: 750; }
+        .eco-cta { margin-top: auto; padding-top: 14px; border-top: 1px solid rgba(160, 192, 240, 0.16); width: 100%; display: inline-flex; align-items: center; justify-content: center; gap: 6px; color: #7dd3fc; font-size: 12px; font-weight: 750; }
         .home-filter-bar { display: flex; gap: 8px; flex-wrap: wrap; margin-bottom: 22px; }
         .home-filter-pill { border: 1px solid rgba(148, 184, 255, 0.24); background: rgba(15, 25, 58, 0.85); color: #c8d7f5; padding: 7px 14px; border-radius: 999px; font-size: 12px; font-weight: 700; cursor: pointer; transition: background 0.2s ease, border-color 0.2s ease, color 0.2s ease; }
         .home-filter-pill:hover { border-color: rgba(148, 184, 255, 0.48); color: #ffffff; }
@@ -1089,6 +1091,7 @@ export default function HomePage() {
         .video-center-play { position: absolute; left: 50%; top: 50%; transform: translate(-50%, -50%); width: 48px; height: 48px; border-radius: 50%; border: none; background: rgba(75, 107, 255, 0.92); color: #ffffff; font-size: 16px; cursor: pointer; display: grid; place-items: center; }
         .video-card-footer { display: flex; align-items: center; justify-content: space-between; font-size: 11.5px; color: #9cb0d9; margin-top: auto; }
         .about-card { background: linear-gradient(145deg, rgba(22, 36, 82, 0.92), rgba(11, 19, 46, 0.96)); border: 1px solid rgba(138, 165, 255, 0.2); border-radius: 22px; padding: 34px 36px; max-width: 960px; }
+        /* PAGE DEPAN = GAYA EXPLORE NO.3 - hanya visual, fungsi tetap sama */
         /* TAMBAHAN - STATS / HOW / WHY / CTA - CSS baru, CSS lama tidak diubah */
         .stats-strip { padding: 0 7% 10px; }
         .stats-inner { max-width: 1340px; margin: 0 auto; display: grid; grid-template-columns: repeat(4, minmax(0, 1fr)); gap: 12px; background: rgba(15, 25, 58, 0.6); border: 1px solid rgba(138, 165, 255, 0.16); border-radius: 16px; padding: 20px; }
@@ -1097,7 +1100,8 @@ export default function HomePage() {
         .stats-inner span { font-size: 11.5px; color: #9cb0d9; font-weight: 600; }
         .how-section, .why-section { padding: 48px 7%; }
         .how-grid { display: grid; grid-template-columns: repeat(3, minmax(0, 1fr)); gap: 16px; }
-        .how-card { background: linear-gradient(160deg, rgba(20, 32, 72, 0.9), rgba(11, 19, 46, 0.95)); border: 1px solid rgba(138, 165, 255, 0.16); border-radius: 18px; padding: 26px; }
+        .how-card { position: relative; overflow: hidden; background: linear-gradient(180deg, rgba(24, 38, 84, 0.92), rgba(12, 22, 52, 0.98)); border: 1px solid rgba(138, 165, 255, 0.18); border-radius: 20px; padding: 30px 24px; text-align: center; box-shadow: 0 14px 30px rgba(3, 8, 24, 0.28); }
+        .how-card::before { content: ""; position: absolute; top: 0; left: 24px; right: 24px; height: 2px; background: linear-gradient(90deg, transparent, rgba(138, 180, 255, 0.9), transparent); }
         .how-num { font-size: 30px; font-weight: 850; color: #8ab4ff; }
         .how-card h3 { margin: 10px 0 8px; color: #fff; font-size: 17px; font-weight: 750; }
         .how-card p { margin: 0; color: #a9b9da; font-size: 13.5px; line-height: 1.65; }
