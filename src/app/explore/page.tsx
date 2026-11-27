@@ -789,10 +789,10 @@ function ExploreContent() {
         .module-features {
           list-style: none;
           padding: 0;
-          margin: 0 0 18px;
+          margin: 0 0 22px;
           display: flex;
           flex-direction: column;
-          gap: 6px;
+          gap: 7px;
           font-size: 12px;
           color: #c7d6f5;
           flex: 1;
@@ -801,40 +801,53 @@ function ExploreContent() {
         .module-actions {
           display: flex;
           align-items: center;
-          gap: 8px;
-          padding-top: 12px;
-          border-top: 1px solid rgba(160, 192, 240, 0.16);
+          gap: 10px;
+          padding-top: 14px;
+          margin-top: auto;
+          border-top: 1px solid rgba(160, 192, 240, 0.18);
         }
 
         .module-open-btn {
           flex: 1;
           text-decoration: none;
-          background: rgba(255, 255, 255, 0.08);
-          border: 1px solid rgba(148, 184, 255, 0.28);
+          background: linear-gradient(110deg, #4b6bff, #7854ff);
+          border: 1px solid rgba(168, 196, 255, 0.35);
           color: #ffffff;
-          padding: 9px 14px;
-          border-radius: 10px;
-          font-size: 12.5px;
+          padding: 10px 16px;
+          border-radius: 999px;
+          font-size: 13px;
           font-weight: 750;
           display: inline-flex;
           align-items: center;
           justify-content: space-between;
+          gap: 8px;
+          box-shadow: 0 6px 18px rgba(75, 107, 255, 0.32);
+          transition: transform 0.18s ease, box-shadow 0.18s ease,
+            filter 0.18s ease;
         }
 
         .module-open-btn:hover {
-          background: linear-gradient(110deg, #4b6bff, #7854ff);
-          border-color: transparent;
+          transform: translateY(-1px);
+          box-shadow: 0 8px 22px rgba(120, 84, 255, 0.45);
+          filter: brightness(1.06);
         }
 
         .module-sub-link {
           text-decoration: none;
-          font-size: 11.5px;
+          font-size: 12px;
           font-weight: 700;
-          color: #7dd3fc;
-          padding: 8px 10px;
-          border-radius: 9px;
-          background: rgba(125, 211, 252, 0.1);
-          border: 1px solid rgba(125, 211, 252, 0.28);
+          color: #ffffff;
+          padding: 9px 14px;
+          border-radius: 999px;
+          background: rgba(92, 124, 255, 0.24);
+          border: 1px solid rgba(138, 180, 255, 0.42);
+          white-space: nowrap;
+          transition: background 0.18s ease, border-color 0.18s ease;
+        }
+
+        .module-sub-link:hover {
+          background: rgba(92, 124, 255, 0.38);
+          border-color: rgba(168, 196, 255, 0.65);
         }
 
         .empty-state {
