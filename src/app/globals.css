@@ -1,8 +1,4 @@
-@tailwind base;
-@tailwind components;
-@tailwind utilities;
-
-/* ===== v-nect base ===== */
+* ===== v-nect base ===== */
 :root {
   --navy: #060B24;
   --navy-2: #0E183A;
@@ -17,15 +13,13 @@ html, body {
   padding: 0;
   background: #060B24;
   color: #F3F7FF;
-  font-family: var(--font-sans), Arial, sans-serif;
+  font-family: Arial, sans-serif;
   overflow-x: hidden;
 }
 
 a { color: inherit; }
 
 /* ===== FIX UTAMA: matiin gradasi lama yang bikin biru nabrak ===== */
-/* Gradasi lama di sini yang dulu nimpa page.tsx - sekarang dimatiin total */
-
 .fc-community,
 .community-card,
 .comm-card {
@@ -71,7 +65,7 @@ a { color: inherit; }
   border-color: #fff !important;
 }
 
-/* ===== Biar nggak ada lagi sisa gradient pink/merah lama yang nyangkut ===== */
+/* ===== Matin sisa gradient pink/merah lama ===== */
 [class*="gradient"],
 .bg-gradient-to-r,
 .bg-gradient-to-br {
