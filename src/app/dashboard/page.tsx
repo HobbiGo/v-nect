@@ -1,4 +1,3 @@
-
 "use client";
 
 import { useEffect, useState } from "react";
@@ -109,6 +108,7 @@ export default function DashboardPage() {
   const [loading, setLoading] = useState(true);
   const [switching, setSwitching] = useState(false);
   const [signingOut, setSigningOut] = useState(false);
+  const [notice, setNotice] = useState("");
 
   const [showCompanyForm, setShowCompanyForm] = useState(false);
   const [companyName, setCompanyName] = useState("");
@@ -206,7 +206,7 @@ export default function DashboardPage() {
         console.error("Dashboard loading error:", error);
 
         if (mounted) {
-          alert(
+          setNotice(
             "Unable to load dashboard data. Please refresh the page."
           );
         }
@@ -330,6 +330,7 @@ export default function DashboardPage() {
     }
 
     setSwitching(true);
+    setNotice("");
 
     try {
       const supabase = createClient();
@@ -360,7 +361,7 @@ export default function DashboardPage() {
       }
     } catch (error) {
       console.error("Profile switching error:", error);
-      alert("Unable to switch profile. Please try again.");
+      setNotice("Unable to switch profile. Please try again.");
     } finally {
       setSwitching(false);
     }
@@ -381,7 +382,7 @@ export default function DashboardPage() {
       router.refresh();
     } catch (error) {
       console.error("Sign out error:", error);
-      alert("Unable to sign out. Please try again.");
+      setNotice("Unable to sign out. Please try again.");
       setSigningOut(false);
     }
   }
@@ -406,23 +407,24 @@ export default function DashboardPage() {
           minHeight: "100vh",
           display: "grid",
           placeItems: "center",
-          background: "#f4f7fc",
-          color: "#17243c",
-          fontFamily: "Arial, Helvetica, sans-serif",
+          background:
+            "linear-gradient(180deg, #060b24 0%, #091338 55%, #060b24 100%)",
+          color: "#f3f7ff",
+          fontFamily: "var(--font-sans), Arial, Helvetica, sans-serif",
         }}
       >
         <div style={{ textAlign: "center" }}>
           <div
             style={{
               fontSize: 27,
-              fontWeight: 800,
+              fontWeight: 850,
               letterSpacing: 2,
               marginBottom: 15,
             }}
           >
-            VOIN<span style={{ color: "#438ce0" }}>NECT</span>
+            VOIN<span style={{ color: "#8ab4ff" }}>NECT</span>
           </div>
-          <p style={{ color: "#8490a2", fontSize: 13 }}>
+          <p style={{ color: "#9cb0d9", fontSize: 13 }}>
             Loading your workspace...
           </p>
         </div>
@@ -439,10 +441,21 @@ export default function DashboardPage() {
 
         .vn-dashboard {
           min-height: 100vh;
-          background: #f4f7fc;
-          color: #17243c;
-          font-family: Arial, Helvetica, sans-serif;
+          color: #f3f7ff;
+          font-family: var(--font-sans), Arial, Helvetica, sans-serif;
           overflow-x: hidden;
+          background:
+            radial-gradient(
+              circle at 78% 14%,
+              rgba(78, 108, 255, 0.32),
+              transparent 36%
+            ),
+            radial-gradient(
+              circle at 22% 32%,
+              rgba(120, 84, 255, 0.22),
+              transparent 42%
+            ),
+            linear-gradient(180deg, #060b24 0%, #091338 55%, #060b24 100%);
         }
 
         .vn-layout {
@@ -453,8 +466,9 @@ export default function DashboardPage() {
         .vn-sidebar {
           width: 255px;
           flex-shrink: 0;
-          background: #101d35;
-          color: white;
+          background: rgba(6, 11, 36, 0.92);
+          border-right: 1px solid rgba(138, 165, 255, 0.16);
+          color: #f3f7ff;
           padding: 28px 18px;
           display: flex;
           flex-direction: column;
@@ -462,17 +476,17 @@ export default function DashboardPage() {
 
         .vn-brand {
           font-size: 25px;
-          font-weight: 800;
+          font-weight: 850;
           letter-spacing: 2px;
           padding: 5px 12px 35px;
         }
 
         .vn-brand span {
-          color: #55a4ff;
+          color: #8ab4ff;
         }
 
         .vn-side-label {
-          color: #8291aa;
+          color: #8ea3cc;
           font-size: 10px;
           letter-spacing: 2px;
           font-weight: 700;
@@ -485,9 +499,9 @@ export default function DashboardPage() {
           gap: 12px;
           padding: 13px 14px;
           margin: 3px 0;
-          color: #aab7ca;
+          color: #b8c7e6;
           text-decoration: none;
-          border-radius: 9px;
+          border-radius: 10px;
           font-size: 13px;
           cursor: pointer;
           border: 0;
@@ -495,16 +509,17 @@ export default function DashboardPage() {
           width: 100%;
           text-align: left;
           font-family: inherit;
+          transition: background 0.2s ease, color 0.2s ease;
         }
 
         .vn-nav:hover,
         .vn-nav.active {
-          background: #20395e;
-          color: white;
+          background: rgba(92, 124, 255, 0.18);
+          color: #ffffff;
         }
 
         .vn-nav.active {
-          border-left: 3px solid #55a4ff;
+          border-left: 3px solid #7854ff;
         }
 
         .vn-nav-icon {
@@ -517,7 +532,7 @@ export default function DashboardPage() {
         .vn-sidebar-bottom {
           margin-top: auto;
           padding-top: 25px;
-          border-top: 1px solid #293750;
+          border-top: 1px solid rgba(138, 165, 255, 0.16);
         }
 
         .vn-main {
@@ -537,7 +552,7 @@ export default function DashboardPage() {
         .vn-mobile-brand {
           display: none;
           font-size: 21px;
-          font-weight: 800;
+          font-weight: 850;
           letter-spacing: 1px;
         }
 
@@ -549,11 +564,11 @@ export default function DashboardPage() {
         }
 
         .vn-search {
-          border: 1px solid #e0e6f0;
-          background: white;
+          border: 1px solid rgba(138, 165, 255, 0.22);
+          background: rgba(14, 24, 58, 0.85);
           padding: 11px 15px;
-          border-radius: 9px;
-          color: #7c899f;
+          border-radius: 10px;
+          color: #9cb0d9;
           font-size: 12px;
           width: 210px;
         }
@@ -564,13 +579,14 @@ export default function DashboardPage() {
           gap: 10px;
           font-size: 12px;
           font-weight: 700;
+          color: #ffffff;
         }
 
         .vn-avatar {
           width: 38px;
           height: 38px;
-          background: #dceaff;
-          color: #2465b5;
+          background: linear-gradient(135deg, #4b6bff, #7854ff);
+          color: #ffffff;
           display: grid;
           place-items: center;
           border-radius: 50%;
@@ -579,37 +595,67 @@ export default function DashboardPage() {
           flex-shrink: 0;
         }
 
+        .vn-notice {
+          margin-bottom: 20px;
+          padding: 12px 16px;
+          border-radius: 10px;
+          background: rgba(92, 124, 255, 0.18);
+          border: 1px solid rgba(138, 180, 255, 0.42);
+          color: #dce7ff;
+          font-size: 12px;
+          font-weight: 600;
+          display: flex;
+          align-items: center;
+          justify-content: space-between;
+          gap: 12px;
+        }
+
+        .vn-notice button {
+          border: 0;
+          background: transparent;
+          color: #dce7ff;
+          cursor: pointer;
+          font-size: 14px;
+        }
+
         .vn-eyebrow {
-          color: #4988d8;
+          color: #79a6ff;
           font-size: 10px;
           font-weight: 800;
           letter-spacing: 2px;
           margin-bottom: 10px;
+          text-transform: uppercase;
         }
 
         .vn-heading {
           font-size: 32px;
-          font-weight: 800;
+          font-weight: 850;
           letter-spacing: -1px;
           margin: 0 0 8px;
-          color: #15233d;
+          color: #ffffff;
         }
 
         .vn-subtitle {
-          color: #7b879a;
+          color: #b8c7e6;
           font-size: 13px;
           line-height: 1.7;
           margin: 0;
         }
 
         .vn-hero {
-          background: linear-gradient(115deg, #142849, #245a9d);
-          border-radius: 17px;
+          background: linear-gradient(
+            125deg,
+            rgba(22, 36, 82, 0.94),
+            rgba(13, 24, 62, 0.98)
+          );
+          border: 1px solid rgba(138, 165, 255, 0.24);
+          border-radius: 18px;
           padding: 34px;
-          color: white;
+          color: #ffffff;
           margin: 27px 0 25px;
           position: relative;
           overflow: hidden;
+          box-shadow: 0 14px 32px rgba(3, 8, 24, 0.36);
         }
 
         .vn-hero::after {
@@ -620,14 +666,14 @@ export default function DashboardPage() {
           font-size: 220px;
           line-height: 1;
           font-weight: 900;
-          color: rgba(255,255,255,.055);
+          color: rgba(138, 180, 255, 0.08);
           pointer-events: none;
         }
 
         .vn-hero-label {
           font-size: 10px;
           letter-spacing: 2px;
-          color: #b7d6ff;
+          color: #8ab4ff;
           font-weight: 700;
           margin-bottom: 14px;
         }
@@ -637,10 +683,11 @@ export default function DashboardPage() {
           margin: 0 0 12px;
           position: relative;
           z-index: 1;
+          color: #ffffff;
         }
 
         .vn-hero p {
-          color: #d0def0;
+          color: #b8c7e6;
           font-size: 13px;
           line-height: 1.8;
           max-width: 570px;
@@ -651,7 +698,7 @@ export default function DashboardPage() {
 
         .vn-tagline {
           display: block;
-          color: #b7d6ff;
+          color: #9ec0ff;
           font-size: 11px;
           font-weight: 700;
           letter-spacing: 1.5px;
@@ -660,10 +707,25 @@ export default function DashboardPage() {
           z-index: 1;
         }
 
+        .vn-intro,
+        .vn-guidelines,
+        .vn-profile-panel,
+        .vn-create-company,
+        .vn-company-form,
+        .vn-company-list,
+        .vn-module {
+          background: linear-gradient(
+            160deg,
+            rgba(20, 32, 72, 0.92),
+            rgba(11, 19, 46, 0.96)
+          );
+          border: 1px solid rgba(138, 165, 255, 0.18);
+          border-radius: 16px;
+          color: #f3f7ff;
+          box-shadow: 0 10px 24px rgba(3, 8, 24, 0.25);
+        }
+
         .vn-intro {
-          background: white;
-          border: 1px solid #e8edf5;
-          border-radius: 13px;
           padding: 24px;
           margin-bottom: 25px;
         }
@@ -671,20 +733,17 @@ export default function DashboardPage() {
         .vn-intro h2 {
           font-size: 18px;
           margin: 0 0 10px;
-          color: #17243c;
+          color: #ffffff;
         }
 
         .vn-intro p {
-          color: #718096;
+          color: #b8c7e6;
           font-size: 12px;
           line-height: 1.85;
           margin: 0;
         }
 
         .vn-guidelines {
-          background: white;
-          border: 1px solid #e4eaf3;
-          border-radius: 15px;
           padding: 25px;
           margin: 25px 0 30px;
           scroll-margin-top: 20px;
@@ -701,19 +760,20 @@ export default function DashboardPage() {
         .vn-guidelines-heading h2 {
           font-size: 20px;
           margin: 0 0 8px;
-          color: #17243c;
+          color: #ffffff;
         }
 
         .vn-guidelines-heading p {
           font-size: 12px;
           line-height: 1.7;
-          color: #8490a2;
+          color: #a9b9da;
           margin: 0;
         }
 
         .vn-guidelines-badge {
-          background: #edf4ff;
-          color: #286fbe;
+          background: rgba(92, 124, 255, 0.2);
+          border: 1px solid rgba(138, 180, 255, 0.32);
+          color: #9ec0ff;
           border-radius: 7px;
           padding: 8px 10px;
           font-size: 9px;
@@ -733,9 +793,9 @@ export default function DashboardPage() {
           display: flex;
           align-items: flex-start;
           gap: 12px;
-          background: #f7f9fc;
-          border: 1px solid #edf0f5;
-          border-radius: 10px;
+          background: rgba(8, 16, 41, 0.78);
+          border: 1px solid rgba(138, 165, 255, 0.14);
+          border-radius: 12px;
           padding: 15px;
           min-width: 0;
         }
@@ -746,8 +806,8 @@ export default function DashboardPage() {
           flex-shrink: 0;
           display: grid;
           place-items: center;
-          background: #e7f0fd;
-          color: #286fbe;
+          background: rgba(92, 124, 255, 0.22);
+          color: #9ec0ff;
           border-radius: 8px;
           font-size: 10px;
           font-weight: 800;
@@ -756,31 +816,28 @@ export default function DashboardPage() {
         .vn-guideline-item h3 {
           font-size: 12px;
           margin: 1px 0 6px;
-          color: #243650;
+          color: #ffffff;
         }
 
         .vn-guideline-item p {
           font-size: 11px;
           line-height: 1.7;
-          color: #8490a2;
+          color: #a9b9da;
           margin: 0;
         }
 
         .vn-guidelines-warning {
-          background: #fff8eb;
-          border: 1px solid #f3e5c9;
-          border-radius: 9px;
+          background: rgba(120, 84, 255, 0.14);
+          border: 1px solid rgba(168, 142, 255, 0.34);
+          border-radius: 10px;
           padding: 14px 16px;
           margin-top: 17px;
-          color: #86642a;
+          color: #dce7ff;
           font-size: 11px;
           line-height: 1.8;
         }
 
         .vn-profile-panel {
-          background: white;
-          border: 1px solid #e8edf5;
-          border-radius: 13px;
           padding: 22px;
           display: flex;
           justify-content: space-between;
@@ -793,18 +850,20 @@ export default function DashboardPage() {
           font-weight: 800;
           font-size: 14px;
           margin-bottom: 6px;
+          color: #ffffff;
         }
 
         .vn-profile-description {
           font-size: 11px;
-          color: #8490a3;
+          color: #a9b9da;
         }
 
         .vn-switcher {
           display: flex;
           padding: 4px;
-          border-radius: 9px;
-          background: #f0f3f8;
+          border-radius: 10px;
+          background: #081029;
+          border: 1px solid rgba(138, 165, 255, 0.2);
           gap: 4px;
         }
 
@@ -814,26 +873,23 @@ export default function DashboardPage() {
           padding: 10px 17px;
           font-size: 12px;
           font-weight: 700;
-          color: #77849a;
+          color: #9cb0d9;
           background: transparent;
           cursor: pointer;
         }
 
         .vn-switcher button.selected {
-          background: #2469b9;
-          color: white;
-          box-shadow: 0 3px 8px #2469b933;
+          background: linear-gradient(110deg, #4b6bff, #7854ff);
+          color: #ffffff;
+          box-shadow: 0 4px 12px rgba(75, 107, 255, 0.3);
         }
 
         .vn-switcher button:disabled {
-          opacity: .6;
+          opacity: 0.6;
           cursor: not-allowed;
         }
 
         .vn-create-company {
-          background: white;
-          border: 1px solid #e4eaf3;
-          border-radius: 13px;
           padding: 22px;
           margin-bottom: 30px;
           display: flex;
@@ -845,10 +901,11 @@ export default function DashboardPage() {
         .vn-create-company h3 {
           font-size: 15px;
           margin: 0 0 7px;
+          color: #ffffff;
         }
 
         .vn-create-company p {
-          color: #8490a2;
+          color: #a9b9da;
           font-size: 12px;
           line-height: 1.6;
           margin: 0;
@@ -856,19 +913,16 @@ export default function DashboardPage() {
 
         .vn-create-company button {
           border: 0;
-          border-radius: 8px;
+          border-radius: 9px;
           padding: 12px 17px;
           font-size: 12px;
           font-weight: 700;
           cursor: pointer;
-          background: #2469b9;
-          color: white;
+          background: linear-gradient(110deg, #4b6bff, #7854ff);
+          color: #ffffff;
         }
 
         .vn-company-form {
-          background: white;
-          border: 1px solid #e4eaf3;
-          border-radius: 14px;
           padding: 25px;
           margin-bottom: 30px;
         }
@@ -876,11 +930,11 @@ export default function DashboardPage() {
         .vn-company-form h2 {
           font-size: 22px;
           margin: 8px 0;
-          color: #17243c;
+          color: #ffffff;
         }
 
         .vn-company-form p {
-          color: #8490a2;
+          color: #a9b9da;
           font-size: 12px;
           line-height: 1.7;
           margin-bottom: 22px;
@@ -895,7 +949,7 @@ export default function DashboardPage() {
         .vn-company-form label {
           font-size: 12px;
           font-weight: 700;
-          color: #34445d;
+          color: #c8d7f5;
           margin-top: 8px;
         }
 
@@ -903,17 +957,24 @@ export default function DashboardPage() {
         .vn-company-form textarea {
           width: 100%;
           padding: 12px 14px;
-          border: 1px solid #dfe6f0;
-          border-radius: 8px;
+          border: 1px solid rgba(138, 165, 255, 0.24);
+          background: #081029;
+          color: #f3f7ff;
+          border-radius: 9px;
           font-family: inherit;
           font-size: 13px;
           outline: none;
           resize: vertical;
         }
 
+        .vn-company-form input::placeholder,
+        .vn-company-form textarea::placeholder {
+          color: #889bc2;
+        }
+
         .vn-company-form input:focus,
         .vn-company-form textarea:focus {
-          border-color: #438ce0;
+          border-color: #7854ff;
         }
 
         .vn-company-actions {
@@ -933,32 +994,31 @@ export default function DashboardPage() {
         }
 
         .vn-company-actions button:first-child {
-          background: #edf1f7;
-          color: #52627a;
+          background: rgba(255, 255, 255, 0.08);
+          border: 1px solid rgba(138, 165, 255, 0.24);
+          color: #dce7ff;
         }
 
         .vn-company-actions button:last-child {
-          background: #2469b9;
-          color: white;
+          background: linear-gradient(110deg, #4b6bff, #7854ff);
+          color: #ffffff;
         }
 
         .vn-company-actions button:disabled {
-          opacity: .6;
+          opacity: 0.6;
           cursor: not-allowed;
         }
 
         .vn-company-error {
-          color: #c0392b;
-          background: #fff0ef;
-          border-radius: 7px;
+          color: #fda4af;
+          background: rgba(244, 63, 94, 0.16);
+          border: 1px solid rgba(244, 63, 94, 0.42);
+          border-radius: 8px;
           padding: 11px;
           font-size: 12px;
         }
 
         .vn-company-list {
-          background: white;
-          border: 1px solid #e8edf5;
-          border-radius: 13px;
           padding: 20px;
           margin-bottom: 30px;
         }
@@ -966,6 +1026,7 @@ export default function DashboardPage() {
         .vn-company-list h3 {
           font-size: 15px;
           margin: 0 0 14px;
+          color: #ffffff;
         }
 
         .vn-company-item {
@@ -974,19 +1035,20 @@ export default function DashboardPage() {
           align-items: center;
           gap: 12px;
           padding: 13px 0;
-          border-top: 1px solid #edf0f5;
+          border-top: 1px solid rgba(138, 165, 255, 0.14);
         }
 
         .vn-company-item strong {
           font-size: 13px;
+          color: #ffffff;
         }
 
         .vn-company-item button {
-          border: 0;
-          background: #edf4ff;
-          color: #2469b9;
+          border: 1px solid rgba(138, 180, 255, 0.35);
+          background: rgba(92, 124, 255, 0.2);
+          color: #c7dcff;
           padding: 9px 12px;
-          border-radius: 7px;
+          border-radius: 8px;
           font-size: 11px;
           font-weight: 700;
           cursor: pointer;
@@ -1004,14 +1066,19 @@ export default function DashboardPage() {
           font-size: 21px;
           margin: 0;
           font-weight: 800;
+          color: #ffffff;
         }
 
         .vn-count {
           font-size: 10px;
           letter-spacing: 1px;
-          color: #71819a;
+          color: #9ec0ff;
           font-weight: 700;
           white-space: nowrap;
+          background: rgba(92, 124, 255, 0.16);
+          border: 1px solid rgba(138, 180, 255, 0.28);
+          padding: 6px 10px;
+          border-radius: 999px;
         }
 
         .vn-grid {
@@ -1021,19 +1088,16 @@ export default function DashboardPage() {
         }
 
         .vn-module {
-          background: white;
-          border: 1px solid #e8edf5;
-          border-radius: 13px;
           padding: 22px;
           min-height: 205px;
-          transition: .2s ease;
+          transition: 0.2s ease;
           min-width: 0;
         }
 
         .vn-module:hover {
           transform: translateY(-3px);
-          border-color: #b6d4f6;
-          box-shadow: 0 10px 25px #243d5b0d;
+          border-color: rgba(138, 180, 255, 0.45);
+          box-shadow: 0 12px 26px rgba(3, 8, 24, 0.36);
         }
 
         .vn-module-top {
@@ -1049,13 +1113,14 @@ export default function DashboardPage() {
           display: grid;
           place-items: center;
           border-radius: 11px;
-          background: #eaf3ff;
-          color: #286fbe;
+          background: rgba(92, 124, 255, 0.2);
+          border: 1px solid rgba(138, 180, 255, 0.3);
+          color: #9ec0ff;
           font-size: 21px;
         }
 
         .vn-module-number {
-          color: #a3aec0;
+          color: #8ea3cc;
           font-size: 11px;
           font-weight: 700;
         }
@@ -1064,11 +1129,12 @@ export default function DashboardPage() {
           font-size: 15px;
           margin: 0 0 9px;
           font-weight: 800;
+          color: #ffffff;
         }
 
         .vn-module p {
           font-size: 11px;
-          color: #8490a2;
+          color: #a9b9da;
           line-height: 1.7;
           min-height: 38px;
           margin: 0 0 17px;
@@ -1076,9 +1142,10 @@ export default function DashboardPage() {
 
         .vn-coming {
           display: inline-block;
-          background: #f0f4fa;
-          color: #6380a4;
-          border-radius: 5px;
+          background: rgba(92, 124, 255, 0.16);
+          border: 1px solid rgba(138, 180, 255, 0.26);
+          color: #c7dcff;
+          border-radius: 6px;
           padding: 6px 9px;
           font-size: 9px;
           letter-spacing: 1px;
@@ -1087,19 +1154,19 @@ export default function DashboardPage() {
 
         .vn-footer {
           text-align: center;
-          color: #98a3b3;
+          color: #96a8d0;
           font-size: 10px;
           margin-top: 45px;
           padding-top: 22px;
-          border-top: 1px solid #e6ebf2;
+          border-top: 1px solid rgba(138, 165, 255, 0.16);
           line-height: 1.8;
         }
 
         .vn-mobile-menu {
           display: none;
-          border: 1px solid #e0e6f0;
-          background: white;
-          color: #17243c;
+          border: 1px solid rgba(138, 165, 255, 0.26);
+          background: rgba(14, 24, 58, 0.88);
+          color: #f3f7ff;
           border-radius: 8px;
           padding: 9px 12px;
           font-size: 18px;
@@ -1129,6 +1196,8 @@ export default function DashboardPage() {
             min-height: auto;
             padding: 18px 16px;
             border-radius: 0 0 14px 14px;
+            border-right: 0;
+            border-bottom: 1px solid rgba(138, 165, 255, 0.16);
           }
 
           .vn-sidebar.open {
@@ -1177,7 +1246,7 @@ export default function DashboardPage() {
           .vn-mobile-brand {
             display: block;
             font-size: 18px;
-            letter-spacing: .5px;
+            letter-spacing: 0.5px;
             white-space: nowrap;
           }
 
@@ -1212,7 +1281,7 @@ export default function DashboardPage() {
 
           .vn-heading {
             font-size: 27px;
-            letter-spacing: -.5px;
+            letter-spacing: -0.5px;
           }
 
           .vn-subtitle {
@@ -1346,7 +1415,7 @@ export default function DashboardPage() {
 
           .vn-count {
             font-size: 9px;
-            letter-spacing: .5px;
+            letter-spacing: 0.5px;
           }
 
           .vn-grid {
@@ -1497,7 +1566,7 @@ export default function DashboardPage() {
             </button>
 
             <div className="vn-mobile-brand">
-              VOIN<span style={{ color: "#438ce0" }}>NECT</span>
+              VOIN<span style={{ color: "#8ab4ff" }}>NECT</span>
             </div>
 
             <div className="vn-top-right">
@@ -1514,7 +1583,7 @@ export default function DashboardPage() {
                   Welcome {displayName}
                   <div
                     style={{
-                      color: "#8a96a9",
+                      color: "#9cb0d9",
                       fontWeight: 400,
                       marginTop: 4,
                     }}
@@ -1525,6 +1594,15 @@ export default function DashboardPage() {
               </div>
             </div>
           </header>
+
+          {notice && (
+            <div className="vn-notice">
+              <span>{notice}</span>
+              <button type="button" onClick={() => setNotice("")}>
+                ✕
+              </button>
+            </div>
+          )}
 
           <div id="overview">
             <div className="vn-eyebrow">
@@ -1669,7 +1747,7 @@ export default function DashboardPage() {
               <h2>Create Your Company Profile</h2>
 
               <p>
-                Build your company's identity and become part of
+                Build your company&apos;s identity and become part of
                 the v-nect business ecosystem.
               </p>
 
