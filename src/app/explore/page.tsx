@@ -21,10 +21,6 @@ type ExploreModule = {
   keywords: string[];
   features: string[];
   href: string;
-  initialLikes: number;
-  initialChats: number;
-  initialShares: number;
-  initialViews: string;
 };
 
 const BRAND_LOGO_SRC = "/images/V-NECT-logo.png";
@@ -48,10 +44,6 @@ const EXPLORE_MODULES: ExploreModule[] = [
       "Partner & team threads",
     ],
     href: "/business-feed",
-    initialLikes: 148,
-    initialChats: 36,
-    initialShares: 19,
-    initialViews: "2.4K",
   },
   {
     id: "v-meet",
@@ -71,10 +63,6 @@ const EXPLORE_MODULES: ExploreModule[] = [
       "Direct pitch & sync rooms",
     ],
     href: "/v-meet",
-    initialLikes: 124,
-    initialChats: 28,
-    initialShares: 15,
-    initialViews: "1.9K",
   },
   {
     id: "v-hub",
@@ -94,10 +82,6 @@ const EXPLORE_MODULES: ExploreModule[] = [
       "Quick module launcher",
     ],
     href: "/v-hub",
-    initialLikes: 112,
-    initialChats: 21,
-    initialShares: 14,
-    initialViews: "1.7K",
   },
   {
     id: "v-business-feed",
@@ -113,14 +97,10 @@ const EXPLORE_MODULES: ExploreModule[] = [
     keywords: ["feed", "berita", "pengumuman", "update", "bisnis", "post", "diskusi"],
     features: [
       "Company updates & launches",
-      "Likes & threaded comments",
+      "Threaded discussions & posts",
       "Video & media highlights",
     ],
     href: "/business-feed",
-    initialLikes: 215,
-    initialChats: 54,
-    initialShares: 31,
-    initialViews: "4.2K",
   },
   {
     id: "v-circle",
@@ -149,10 +129,6 @@ const EXPLORE_MODULES: ExploreModule[] = [
       "Connection notes & sync",
     ],
     href: "/v-circle",
-    initialLikes: 164,
-    initialChats: 42,
-    initialShares: 22,
-    initialViews: "3.1K",
   },
   {
     id: "v-market",
@@ -172,10 +148,6 @@ const EXPLORE_MODULES: ExploreModule[] = [
       "Direct info requests",
     ],
     href: "/v-market",
-    initialLikes: 139,
-    initialChats: 31,
-    initialShares: 18,
-    initialViews: "2.8K",
   },
 ];
 
@@ -196,10 +168,6 @@ function ExploreContent() {
     useState<ModuleCategory>("All");
   const [userName, setUserName] = useState<string | null>(null);
   const [authModalOpen, setAuthModalOpen] = useState(false);
-
-  const [likedIds, setLikedIds] = useState<Record<string, boolean>>({});
-  const [extraShares, setExtraShares] = useState<Record<string, number>>({});
-  const [toastNotice, setToastNotice] = useState<string>("");
 
   useEffect(() => {
     const paramQ = searchParams.get("q");
@@ -264,27 +232,6 @@ function ExploreContent() {
     }
     const qs = params.toString();
     router.replace(qs ? `/explore?${qs}` : "/explore", { scroll: false });
-  }
-
-  function handleToggleLike(modId: string) {
-    setLikedIds((prev) => ({ ...prev, [modId]: !prev[modId] }));
-  }
-
-  async function handleShareModule(mod: ExploreModule) {
-    setExtraShares((prev) => ({ ...prev, [mod.id]: (prev[mod.id] || 0) + 1 }));
-    const shareUrl =
-      typeof window !== "undefined"
-        ? `${window.location.origin}${mod.href}`
-        : mod.href;
-
-    try {
-      if (typeof navigator !== "undefined" && navigator.clipboard) {
-        await navigator.clipboard.writeText(shareUrl);
-      }
-      setToastNotice(`Tautan ${mod.name} disalin ke clipboard.`);
-    } catch {
-      setToastNotice(`Tautan ${mod.name}: ${shareUrl}`);
-    }
   }
 
   const filteredModules = useMemo(() => {
@@ -410,15 +357,6 @@ function ExploreContent() {
       </section>
 
       <section className="modules-section">
-        {toastNotice && (
-          <div className="toast-banner">
-            <span>✓ {toastNotice}</span>
-            <button type="button" onClick={() => setToastNotice("")}>
-              ✕
-            </button>
-          </div>
-        )}
-
         <div className="modules-meta">
           <span>
             Menampilkan <strong>{filteredModules.length}</strong> dari{" "}
@@ -451,94 +389,54 @@ function ExploreContent() {
           </div>
         ) : (
           <div className="modules-grid">
-            {filteredModules.map((mod) => {
-              const isLiked = Boolean(likedIds[mod.id]);
-              const likesCount = mod.initialLikes + (isLiked ? 1 : 0);
-              const sharesCount = mod.initialShares + (extraShares[mod.id] || 0);
-
-              return (
-                <article
-                  key={mod.id}
-                  className="module-card"
-                  style={{ borderColor: mod.border }}
-                >
-                  <div className="module-top">
-                    <div
-                      className="module-icon"
-                      style={{
-                        background:
-                          "linear-gradient(135deg, rgba(75, 107, 255, 0.28), rgba(120, 84, 255, 0.28))",
-                        borderColor: mod.border,
-                      }}
-                    >
-                      <span>{mod.icon}</span>
-                    </div>
-                    <span className="module-category">{mod.category}</span>
+            {filteredModules.map((mod) => (
+              <article
+                key={mod.id}
+                className="module-card"
+                style={{ borderColor: mod.border }}
+              >
+                <div className="module-top">
+                  <div
+                    className="module-icon"
+                    style={{
+                      background:
+                        "linear-gradient(135deg, rgba(75, 107, 255, 0.28), rgba(120, 84, 255, 0.28))",
+                      borderColor: mod.border,
+                    }}
+                  >
+                    <span>{mod.icon}</span>
                   </div>
+                  <span className="module-category">{mod.category}</span>
+                </div>
 
-                  <span className="module-label" style={{ color: mod.accent }}>
-                    {mod.label}
-                  </span>
-                  <h2>{mod.name}</h2>
-                  <p className="module-tagline">{mod.tagline}</p>
-                  <p className="module-desc">{mod.description}</p>
+                <span className="module-label" style={{ color: mod.accent }}>
+                  {mod.label}
+                </span>
+                <h2>{mod.name}</h2>
+                <p className="module-tagline">{mod.tagline}</p>
+                <p className="module-desc">{mod.description}</p>
 
-                  <ul className="module-features">
-                    {mod.features.map((feat) => (
-                      <li key={feat}>✓ {feat}</li>
-                    ))}
-                  </ul>
+                <ul className="module-features">
+                  {mod.features.map((feat) => (
+                    <li key={feat}>✓ {feat}</li>
+                  ))}
+                </ul>
 
-                  <div className="module-metrics" aria-label="Statistik modul">
-                    <button
-                      type="button"
-                      className={isLiked ? "metric-btn liked" : "metric-btn"}
-                      onClick={() => handleToggleLike(mod.id)}
+                <div className="module-actions">
+                  <Link href={mod.href} className="module-open-btn">
+                    Buka {mod.name} <span>→</span>
+                  </Link>
+                  {mod.id === "v-circle" && (
+                    <Link
+                      href="/v-circle?tab=discussions"
+                      className="module-sub-link"
                     >
-                      <span>{isLiked ? "♥" : "♡"}</span>
-                      <strong>{likesCount}</strong>
-                      <small>Like</small>
-                    </button>
-
-                    <Link href={mod.href} className="metric-btn">
-                      <span>💬</span>
-                      <strong>{mod.initialChats}</strong>
-                      <small>Chat</small>
+                      Discussions
                     </Link>
-
-                    <button
-                      type="button"
-                      className="metric-btn"
-                      onClick={() => handleShareModule(mod)}
-                    >
-                      <span>↗</span>
-                      <strong>{sharesCount}</strong>
-                      <small>Share</small>
-                    </button>
-
-                    <span className="metric-static">
-                      <span>👁</span>
-                      <strong>{mod.initialViews}</strong>
-                      <small>View</small>
-                    </span>
-                  </div>
-
-                  <div className="module-actions">
-                    <Link href={mod.href} className="module-open-btn">
-                      Buka {mod.name} <span>→</span>
-                    </Link>
-                    {mod.id === "v-circle" && (
-                      <Link
-                        href="/v-circle?tab=discussions"
-                        className="module-sub-link"
-                      >
-                        Discussions
-                      </Link>
-                    )}
-                  </div>
-                </article>
-              );
-            })}
+                  )}
+                </div>
+              </article>
+            ))}
           </div>
         )}
       </section>
@@ -798,28 +696,6 @@ function ExploreContent() {
           padding: 16px 7% 68px;
         }
 
-        .toast-banner {
-          margin-bottom: 16px;
-          padding: 10px 14px;
-          border-radius: 11px;
-          background: rgba(92, 124, 255, 0.22);
-          border: 1px solid rgba(138, 180, 255, 0.45);
-          color: #eef4ff;
-          font-size: 12.5px;
-          display: flex;
-          align-items: center;
-          justify-content: space-between;
-          gap: 12px;
-        }
-
-        .toast-banner button {
-          border: none;
-          background: transparent;
-          color: #ffffff;
-          cursor: pointer;
-          font-weight: 700;
-        }
-
         .modules-meta {
           display: flex;
           align-items: center;
@@ -916,82 +792,13 @@ function ExploreContent() {
         .module-features {
           list-style: none;
           padding: 0;
-          margin: 0 0 16px;
+          margin: 0 0 18px;
           display: flex;
           flex-direction: column;
           gap: 6px;
           font-size: 12px;
           color: #d2def7;
           flex: 1;
-        }
-
-        .module-metrics {
-          display: grid;
-          grid-template-columns: repeat(4, minmax(0, 1fr));
-          gap: 6px;
-          padding: 10px;
-          margin-bottom: 14px;
-          border-radius: 12px;
-          background: rgba(6, 11, 36, 0.72);
-          border: 1px solid rgba(148, 184, 255, 0.18);
-        }
-
-        .metric-btn,
-        .metric-static {
-          appearance: none;
-          border: 1px solid rgba(148, 184, 255, 0.14);
-          background: rgba(255, 255, 255, 0.04);
-          color: #e6efff;
-          border-radius: 9px;
-          padding: 6px 4px;
-          display: flex;
-          flex-direction: column;
-          align-items: center;
-          justify-content: center;
-          gap: 2px;
-          text-decoration: none;
-          font: inherit;
-          cursor: pointer;
-          transition: background 0.18s ease, border-color 0.18s ease,
-            transform 0.15s ease;
-        }
-
-        .metric-btn:hover {
-          background: rgba(92, 124, 255, 0.22);
-          border-color: rgba(148, 184, 255, 0.42);
-          transform: translateY(-1px);
-        }
-
-        .metric-btn.liked {
-          background: rgba(120, 84, 255, 0.28);
-          border-color: rgba(167, 139, 250, 0.65);
-          color: #ffffff;
-        }
-
-        .metric-static {
-          cursor: default;
-          opacity: 0.92;
-        }
-
-        .metric-btn span,
-        .metric-static span {
-          font-size: 12px;
-          line-height: 1;
-        }
-
-        .metric-btn strong,
-        .metric-static strong {
-          font-size: 11.5px;
-          font-weight: 800;
-          color: #ffffff;
-          line-height: 1.1;
-        }
-
-        .metric-btn small,
-        .metric-static small {
-          font-size: 9.5px;
-          color: #a4b7de;
-          line-height: 1;
         }
 
         .module-actions {
