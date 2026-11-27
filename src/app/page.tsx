@@ -179,7 +179,7 @@ export default function HomePage() {
         <h1>{t("heroTitle1", lang)}<br/><span>{t("heroTitle2", lang)}</span></h1>
         <p>{t("heroDesc", lang)}</p>
         <div className="hero-btns"><button onClick={()=>setMainTab("jelajahi")} className="btn-primary">▦ {t("exploreAll", lang)} →</button><button onClick={()=>setMainTab("feed")} className="btn-secondary">▶ {t("watchFeed", lang)}</button></div>
-        <div className="hero-stats"><b>2</b> Menu Besar  •  <b>1</b> Klik Nyampe  •  <b>6</b> Modul di Dalamnya</div>
+        <div className="hero-stats"><b>2</b> Menu Besar  •  <b>1</b> Klik Nyampe  •  <b>6</b> Modul di Dalamnya</div>
       </section>
 
       {mainTab==="jelajahi" && (
