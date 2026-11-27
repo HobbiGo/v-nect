@@ -9,6 +9,7 @@ import { PostThreadComments } from "@/components/PostThreadComments";
 interface BusinessPost {
   id: string; company_id: string; author_id: string; title: string; content: string;
   post_type: string; image_url: string | null; image_urls?: string[] | null;
+  video_url?: string | null; media_url?: string | null; video_urls?: string[] | null; media_urls?: string[] | null; file_url?: string | null; attachment_url?: string | null;
   status: string; created_at: string;
   companies: { company_name: string; logo_url: string | null } | null;
 }
@@ -29,8 +30,14 @@ const FEATURES = [
 ];
 
 function isVideoUrl(u: string) {
-  const c = (u||"").split("?")[0].toLowerCase();
-  return c.endsWith(".mp4")||c.endsWith(".webm")||c.endsWith(".mov")||c.endsWith(".m4v")||c.includes("/video/upload/");
+  const c = (u||"").toLowerCase();
+  if(!c.startsWith("http") && !c.startsWith("blob:") && !c.startsWith("/")) return false;
+  if(c.includes("/video/upload/")||c.includes("/video/")||c.includes("video")) return true;
+  const base = c.split("?")[0];
+  return base.endsWith(".mp4")||base.endsWith(".webm")||base.endsWith(".mov")||base.endsWith(".m4v")||base.endsWith(".m3u8")||base.includes(".mp4")||base.includes(".webm")||base.includes(".mov");
+}
+function allUrls(text: string): string[] {
+  return Array.from(new Set(((text||"").match(/https?:\/\/[^\s"'<>)]+/gi)||[]).map(u=>u.replace(/[.,)]+$/,""))));
 }
 function extractLink(content: string) {
   const m = (content||"").match(/^\s*Link Video:\s*(https?:\/\/\S+)\s*$/im);
@@ -51,16 +58,23 @@ type Media = { type: "upload"|"youtube"|"image"|"none"; url: string; thumb?: str
 
 function getMedia(post: BusinessPost): Media {
   const list: string[] = [];
-  if (Array.isArray(post.image_urls)) post.image_urls.forEach(u=>{ if(u?.trim() && !list.includes(u.trim())) list.push(u.trim()) });
-  if (post.image_url?.trim() && !list.includes(post.image_url.trim())) list.push(post.image_url.trim());
+  const push = (u: any) => { if(typeof u==="string" && u.trim() && !list.includes(u.trim())) list.push(u.trim()); };
+  const pushArr = (a: any) => { if(Array.isArray(a)) a.forEach(push); };
+  push((post as any).video_url); push((post as any).media_url); push((post as any).file_url); push((post as any).attachment_url);
+  pushArr((post as any).video_urls); pushArr((post as any).media_urls);
+  pushArr(post.image_urls); push(post.image_url);
+  allUrls(post.content).forEach(push);
+  allUrls(post.title).forEach(push);
   const upVideo = list.find(isVideoUrl);
   if (upVideo) return { type: "upload", url: upVideo };
-  const link = extractLink(post.content);
+  const link = extractLink(post.content) || allUrls(post.content)[0] || "";
   if (link) {
     const id = ytId(link);
     if (id) return { type: "youtube", url: link, thumb: `https://i.ytimg.com/vi/${id}/hqdefault.jpg`, embed: `https://www.youtube.com/embed/${id}?autoplay=1&mute=1&loop=1&playlist=${id}&playsinline=1&controls=0` };
-    return { type: "none", url: link };
+    if (/\.(jpg|jpeg|png|webp|gif)(\?|$)/i.test(link)) return { type: "image", url: link };
   }
+  const img = list.find(u=>/\.(jpg|jpeg|png|webp|gif)(\?|$)/i.test(u));
+  if (img) return { type: "image", url: img };
   if (list[0]) return { type: "image", url: list[0] };
   return { type: "none", url: "" };
 }
@@ -94,11 +108,11 @@ export default function HomePage() {
         const v = e.target as HTMLVideoElement;
         if(e.isIntersecting) v.play().catch(()=>{}); else v.pause();
       });
-    },{ threshold: 0.6, root: feedRef.current });
+    },{ threshold: 0.4 });
     const els = feedRef.current?.querySelectorAll("video.tiktok-video");
     els?.forEach(v=>obs.observe(v));
     return ()=>obs.disconnect();
-  },[posts]);
+  },[posts, mainTab, feedTab]);
 
   async function loadUser(){
     const { data:{user} } = await supabase.auth.getUser();
@@ -110,7 +124,7 @@ export default function HomePage() {
   }
   async function fetchPosts(){
     setLoadingPosts(true);
-    const { data, error } = await supabase.from("business_posts").select(`id,company_id,author_id,title,content,post_type,image_url,image_urls,status,created_at,companies(company_name,logo_url)`).eq("status","published").order("created_at",{ascending:false}).limit(20);
+    const { data, error } = await supabase.from("business_posts").select(`*,companies(company_name,logo_url)`).eq("status","published").order("created_at",{ascending:false}).limit(20);
     if(error){ setPosts([]); setLoadingPosts(false); return; }
     const list = (data||[]) as unknown as BusinessPost[];
     setPosts(list);
@@ -224,10 +238,9 @@ export default function HomePage() {
               <article key={post.id} className="tiktok-card">
                 <div className="tiktok-media">
                   {media.type==="upload" ? (
-                    <video className="tiktok-video" src={media.url} muted loop playsInline preload="auto" />
+                    <video className="tiktok-video" src={media.url} autoPlay muted loop playsInline preload="auto" disablePictureInPicture onClick={(e)=>{ const v=e.currentTarget; if(v.paused) v.play().catch(()=>{}); else v.pause(); }} onError={(e)=>{ (e.currentTarget as HTMLVideoElement).style.display="none"; }} />
                   ) : media.type==="youtube" ? (
-                    showYoutube[post.id] ? <iframe src={media.embed} allow="autoplay; encrypted-media; picture-in-picture" allowFullScreen className="tiktok-video" />
-                    : <div className="yt-thumb" onClick={()=>setShowYoutube(p=>({...p,[post.id]:true}))}><img src={media.thumb} alt={post.title}/><span className="play-big">▶</span><span className="tap">Tap to play</span></div>
+                    <iframe src={media.embed} allow="autoplay; encrypted-media; picture-in-picture" allowFullScreen className="tiktok-video" />
                   ) : media.type==="image" ? <img src={media.url} alt={post.title} className="tiktok-img"/>
                   : <div className="no-media"><span className="no-media-logo">v-nect</span><p>{post.title}</p></div>}
 
