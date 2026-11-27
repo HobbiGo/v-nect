@@ -11,7 +11,6 @@ import {
 } from "@/components/LiveStoriesAndVideoComposer";
 import { VChatPanel } from "@/components/VChatPanel";
 import {
-  PostEngagementBar,
   ComposerActionToolbar,
   type ComposerToolKey,
 } from "@/components/FeedPostActionsAndToolbar";
@@ -1714,12 +1713,6 @@ export default function BusinessFeedPage() {
                         </div>
                       )}
                     </div>
-
-                    <PostEngagementBar
-                      postId={post.id}
-                      currentUserId={userId || null}
-                      onCommentClick={() => handleFocusImageComment(post.id, 0)}
-                    />
 
                     <PostThreadComments
                       supabase={supabase}
