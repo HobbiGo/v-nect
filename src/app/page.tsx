@@ -150,9 +150,24 @@ export default function HomePage() {
 
   return (
     <main className="home">
+      {/* ===== TOPNAV BARU - HOME JELAS ===== */}
       <header className="topnav">
-        <Link href="/" className="brand">v<span>-nect</span></Link>
-        <nav className="nav-desktop"><button onClick={()=>setMainTab("jelajahi")} className={mainTab==="jelajahi"?"nav-tab active":"nav-tab"}>▦ {t("explore", lang)}</button><button onClick={()=>setMainTab("feed")} className={mainTab==="feed"?"nav-tab active":"nav-tab"}>▶ {t("feed", lang)}</button></nav>
+        <div className="top-left">
+          <Link href="/" className="brand">v<span>-nect</span></Link>
+          {/* HOME - TOMBOL PILL PUTIH, PALING MENONJOL */}
+          <button onClick={()=>setMainTab("jelajahi")} className="home-pill" title="Kembali ke Beranda">
+            <span className="home-icon">⌂</span>
+            <span>{lang==="id" ? "Beranda" : lang==="en" ? "Home" : lang==="zh" ? "首页" : lang==="ja" ? "ホーム" : "Home"}</span>
+            <span className="home-dot">●</span>
+          </button>
+        </div>
+        <nav className="nav-desktop">
+          <button onClick={()=>setMainTab("jelajahi")} className={mainTab==="jelajahi"?"nav-tab active":"nav-tab"}>▦ {t("explore", lang)}</button>
+          <button onClick={()=>setMainTab("feed")} className={mainTab==="feed"?"nav-tab active":"nav-tab"}>▶ {t("feed", lang)}</button>
+          <Link href="/v-circle" className="nav-link">👥 {t("community", lang)}</Link>
+          <Link href="/v-market" className="nav-link">🛒 {t("market", lang)}</Link>
+          <Link href="/v-meet" className="nav-link">🎥 {t("meet", lang)}</Link>
+        </nav>
         <div style={{ display: "flex", alignItems: "center", gap: 10 }}>
           <LanguageSwitcher />
           {currentUserName ? <span className="chip">● {currentUserName}</span> : <button className="btn-ghost" onClick={()=>setAuthModalOpen(true)}>Sign In</button>}
@@ -169,6 +184,7 @@ export default function HomePage() {
 
       {mainTab==="jelajahi" && (
       <div id="jelajahi">
+      {/* ===== FEATURE + COMMUNITY - GRADASI DIHAPUS, JADI SOLID NAVY ===== */}
       <section id="feature-community" className="feature-community">
         <div className="fc-grid">
           <div className="fc-feature">
@@ -181,16 +197,17 @@ export default function HomePage() {
               ))}
             </div>
           </div>
+          {/* COMMUNITY CARD - SOLID, BUKAN GRADASI LAGI */}
           <Link href="/v-circle" className="fc-community">
             <span className="eyebrow">COMMUNITY</span>
             <div className="comm-head"><span className="comm-icon">👥</span><div><h2>v-circle {t("community", lang)}</h2><p>Grow your network.</p></div></div>
             <p className="comm-desc">Founder, profesional & perusahaan. Diskusi, tanya produk, cari partner — di satu circle.</p>
             <div className="comm-stats">
-              <div><b>{posts.length || "—"}</b><span>Post terbaru</span></div>
-              <div><b>{Object.values(likeCounts).reduce((a,b)=>a+b,0) || "—"}</b><span>Total likes</span></div>
-              <div><b>{Object.values(commentCounts).reduce((a,b)=>a+b,0) || "—"}</b><span>Diskusi</span></div>
+              <div><b>{posts.length || "0"}</b><span>Post terbaru</span></div>
+              <div><b>{Object.values(likeCounts).reduce((a,b)=>a+b,0) || "0"}</b><span>Total likes</span></div>
+              <div><b>{Object.values(commentCounts).reduce((a,b)=>a+b,0) || "0"}</b><span>Diskusi</span></div>
             </div>
-            <span className="btn-primary">{t("joinCommunity", lang)} →</span>
+            <span className="btn-join">{t("joinCommunity", lang)} →</span>
           </Link>
         </div>
       </section>
@@ -273,53 +290,70 @@ export default function HomePage() {
 
       <footer className="footer"><b>v<span>-nect</span></b><p>Connect Beyond Boundaries.</p><small>© 2026 v-nect</small></footer>
 
+      {/* BOTTOM NAV - HOME JUGA JELAS DI SINI */}
       <nav className="bottom-nav">
-        <button onClick={()=>setMainTab("jelajahi")} className="bnav">⌂<small>{t("home", lang)}</small></button><a href="/v-market" className="bnav">🛒<small>{t("market", lang)}</small></a><button onClick={()=>setMainTab("feed")} className="bnav plus">+<small></small></button><a href="/v-circle?tab=messages" className="bnav">✉️<small>Kotak Masuk</small></a><a href="/v-hub" className="bnav">●<small>Profil</small></a>
+        <button onClick={()=>setMainTab("jelajahi")} className="bnav bnav-home">⌂<small>{lang==="id"?"Beranda":"Home"}</small></button><a href="/v-market" className="bnav">🛒<small>{t("market", lang)}</small></a><button onClick={()=>setMainTab("feed")} className="bnav plus">+<small></small></button><a href="/v-circle?tab=messages" className="bnav">✉️<small>Kotak Masuk</small></a><a href="/v-hub" className="bnav">●<small>Profil</small></a>
       </nav>
 
       <AccountAuthModal open={authModalOpen} initialMode="login" onClose={()=>setAuthModalOpen(false)} onSuccess={()=>loadUser()} />
 
       <style jsx>{`
         .home{background:#060b24;color:#f3f7ff;font-family:var(--font-sans),Arial,sans-serif;padding-bottom:70px;overflow-x:hidden}
-        .topnav{position:sticky;top:0;z-index:30;display:flex;justify-content:space-between;align-items:center;padding:12px 6%;background:rgba(6,11,34,.92);backdrop-filter:blur(12px);border-bottom:1px solid rgba(138,165,255,.15)}
-        .brand{font-size:21px;font-weight:850;color:#fff;text-decoration:none}.brand span,.footer span{color:#8ab4ff}
-        .nav-desktop{display:flex;gap:22px}.nav-desktop a{color:#d9e4ff;text-decoration:none;font-size:13px;font-weight:600}
-        .chip{background:rgba(138,180,255,.14);border:1px solid rgba(138,180,255,.35);padding:7px 12px;border-radius:999px;font-size:12px;font-weight:700}
+        .topnav{position:sticky;top:0;z-index:30;display:flex;justify-content:space-between;align-items:center;gap:12px;padding:12px 6%;background:#060B24;border-bottom:1px solid rgba(138,165,255,.15)}
+        .top-left{display:flex;align-items:center;gap:12px}
+        .brand{font-size:21px;font-weight:850;color:#fff;text-decoration:none;white-space:nowrap}.brand span,.footer span{color:#8ab4ff}
+        /* HOME PILL - BARU, MENARIK & JELAS */
+        .home-pill{display:flex;align-items:center;gap:7px;background:#ffffff;color:#060B24;border:2px solid #ffffff;padding:8px 16px;border-radius:999px;font-size:13.5px;font-weight:800;cursor:pointer;box-shadow:0 6px 18px rgba(255,255,255,.18);white-space:nowrap}
+        .home-icon{font-size:17px;line-height:1}
+        .home-dot{color:#0CAA91;font-size:9px}
+        .home-pill:hover{background:#E8EEFF;transform:translateY(-1px)}
+        .nav-desktop{display:flex;gap:8px;align-items:center}.nav-desktop a{color:#d9e4ff;text-decoration:none;font-size:13px;font-weight:600}
+        .nav-link{padding:8px 12px;border-radius:999px;white-space:nowrap}.nav-link:hover{background:rgba(255,255,255,.08)}
+        .nav-tab{background:rgba(255,255,255,.06);border:1px solid rgba(154,178,255,.25);color:#d9e4ff;padding:8px 16px;border-radius:999px;font-size:13px;font-weight:700;cursor:pointer;white-space:nowrap}.nav-tab.active{background:#fff;color:#060b24;border-color:#fff}
+        .chip{background:rgba(138,180,255,.14);border:1px solid rgba(138,180,255,.35);padding:7px 12px;border-radius:999px;font-size:12px;font-weight:700;white-space:nowrap}
         .btn-ghost{background:rgba(255,255,255,.06);border:1px solid rgba(154,178,255,.28);color:#eef3ff;padding:8px 14px;border-radius:10px;font-size:12px;font-weight:700;cursor:pointer}
-        .btn-primary{background:linear-gradient(110deg,#4b6bff,#7854ff);color:#fff;text-decoration:none;padding:12px 20px;border-radius:11px;font-size:13px;font-weight:750;display:inline-flex;gap:8px;box-shadow:0 10px 24px rgba(75,107,255,.28)}
+        .btn-primary{background:#4B6BFF;color:#fff;text-decoration:none;padding:12px 20px;border-radius:11px;font-size:13px;font-weight:750;display:inline-flex;gap:8px;border:none;cursor:pointer}
         .btn-secondary{background:rgba(255,255,255,.08);border:1px solid rgba(154,178,255,.3);color:#fff;padding:12px 18px;border-radius:11px;font-size:13px;font-weight:700;cursor:pointer}
+        .btn-join{background:#ffffff;color:#060B24;padding:12px 18px;border-radius:12px;font-size:13px;font-weight:800;display:block;text-align:center;margin-top:4px}
         .eyebrow{color:#79a6ff;font-size:10.5px;font-weight:800;letter-spacing:2.6px}
         .hero{padding:36px 7% 28px;max-width:1100px;margin:0 auto;text-align:left}
         .hero h1{font-size:clamp(38px,7vw,60px);line-height:1.05;letter-spacing:-1.5px;margin:12px 0 12px}.hero h1 span{color:#8ab4ff}
         .hero p{color:#b8c7e6;max-width:520px;line-height:1.7;margin:0 0 20px}.hero-stats{margin-top:18px;color:#9cb0d9;font-size:13px}
         .explore,.more{padding:28px 7%;max-width:1100px;margin:0 auto}.feed-section{padding:28px 7%;max-width:560px;margin:0 auto}
-        .nav-tab{background:rgba(255,255,255,.06);border:1px solid rgba(154,178,255,.25);color:#d9e4ff;padding:8px 16px;border-radius:999px;font-size:13px;font-weight:700;cursor:pointer}.nav-tab.active{background:#fff;color:#060b24;border-color:#fff}
         .hero-btns{display:flex;gap:10px;flex-wrap:wrap}
-        .feature-community{padding:10px 7% 10px;max-width:1100px;margin:0 auto}.fc-grid{display:grid;grid-template-columns:1.1fr 0.9fr;gap:16px;align-items:stretch}.fc-feature{background:linear-gradient(160deg,rgba(20,32,72,.9),rgba(11,19,46,.95));border:1px solid rgba(138,165,255,.16);border-radius:20px;padding:24px}.fc-feature h2{margin:8px 0 6px;font-size:clamp(22px,3.5vw,30px)}.fc-sub{color:#a9b9da;font-size:13px;margin:0 0 16px}.feature-list{display:flex;flex-direction:column;gap:12px}.feature-row{display:flex;gap:12px;align-items:flex-start;background:rgba(255,255,255,.04);border:1px solid rgba(138,165,255,.12);border-radius:14px;padding:12px}.feature-row b{font-size:14px}.feature-row p{margin:3px 0 0;color:#b4c6e7;font-size:12.5px;line-height:1.5}.f-icon{width:40px;height:40px;flex-shrink:0;border-radius:11px;background:rgba(92,124,255,.18);display:grid;place-items:center;font-size:18px}
-        .fc-community{background:linear-gradient(155deg,#4B6BFF,#0E183A);border-radius:20px;padding:24px;color:#fff;text-decoration:none;display:flex;flex-direction:column;gap:10px}.fc-community .eyebrow{color:#ffe4ef}.comm-head{display:flex;gap:12px;align-items:center}.comm-icon{width:52px;height:52px;border-radius:16px;background:rgba(255,255,255,.22);display:grid;place-items:center;font-size:24px}.comm-head h2{margin:0;font-size:22px}.comm-head p{margin:2px 0 0;opacity:.9;font-size:13px}.comm-desc{margin:0;line-height:1.6;font-size:13.5px;opacity:.95}.comm-stats{display:grid;grid-template-columns:repeat(3,1fr);gap:10px;margin:6px 0}.comm-stats div{background:rgba(0,0,0,.22);border-radius:12px;padding:12px;text-align:center;display:flex;flex-direction:column}.comm-stats b{font-size:20px}.comm-stats span{font-size:11px;opacity:.85}.fc-community .btn-primary{background:#fff;color:#0E183A;box-shadow:none;justify-content:center}
+        .feature-community{padding:10px 7% 10px;max-width:1100px;margin:0 auto}.fc-grid{display:grid;grid-template-columns:1.1fr 0.9fr;gap:16px;align-items:stretch}.fc-feature{background:#0E183A;border:1px solid rgba(138,165,255,.16);border-radius:20px;padding:24px}.fc-feature h2{margin:8px 0 6px;font-size:clamp(22px,3.5vw,30px)}.fc-sub{color:#a9b9da;font-size:13px;margin:0 0 16px}.feature-list{display:flex;flex-direction:column;gap:12px}.feature-row{display:flex;gap:12px;align-items:flex-start;background:rgba(255,255,255,.04);border:1px solid rgba(138,165,255,.12);border-radius:14px;padding:12px}.feature-row b{font-size:14px}.feature-row p{margin:3px 0 0;color:#b4c6e7;font-size:12.5px;line-height:1.5}.f-icon{width:40px;height:40px;flex-shrink:0;border-radius:11px;background:rgba(92,124,255,.18);display:grid;place-items:center;font-size:18px}
+        /* COMMUNITY - FIX UTAMA: SOLID NAVY, BUKAN GRADASI */
+        .fc-community{background:#0E183A;border:1px solid #4B6BFF;border-radius:20px;padding:24px;color:#fff;text-decoration:none;display:flex;flex-direction:column;gap:12px;overflow:hidden;min-width:0}
+        .fc-community .eyebrow{color:#8AB4FF}
+        .comm-head{display:flex;gap:12px;align-items:center;min-width:0}.comm-icon{width:52px;height:52px;flex-shrink:0;border-radius:16px;background:#1A2A5A;display:grid;place-items:center;font-size:24px}.comm-head h2{margin:0;font-size:21px;line-height:1.2;word-break:break-word}.comm-head p{margin:2px 0 0;color:#B4C6E7;font-size:13px}
+        .comm-desc{margin:0;line-height:1.6;font-size:13.5px;color:#E2ECFF;word-break:break-word}
+        .comm-stats{display:grid;grid-template-columns:repeat(3,1fr);gap:10px;margin:6px 0}.comm-stats div{background:#16224F;border:1px solid rgba(138,165,255,.2);border-radius:12px;padding:12px 6px;text-align:center;display:flex;flex-direction:column;min-width:0}.comm-stats b{font-size:20px;color:#fff}.comm-stats span{font-size:11px;color:#B4C6E7}
         .eco-note{color:#a9b9da;font-size:13px;margin:8px 0 0;max-width:620px;line-height:1.6}
         .tiktok-tabs{display:flex;gap:4px;background:rgba(255,255,255,.06);padding:4px;border-radius:999px}.tiktok-tabs .tab{background:transparent;border:none;color:#a9b9da;padding:7px 14px;border-radius:999px;font-size:12.5px;font-weight:700;cursor:pointer}.tiktok-tabs .tab.active{background:#fff;color:#060b24}.feed-tabs{margin-bottom:16px;justify-content:center}
         .sec-head{display:flex;justify-content:space-between;align-items:flex-end;gap:16px;margin-bottom:18px}.sec-head h2{margin:6px 0 0;font-size:clamp(24px,4vw,32px)}.sec-head p{color:#a9b9da;font-size:13px;margin:6px 0 0}.link{color:#9ec0ff;text-decoration:none;font-size:13px;font-weight:700;white-space:nowrap}
         .module-grid{display:grid;grid-template-columns:repeat(3,1fr);gap:14px}
-        .module-card{background:linear-gradient(160deg,rgba(20,32,72,.9),rgba(11,19,46,.95));border:1px solid rgba(138,165,255,.16);border-radius:16px;padding:18px;text-decoration:none;color:#fff;display:flex;flex-direction:column;gap:4px}
+        .module-card{background:#0E183A;border:1px solid rgba(138,165,255,.16);border-radius:16px;padding:18px;text-decoration:none;color:#fff;display:flex;flex-direction:column;gap:4px}
         .m-icon{width:42px;height:42px;border-radius:12px;display:grid;place-items:center;font-size:19px;margin-bottom:6px}.module-card small{color:#82b4ff;font-size:11px;font-weight:700}.module-card p{color:#b4c6e7;font-size:12.5px;line-height:1.5;margin:0}
         .tiktok-feed{display:flex;flex-direction:column;gap:18px;scroll-snap-type:y proximity}
         .tiktok-card{scroll-snap-align:start}
         .tiktok-media{position:relative;width:100%;aspect-ratio:9/16;max-height:720px;border-radius:20px;overflow:hidden;background:#000;border:1px solid rgba(138,165,255,.18)}
         .tiktok-video,.tiktok-img{width:100%;height:100%;object-fit:cover;display:block;border:none}
-        .no-media{width:100%;height:100%;display:grid;place-items:center;align-content:center;gap:8px;background:radial-gradient(circle at 50% 30%,#1a2f6b,#060b24);text-align:center;padding:20px}.no-media-logo{font-size:28px;font-weight:850;color:#8ab4ff}
+        .no-media{width:100%;height:100%;display:grid;place-items:center;align-content:center;gap:8px;background:#0E183A;text-align:center;padding:20px}.no-media-logo{font-size:28px;font-weight:850;color:#8ab4ff}
         .tiktok-actions{position:absolute;right:12px;bottom:110px;display:flex;flex-direction:column;gap:12px;z-index:3}.act{background:rgba(0,0,0,.45);backdrop-filter:blur(6px);border:1px solid rgba(255,255,255,.2);color:#fff;width:52px;height:52px;border-radius:50%;display:flex;flex-direction:column;align-items:center;justify-content:center;cursor:pointer;text-decoration:none;font-size:18px}.act small{font-size:9px;margin-top:1px}.act.liked{color:#ff5b7a;border-color:#ff5b7a}.act.saved{color:#fbbf24;border-color:#fbbf24}
         .tiktok-caption{position:absolute;left:14px;right:72px;bottom:14px;z-index:2;text-shadow:0 1px 8px rgba(0,0,0,.9)}.author{display:flex;align-items:center;gap:8px;margin-bottom:6px}.avatar{width:30px;height:30px;border-radius:50%;background:#4b6bff;display:grid;place-items:center;font-size:13px;font-weight:800}.badge{background:rgba(255,255,255,.18);padding:3px 8px;border-radius:999px;font-size:10px}.tiktok-caption h3{margin:0 0 4px;font-size:16px}.tiktok-caption p{margin:0;font-size:13px;line-height:1.5;color:#e2ecff;display:-webkit-box;-webkit-line-clamp:2;-webkit-box-orient:vertical;overflow:hidden}
         .thread{margin-top:10px;background:#0d1838;border:1px solid rgba(138,165,255,.2);border-radius:16px;padding:12px;color:#131c36}
         .loading{padding:30px;text-align:center;color:#a9b9da;background:rgba(15,25,58,.7);border-radius:16px}
-        .more{background:linear-gradient(145deg,rgba(22,36,82,.92),rgba(11,19,46,.96));border:1px solid rgba(138,165,255,.2);border-radius:22px;padding:28px;margin-top:10px}.more h2{margin:0 0 8px}.more p{color:#a9b9da}.more-grid{display:grid;grid-template-columns:repeat(3,1fr);gap:14px;margin:18px 0}
+        .more{background:#0E183A;border:1px solid rgba(138,165,255,.2);border-radius:22px;padding:28px;margin-top:10px}.more h2{margin:0 0 8px}.more p{color:#a9b9da}.more-grid{display:grid;grid-template-columns:repeat(3,1fr);gap:14px;margin:18px 0}
         .footer{text-align:center;padding:28px;color:#96a8d0}.footer b{color:#fff;font-size:22px}
         .bottom-nav{display:none}.bottom-nav button{background:none;border:none;cursor:pointer}
         @media(max-width:640px){
           .nav-desktop{display:none}.fc-grid{grid-template-columns:1fr}.module-grid{grid-template-columns:repeat(2,1fr);gap:10px}.module-card{padding:14px}.hero{padding:26px 5% 18px}.explore,.feed-section,.more{padding:22px 5%}
           .tiktok-media{aspect-ratio:9/16;max-height:none;border-radius:18px}.more-grid{grid-template-columns:1fr}
-          .bottom-nav{display:flex;position:fixed;left:0;right:0;bottom:0;z-index:40;background:rgba(6,11,34,.96);backdrop-filter:blur(12px);border-top:1px solid rgba(138,165,255,.2);justify-content:space-around;padding:8px 4px 12px}
-          .bottom-nav a{color:#c8d7f5;text-decoration:none;display:flex;flex-direction:column;align-items:center;font-size:18px}.bottom-nav small{font-size:9px;margin-top:2px}.bottom-nav .plus{background:linear-gradient(110deg,#4b6bff,#7854ff);width:44px;height:44px;border-radius:14px;display:flex;flex-direction:column;align-items:center;justify-content:center;color:#fff;margin-top:-18px}
+          .topnav{padding:10px 4%}
+          .home-pill{padding:7px 12px;font-size:12.5px}
+          .bottom-nav{display:flex;position:fixed;left:0;right:0;bottom:0;z-index:40;background:#060B24;border-top:1px solid rgba(138,165,255,.2);justify-content:space-around;padding:8px 4px 12px}
+          .bottom-nav a{color:#c8d7f5;text-decoration:none;display:flex;flex-direction:column;align-items:center;font-size:18px}.bottom-nav small{font-size:9px;margin-top:2px}.bottom-nav .plus{background:#4B6BFF;width:44px;height:44px;border-radius:14px;display:flex;flex-direction:column;align-items:center;justify-content:center;color:#fff;margin-top:-18px}
+          .bnav-home{color:#fff}.bnav-home small{color:#fff;font-weight:800}
         }
       `}</style>
     </main>
