@@ -1733,9 +1733,20 @@ export default function BusinessFeedPage() {
       <style jsx>{`
         .feed-page {
           min-height: 100vh;
-          background: #f3f6fb;
-          color: #15243a;
+          color: #f3f7ff;
           font-family: var(--font-sans), Arial, sans-serif;
+          background:
+            radial-gradient(
+              circle at 78% 14%,
+              rgba(78, 108, 255, 0.32),
+              transparent 36%
+            ),
+            radial-gradient(
+              circle at 22% 32%,
+              rgba(120, 84, 255, 0.22),
+              transparent 42%
+            ),
+            linear-gradient(180deg, #060b24 0%, #091338 55%, #060b24 100%);
         }
 
         .feed-container {
@@ -1758,9 +1769,9 @@ export default function BusinessFeedPage() {
           align-items: center;
           padding: 4px;
           border-radius: 11px;
-          background: #e6f8f4;
-          border: 1px solid #9be4d7;
-          box-shadow: 0 3px 10px rgba(15, 163, 130, 0.12);
+          background: rgba(16, 26, 58, 0.78);
+          border: 1px solid rgba(154, 178, 255, 0.28);
+          box-shadow: 0 6px 18px rgba(4, 9, 28, 0.25);
         }
 
         .back-home-button {
@@ -1769,7 +1780,7 @@ export default function BusinessFeedPage() {
           gap: 6px;
           padding: 9px 15px;
           border-radius: 8px;
-          background: linear-gradient(110deg, #13c8b5, #0fa382);
+          background: linear-gradient(110deg, #4b6bff, #7854ff);
           color: #ffffff;
           font-size: 13px;
           font-weight: 700;
@@ -1778,13 +1789,13 @@ export default function BusinessFeedPage() {
         }
 
         .back-home-button:hover {
-          filter: brightness(0.95);
+          filter: brightness(1.06);
         }
 
         .vchat-toggle-btn {
-          border: 1px solid #b9cce6;
-          background: #0d1e34;
-          color: #eef4fb;
+          border: 1px solid rgba(154, 178, 255, 0.32);
+          background: rgba(16, 26, 58, 0.85);
+          color: #eef3ff;
           padding: 10px 16px;
           border-radius: 10px;
           font-size: 13px;
@@ -1793,9 +1804,9 @@ export default function BusinessFeedPage() {
         }
 
         .vchat-toggle-btn.active {
-          border-color: #13c8b5;
-          background: #10324e;
-          color: #7ee8dc;
+          border-color: rgba(138, 180, 255, 0.6);
+          background: linear-gradient(110deg, #4b6bff, #7854ff);
+          color: #ffffff;
         }
 
         .vchat-drawer {
@@ -1803,31 +1814,43 @@ export default function BusinessFeedPage() {
         }
 
         .hero {
-          background: linear-gradient(120deg, #102b4d, #145b79);
+          background: linear-gradient(
+            125deg,
+            rgba(22, 36, 82, 0.94),
+            rgba(13, 24, 62, 0.98)
+          );
+          border: 1px solid rgba(138, 165, 255, 0.24);
           border-radius: 18px;
           padding: 42px;
-          color: white;
+          color: #ffffff;
           display: flex;
           align-items: center;
           justify-content: space-between;
           overflow: hidden;
+          box-shadow: 0 14px 32px rgba(3, 8, 24, 0.36);
         }
 
         .eyebrow {
-          color: #13c8b5;
-          font-size: 12px;
+          color: #79a6ff;
+          font-size: 11px;
           font-weight: 800;
-          letter-spacing: 1.6px;
+          letter-spacing: 2px;
+          text-transform: uppercase;
         }
 
         .hero h1 {
           font-size: 44px;
-          font-weight: 800;
+          font-weight: 850;
           margin: 12px 0;
+          color: #ffffff;
+        }
+
+        .hero h1 span {
+          color: #8ab4ff;
         }
 
         .hero p {
-          color: #d8e5f3;
+          color: #b8c7e6;
           font-size: 15px;
           line-height: 1.7;
           max-width: 580px;
@@ -1835,8 +1858,8 @@ export default function BusinessFeedPage() {
 
         .hero-icon {
           font-size: 95px;
-          color: #13c8b5;
-          opacity: 0.8;
+          color: #8ab4ff;
+          opacity: 0.55;
         }
 
         .feed-layout {
@@ -1857,18 +1880,23 @@ export default function BusinessFeedPage() {
         .composer,
         .post-card,
         .empty-state {
-          background: white;
-          border: 1px solid #e4eaf2;
-          border-radius: 14px;
+          background: linear-gradient(
+            160deg,
+            rgba(20, 32, 72, 0.92),
+            rgba(11, 19, 46, 0.96)
+          );
+          border: 1px solid rgba(138, 165, 255, 0.18);
+          border-radius: 16px;
           padding: 21px;
-          box-shadow: 0 5px 18px rgba(20, 42, 70, 0.035);
+          color: #f3f7ff;
+          box-shadow: 0 10px 24px rgba(3, 8, 24, 0.25);
         }
 
         .panel-heading {
-          font-size: 12px;
+          font-size: 11px;
           font-weight: 800;
-          color: #6f8096;
-          letter-spacing: 1.3px;
+          color: #8ea3cc;
+          letter-spacing: 1.4px;
           margin-bottom: 15px;
         }
 
@@ -1877,21 +1905,28 @@ export default function BusinessFeedPage() {
           display: flex;
           align-items: center;
           gap: 11px;
-          border: none;
+          border: 1px solid transparent;
           background: transparent;
           padding: 12px;
-          border-radius: 9px;
+          border-radius: 10px;
           text-align: left;
-          color: #4c5e75;
+          color: #c8d7f5;
           font-size: 13px;
           font-weight: 500;
           cursor: pointer;
+          transition: background 0.2s ease, color 0.2s ease, border-color 0.2s ease;
+        }
+
+        .category:hover {
+          background: rgba(92, 124, 255, 0.1);
+          color: #ffffff;
         }
 
         .category.active {
-          background: #eaf2ff;
-          color: #2874db;
+          background: linear-gradient(110deg, #4b6bff, #7854ff);
+          color: #ffffff;
           font-weight: 700;
+          box-shadow: 0 6px 18px rgba(75, 107, 255, 0.28);
         }
 
         .company-identity {
@@ -1913,8 +1948,9 @@ export default function BusinessFeedPage() {
         .company-avatar {
           display: grid;
           place-items: center;
-          background: #e8f1ff;
-          color: #2874db;
+          background: rgba(92, 124, 255, 0.22);
+          border: 1px solid rgba(138, 180, 255, 0.35);
+          color: #9ec0ff;
           font-size: 18px;
           font-weight: 800;
         }
@@ -1923,14 +1959,14 @@ export default function BusinessFeedPage() {
           display: block;
           font-size: 14px;
           font-weight: 700;
-          color: #1d3048;
+          color: #ffffff;
           overflow-wrap: anywhere;
         }
 
         .company-identity small {
           display: block;
           margin-top: 4px;
-          color: #7c8ea4;
+          color: #9cb0d9;
           font-size: 12px;
         }
 
@@ -1941,28 +1977,33 @@ export default function BusinessFeedPage() {
           padding: 12px;
           margin-top: 18px;
           border: none;
-          border-radius: 9px;
-          background: linear-gradient(110deg, #347cf0, #13bcae);
-          color: white;
+          border-radius: 10px;
+          background: linear-gradient(110deg, #4b6bff, #7854ff);
+          color: #ffffff;
           text-align: center;
           font-size: 13px;
-          font-weight: 700;
+          font-weight: 750;
           text-decoration: none;
           cursor: pointer;
           box-sizing: border-box;
+          box-shadow: 0 8px 20px rgba(75, 107, 255, 0.28);
         }
 
         .manage-link {
           display: block;
           margin-top: 15px;
-          color: #2874db;
+          color: #8ab4ff;
           text-decoration: none;
           font-size: 13px;
           font-weight: 700;
         }
 
+        .manage-link:hover {
+          color: #c2d8ff;
+        }
+
         .muted {
-          color: #6b7d94;
+          color: #a9b9da;
           font-size: 13px;
           line-height: 1.7;
         }
@@ -1981,10 +2022,10 @@ export default function BusinessFeedPage() {
         }
 
         .video-clip-card {
-          border: 1px solid #e4eaf2;
-          border-radius: 10px;
+          border: 1px solid rgba(138, 165, 255, 0.22);
+          border-radius: 12px;
           overflow: hidden;
-          background: #0d1e34;
+          background: #08112b;
           color: #eef4fb;
         }
 
@@ -1993,13 +2034,13 @@ export default function BusinessFeedPage() {
           height: 140px;
           object-fit: cover;
           display: block;
-          background: #050d18;
+          background: #050a20;
         }
 
         .video-fallback-box {
           height: 140px;
           padding: 12px;
-          background: linear-gradient(135deg, #102b4d, #144d66);
+          background: linear-gradient(135deg, #10204c, #192f6b);
           color: #eef4fb;
           display: flex;
           flex-direction: column;
@@ -2015,12 +2056,12 @@ export default function BusinessFeedPage() {
 
         .video-fallback-box strong {
           font-size: 13px;
-          color: #7ee8dc;
+          color: #9ec0ff;
         }
 
         .video-fallback-box small {
           font-size: 11px;
-          color: #cbd9ea;
+          color: #b8c7e6;
         }
 
         .video-clip-meta {
@@ -2030,6 +2071,7 @@ export default function BusinessFeedPage() {
         .video-clip-meta strong {
           display: block;
           font-size: 13px;
+          color: #ffffff;
           overflow-wrap: anywhere;
         }
 
@@ -2037,7 +2079,7 @@ export default function BusinessFeedPage() {
           display: block;
           margin-top: 4px;
           font-size: 12px;
-          color: #7ee8dc;
+          color: #8ab4ff;
         }
 
         .video-clip-caption-input {
@@ -2045,21 +2087,21 @@ export default function BusinessFeedPage() {
           box-sizing: border-box;
           margin-top: 9px;
           padding: 8px 10px;
-          border-radius: 7px;
-          border: 1px solid rgba(255, 255, 255, 0.22);
-          background: rgba(255, 255, 255, 0.08);
+          border-radius: 8px;
+          border: 1px solid rgba(138, 165, 255, 0.25);
+          background: rgba(255, 255, 255, 0.06);
           color: #ffffff;
           font-size: 12px;
           outline: none;
         }
 
         .video-clip-caption-input::placeholder {
-          color: #9cb0c9;
+          color: #96a8d0;
         }
 
         .video-clip-caption-input:focus {
-          border-color: #13c8b5;
-          background: rgba(255, 255, 255, 0.14);
+          border-color: #7854ff;
+          background: rgba(255, 255, 255, 0.1);
         }
 
         .publish-clip-home-btn {
@@ -2067,8 +2109,8 @@ export default function BusinessFeedPage() {
           width: 100%;
           padding: 8px 10px;
           border: none;
-          border-radius: 7px;
-          background: linear-gradient(110deg, #347cf0, #13bcae);
+          border-radius: 8px;
+          background: linear-gradient(110deg, #4b6bff, #7854ff);
           color: #ffffff;
           font-size: 12px;
           font-weight: 700;
@@ -2082,34 +2124,34 @@ export default function BusinessFeedPage() {
 
         .feed-video-box {
           margin-top: 14px;
-          border-radius: 11px;
+          border-radius: 12px;
           overflow: hidden;
-          background: #07111f;
-          border: 1px solid #dfe6ef;
+          background: #060b24;
+          border: 1px solid rgba(138, 165, 255, 0.2);
         }
 
         .feed-video-player {
           display: block;
           width: 100%;
           max-height: 420px;
-          background: #050d18;
+          background: #050a20;
         }
 
         .feed-video-caption-bar {
           padding: 9px 13px;
-          background: #10243d;
-          color: #e6eef8;
+          background: #0d1a40;
+          color: #e2ecff;
           font-size: 13px;
           line-height: 1.45;
-          border-top: 1px solid #1d3656;
+          border-top: 1px solid rgba(138, 165, 255, 0.16);
           overflow-wrap: anywhere;
         }
 
         .extra-tool-box {
           padding: 12px;
           border-radius: 10px;
-          background: #f5f9ff;
-          border: 1px solid #d7e4f8;
+          background: rgba(14, 24, 56, 0.85);
+          border: 1px solid rgba(138, 165, 255, 0.22);
           display: flex;
           flex-direction: column;
           gap: 8px;
@@ -2117,7 +2159,7 @@ export default function BusinessFeedPage() {
 
         .extra-tool-box small {
           font-size: 12px;
-          color: #4f647d;
+          color: #b4c6e7;
           line-height: 1.5;
         }
 
@@ -2140,11 +2182,13 @@ export default function BusinessFeedPage() {
           font-size: 22px;
           font-weight: 800;
           margin: 7px 0 0;
+          color: #ffffff;
         }
 
         .post-count {
-          background: #e6efff;
-          color: #2874db;
+          background: rgba(92, 124, 255, 0.2);
+          border: 1px solid rgba(138, 180, 255, 0.3);
+          color: #9ec0ff;
           padding: 8px 13px;
           border-radius: 20px;
           font-size: 12px;
@@ -2161,8 +2205,9 @@ export default function BusinessFeedPage() {
         }
 
         .close-button {
-          border: none;
-          background: #f0f3f8;
+          border: 1px solid rgba(138, 165, 255, 0.25);
+          background: rgba(255, 255, 255, 0.08);
+          color: #ffffff;
           border-radius: 8px;
           padding: 9px 12px;
           font-size: 13px;
@@ -2176,7 +2221,7 @@ export default function BusinessFeedPage() {
         }
 
         .composer label {
-          color: #485a70;
+          color: #c8d7f5;
           font-size: 13px;
           font-weight: 700;
           margin-top: 8px;
@@ -2187,20 +2232,25 @@ export default function BusinessFeedPage() {
         .composer textarea {
           width: 100%;
           box-sizing: border-box;
-          border: 1px solid #dfe6ef;
-          border-radius: 8px;
+          border: 1px solid rgba(138, 165, 255, 0.24);
+          border-radius: 9px;
           padding: 12px;
-          background: #fbfcfe;
-          color: #1d3048;
+          background: #081029;
+          color: #f3f7ff;
           font: inherit;
           font-size: 14px;
           outline: none;
         }
 
+        .composer input::placeholder,
+        .composer textarea::placeholder {
+          color: #889bc2;
+        }
+
         .composer input:focus,
         .composer select:focus,
         .composer textarea:focus {
-          border-color: #347cf0;
+          border-color: #7854ff;
         }
 
         .composer textarea {
@@ -2209,35 +2259,36 @@ export default function BusinessFeedPage() {
 
         .upload-area {
           padding: 14px;
-          background: #f7faff;
-          border: 1px dashed #b9cce6;
-          border-radius: 9px;
+          background: rgba(12, 22, 52, 0.72);
+          border: 1px dashed rgba(138, 180, 255, 0.36);
+          border-radius: 10px;
         }
 
         .upload-area input {
           border: none;
           background: transparent;
           padding: 5px 0;
+          color: #dce7ff;
         }
 
         .upload-area small {
           display: block;
-          color: #73859c;
+          color: #9cb0d9;
           font-size: 12px;
           margin-top: 7px;
         }
 
         .image-preview {
           padding: 13px;
-          border: 1px solid #e4eaf2;
+          border: 1px solid rgba(138, 165, 255, 0.2);
           border-radius: 10px;
-          background: #fbfcfe;
+          background: rgba(8, 16, 41, 0.82);
           min-width: 0;
         }
 
         .image-preview span {
           display: block;
-          color: #6e8096;
+          color: #9cb0d9;
           font-size: 11px;
           font-weight: 800;
           letter-spacing: 1.2px;
@@ -2251,10 +2302,10 @@ export default function BusinessFeedPage() {
         }
 
         .preview-card {
-          border: 1px solid #e4eaf2;
-          border-radius: 8px;
+          border: 1px solid rgba(138, 165, 255, 0.2);
+          border-radius: 9px;
           padding: 8px;
-          background: white;
+          background: #0d193d;
         }
 
         .preview-card img {
@@ -2263,14 +2314,14 @@ export default function BusinessFeedPage() {
           height: 110px;
           object-fit: cover;
           border-radius: 6px;
-          background: #edf1f6;
+          background: #060b24;
         }
 
         .image-caption-input {
           margin-top: 8px;
           padding: 8px 10px !important;
           font-size: 12px !important;
-          border-radius: 6px !important;
+          border-radius: 7px !important;
         }
 
         .remove-image-button {
@@ -2278,7 +2329,7 @@ export default function BusinessFeedPage() {
           margin-top: 8px;
           border: none;
           background: transparent;
-          color: #d95353;
+          color: #fda4af;
           font-size: 12px;
           font-weight: 700;
           cursor: pointer;
@@ -2288,19 +2339,19 @@ export default function BusinessFeedPage() {
         .moderation-note {
           margin-top: 10px;
           padding: 13px;
-          border: 1px solid #d9eee9;
-          background: #f0faf7;
-          border-radius: 9px;
+          border: 1px solid rgba(138, 180, 255, 0.28);
+          background: rgba(75, 107, 255, 0.14);
+          border-radius: 10px;
         }
 
         .moderation-note strong {
-          color: #168457;
+          color: #9ec0ff;
           font-size: 13px;
         }
 
         .moderation-note p {
           margin: 6px 0 0;
-          color: #556e68;
+          color: #c8d7f5;
           font-size: 12px;
           line-height: 1.6;
         }
@@ -2317,12 +2368,13 @@ export default function BusinessFeedPage() {
           gap: 12px;
           flex-wrap: wrap;
           padding-bottom: 17px;
-          border-bottom: 1px solid #edf0f5;
+          border-bottom: 1px solid rgba(138, 165, 255, 0.14);
         }
 
         .post-category {
-          background: #edf5ff;
-          color: #2f72cc;
+          background: rgba(92, 124, 255, 0.18);
+          border: 1px solid rgba(138, 180, 255, 0.28);
+          color: #9ec0ff;
           padding: 7px 12px;
           border-radius: 20px;
           font-size: 12px;
@@ -2336,14 +2388,14 @@ export default function BusinessFeedPage() {
 
         .post-body h3 {
           font-size: 20px;
-          font-weight: 700;
+          font-weight: 750;
           margin: 0 0 12px;
-          color: #1d3048;
+          color: #ffffff;
           overflow-wrap: anywhere;
         }
 
         .post-body p {
-          color: #52647b;
+          color: #b8c7e6;
           font-size: 14px;
           line-height: 1.78;
           white-space: pre-wrap;
@@ -2368,7 +2420,8 @@ export default function BusinessFeedPage() {
           width: 100%;
           overflow: hidden;
           border-radius: 11px;
-          background: #edf1f6;
+          background: #070d24;
+          border: 1px solid rgba(138, 165, 255, 0.16);
         }
 
         .post-image {
@@ -2393,9 +2446,9 @@ export default function BusinessFeedPage() {
           justify-content: space-between;
           gap: 8px;
           padding: 9px 12px;
-          background: #10243d;
+          background: #0d1a40;
           color: #e6eef8;
-          border-top: 1px solid #1d3656;
+          border-top: 1px solid rgba(138, 165, 255, 0.16);
         }
 
         .post-image-caption {
@@ -2409,10 +2462,10 @@ export default function BusinessFeedPage() {
         }
 
         .post-image-comment-btn {
-          border: 1px solid rgba(255, 255, 255, 0.16);
+          border: 1px solid rgba(138, 180, 255, 0.25);
           background: rgba(255, 255, 255, 0.08);
           color: #ffffff;
-          border-radius: 6px;
+          border-radius: 7px;
           padding: 4px 9px;
           font-size: 13px;
           line-height: 1.3;
@@ -2421,21 +2474,21 @@ export default function BusinessFeedPage() {
         }
 
         .post-image-comment-btn:hover {
-          background: rgba(19, 188, 174, 0.35);
-          border-color: #13bcae;
+          background: linear-gradient(110deg, #4b6bff, #7854ff);
+          border-color: transparent;
         }
 
         .image-error {
           display: none;
           padding: 30px 15px;
           text-align: center;
-          color: #bd3d3d;
+          color: #fda4af;
           font-size: 13px;
           line-height: 1.6;
         }
 
         .image-error a {
-          color: #2874db;
+          color: #8ab4ff;
           font-weight: 700;
         }
 
@@ -2445,9 +2498,9 @@ export default function BusinessFeedPage() {
           align-items: center;
           gap: 10px;
           flex-wrap: wrap;
-          border-top: 1px solid #edf0f5;
+          border-top: 1px solid rgba(138, 165, 255, 0.14);
           padding-top: 15px;
-          color: #7c8ea4;
+          color: #8ea3cc;
           font-size: 12px;
         }
 
@@ -2460,7 +2513,7 @@ export default function BusinessFeedPage() {
         .edit-button {
           background: transparent;
           border: none;
-          color: #2874db;
+          color: #8ab4ff;
           font-size: 12px;
           font-weight: 700;
           cursor: pointer;
@@ -2469,7 +2522,7 @@ export default function BusinessFeedPage() {
         .delete-button {
           background: transparent;
           border: none;
-          color: #d95353;
+          color: #fda4af;
           font-size: 12px;
           font-weight: 700;
           cursor: pointer;
@@ -2482,16 +2535,17 @@ export default function BusinessFeedPage() {
 
         .empty-icon {
           font-size: 38px;
-          color: #347cf0;
+          color: #8ab4ff;
         }
 
         .empty-state h3 {
           margin: 14px 0 8px;
           font-size: 18px;
+          color: #ffffff;
         }
 
         .empty-state p {
-          color: #6b7d94;
+          color: #a9b9da;
           font-size: 13px;
           line-height: 1.7;
           max-width: 360px;
@@ -2507,8 +2561,8 @@ export default function BusinessFeedPage() {
         .loader {
           width: 28px;
           height: 28px;
-          border: 3px solid #e4ebf5;
-          border-top-color: #347cf0;
+          border: 3px solid rgba(138, 180, 255, 0.2);
+          border-top-color: #7854ff;
           border-radius: 50%;
           margin: 0 auto 14px;
           animation: spin 0.8s linear infinite;
@@ -2522,26 +2576,29 @@ export default function BusinessFeedPage() {
 
         .alert {
           padding: 13px 15px;
-          border-radius: 9px;
+          border-radius: 10px;
           font-size: 13px;
           overflow-wrap: anywhere;
         }
 
         .alert.error {
-          background: #fff0f0;
-          color: #bd3d3d;
+          background: rgba(244, 63, 94, 0.16);
+          border: 1px solid rgba(244, 63, 94, 0.42);
+          color: #fda4af;
         }
 
         .alert.success {
-          background: #eafaf3;
-          color: #168457;
+          background: rgba(92, 124, 255, 0.18);
+          border: 1px solid rgba(138, 180, 255, 0.42);
+          color: #c7dcff;
         }
 
         .feed-footer {
           text-align: center;
-          padding: 25px;
-          background: #07111f;
-          color: #93a5bc;
+          padding: 28px 20px;
+          background: #050a20;
+          color: #96a8d0;
+          border-top: 1px solid rgba(138, 165, 255, 0.14);
           font-size: 12px;
         }
 
