@@ -27,8 +27,8 @@ interface CommentCountRow {
   post_id: string;
 }
 
-const BRAND_LOGO_SRC = "/images/V-NECT-logo.png";
-const HERO_GLOBE_SRC = "/images/logonew-v-nect.png";
+const BRAND_LOGO_SRC = "/images/V-NECT-logo.png";[span_4](start_span)[span_4](end_span)
+const HERO_GLOBE_SRC = "/images/logonew-v-nect.png";[span_5](start_span)[span_5](end_span)
 
 function getPostImages(post: BusinessPost): string[] {
   const list: string[] = [];
@@ -417,12 +417,16 @@ export default function HomePage() {
           </div>
 
           <div className="hero-visual">
-            <div className="hero-visual-glow" aria-hidden="true" />
+            <div className="hero-orbit-lines" aria-hidden="true" />
+            <span className="hero-corner-pill top-left">BUSINESS</span>
+            <span className="hero-corner-pill top-right">CONNECT</span>
             <img
               src={HERO_GLOBE_SRC}
               alt="v-nect global network globe"
               className="hero-globe-img"
             />
+            <span className="hero-corner-pill bottom-left">COMMUNITY</span>
+            <span className="hero-corner-pill bottom-right">GLOBAL</span>
           </div>
         </div>
       </section>
@@ -1192,40 +1196,103 @@ export default function HomePage() {
           display: flex;
           align-items: center;
           justify-content: center;
-          border-radius: 22px;
-          padding: 14px;
-          background: radial-gradient(
-            circle at center,
-            rgba(75, 107, 255, 0.2),
-            rgba(9, 19, 56, 0.35) 70%
-          );
-          border: 1px solid rgba(138, 165, 255, 0.2);
-          overflow: hidden;
-        }
+          min-height: 340px;
+          padding: 16px;
+          background: transparent;
+          border: none;
+          box-shadow: none;
+          overflow: visible;
+        }[span_6](start_span)[span_6](end_span)[span_7](start_span)[span_7](end_span)
 
-        .hero-visual-glow {
+        .hero-orbit-lines {
           position: absolute;
-          width: 72%;
-          height: 72%;
-          border-radius: 50%;
-          background: radial-gradient(
-            circle,
-            rgba(120, 84, 255, 0.28),
-            transparent 70%
-          );
+          inset: 12% 8%;
           pointer-events: none;
-        }
+          background:
+            linear-gradient(
+              42deg,
+              transparent 49.4%,
+              rgba(138, 180, 255, 0.24) 49.9%,
+              rgba(138, 180, 255, 0.24) 50.3%,
+              transparent 50.8%
+            ),
+            linear-gradient(
+              -42deg,
+              transparent 49.4%,
+              rgba(138, 180, 255, 0.24) 49.9%,
+              rgba(138, 180, 255, 0.24) 50.3%,
+              transparent 50.8%
+            );
+          -webkit-mask-image: radial-gradient(
+            circle at center,
+            transparent 24%,
+            #000 62%,
+            transparent 95%
+          );
+          mask-image: radial-gradient(
+            circle at center,
+            transparent 24%,
+            #000 62%,
+            transparent 95%
+          );
+        }[span_8](start_span)[span_8](end_span)
 
         .hero-globe-img {
           position: relative;
           z-index: 1;
           width: 100%;
-          max-width: 480px;
+          max-width: 520px;
           height: auto;
           object-fit: contain;
-          border-radius: 16px;
           display: block;
-          mix-blend-mode: lighten;
+          mix-blend-mode: screen;
+          filter: contrast(1.08) saturate(1.12);
+          -webkit-mask-image: radial-gradient(
+            ellipse 76% 74% at 50% 50%,
+            #000 56%,
+            rgba(0, 0, 0, 0.55) 74%,
+            transparent 96%
+          );
+          mask-image: radial-gradient(
+            ellipse 76% 74% at 50% 50%,
+            #000 56%,
+            rgba(0, 0, 0, 0.55) 74%,
+            transparent 96%
+          );
+        }[span_9](start_span)[span_9](end_span)[span_10](start_span)[span_10](end_span)
+
+        .hero-corner-pill {
+          position: absolute;
+          z-index: 2;
+          font-size: 9.5px;
+          font-weight: 800;
+          letter-spacing: 1.4px;
+          color: #cfe0ff;
+          background: rgba(13, 24, 58, 0.72);
+          border: 1px solid rgba(138, 180, 255, 0.28);
+          padding: 4px 10px;
+          border-radius: 6px;
+          pointer-events: none;
+        }[span_11](start_span)[span_11](end_span)
+
+        .hero-corner-pill.top-left {
+          top: 8%;
+          left: 2%;
+        }
+
+        .hero-corner-pill.top-right {
+          top: 8%;
+          right: 2%;
+        }
+
+        .hero-corner-pill.bottom-left {
+          bottom: 8%;
+          left: 2%;
+        }
+
+        .hero-corner-pill.bottom-right {
+          bottom: 8%;
+          right: 2%;
         }
 
         .small-btn {
@@ -1842,6 +1909,10 @@ export default function HomePage() {
           .hero-grid {
             grid-template-columns: 1fr;
             gap: 28px;
+          }
+
+          .hero-visual {
+            min-height: 270px;
           }
 
           .hero-globe-img {
