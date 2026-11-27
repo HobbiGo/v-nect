@@ -140,5 +140,4 @@ return(
 .tk-bottom{position:fixed;left:0;right:0;bottom:0;z-index:60;background:#000;border-top:1px solid #222;display:flex;justify-content:space-around;padding:10px 8px calc(10px + env(safe-area-inset-bottom))}.tk-bottom a{color:#aaa;text-decoration:none;display:flex;flex-direction:column;align-items:center;font-size:20px}.tk-bottom a small{font-size:10px}.tk-bottom a.on{color:#fff}.tk-plus{background:#fe2c55!important;color:#fff!important;width:52px;height:34px;border-radius:12px;align-items:center;justify-content:center;font-size:26px!important}.tk-footer{text-align:center;color:#777;font-size:12px;padding:22px}
 @media(max-width:760px){.tk-top-tabs{display:none}.tk-hero h1{font-size:30px}.tk-card-media{height:520px}.tk-circle-grid{grid-template-columns:1fr}.tk-feed{padding:0 8px}}
 `}</style></main>);}
-}
 export default function VCirclePage(){return(<Suspense fallback={<div style={{minHeight:"100vh",background:"#000",color:"#fff",padding:"40px"}}>Loading v-circle Community...</div>}><VCircleContent/></Suspense>);}
