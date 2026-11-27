@@ -125,7 +125,7 @@ export default function HomePage() {
   async function toggleLike(id: string){
     if(!currentUserId){ setAuthModalOpen(true); return; }
     const liked = likedPostIds.includes(id);
-    if(liked){ setLikedPostIds(p=>p.filter(x=>x!==id)); setLikeCounts(p=>({...p,[id]:Math.max(0,(p[id]||0)-1)}); await supabase.from("post_likes").delete().eq("post_id",id).eq("user_id",currentUserId); }
+    if(liked){ setLikedPostIds(p=>p.filter(x=>x!==id)); setLikeCounts(p=>({...p,[id]:Math.max(0,(p[id]||0)-1)})); await supabase.from("post_likes").delete().eq("post_id",id).eq("user_id",currentUserId); }
     else { setLikedPostIds(p=>[...p,id]); setLikeCounts(p=>({...p,[id]:(p[id]||0)+1})); await supabase.from("post_likes").insert({post_id:id,user_id:currentUserId}); }
   }
 
