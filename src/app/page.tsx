@@ -27,8 +27,8 @@ interface CommentCountRow {
   post_id: string;
 }
 
-const BRAND_LOGO_SRC = "/images/V-NECT-logo.png";[span_4](start_span)[span_4](end_span)
-const HERO_GLOBE_SRC = "/images/logonew-v-nect.png";[span_5](start_span)[span_5](end_span)
+const BRAND_LOGO_SRC = "/images/V-NECT-logo.png";
+const HERO_GLOBE_SRC = "/images/logonew-v-nect.png";
 
 function getPostImages(post: BusinessPost): string[] {
   const list: string[] = [];
