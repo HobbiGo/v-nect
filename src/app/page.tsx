@@ -1087,10 +1087,9 @@ export default function HomePage() {
         }
 
         .hero-section {
-          min-height: 68vh;
-          padding: 52px 7% 48px;
+          padding: 28px 7% 36px;
           display: flex;
-          align-items: center;
+          align-items: flex-start;
           background:
             radial-gradient(
               circle at 76% 42%,
@@ -1111,7 +1110,7 @@ export default function HomePage() {
           display: grid;
           grid-template-columns: minmax(0, 1.05fr) minmax(0, 0.95fr);
           align-items: center;
-          gap: 36px;
+          gap: 24px 32px;
         }
 
         .hero-content {
@@ -1193,7 +1192,7 @@ export default function HomePage() {
           align-items: center;
           justify-content: center;
           width: 100%;
-          min-height: 300px;
+          min-height: auto;
           background: transparent;
           border: none;
           box-shadow: none;
@@ -1202,9 +1201,11 @@ export default function HomePage() {
 
         .hero-globe-img {
           width: 100%;
-          max-width: 500px;
+          max-width: 460px;
+          max-height: 380px;
           height: auto;
           object-fit: contain;
+          object-position: center;
           display: block;
           mix-blend-mode: screen;
           filter: contrast(1.08) saturate(1.12);
@@ -1232,12 +1233,12 @@ export default function HomePage() {
         .posts-section,
         .video-showcase-section,
         .about-section {
-          padding: 58px 7%;
+          padding: 44px 7%;
         }
 
         .section-header {
           max-width: 620px;
-          margin-bottom: 34px;
+          margin-bottom: 30px;
         }
 
         .section-header h2,
@@ -1835,15 +1836,16 @@ export default function HomePage() {
         @media (max-width: 960px) {
           .hero-grid {
             grid-template-columns: 1fr;
-            gap: 28px;
+            gap: 24px;
           }
 
           .hero-visual {
-            min-height: 250px;
+            min-height: auto;
           }
 
           .hero-globe-img {
-            max-width: 380px;
+            max-width: 360px;
+            max-height: 300px;
           }
 
           .features-grid,
