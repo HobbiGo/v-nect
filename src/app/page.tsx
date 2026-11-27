@@ -28,7 +28,6 @@ interface CommentCountRow {
 }
 
 const BRAND_LOGO_SRC = "/images/V-NECT-logo.png";
-// HERO - SUDAH DIGANTI KE PNG TRANSPARAN (background hitam sudah dibuang)
 const HERO_GLOBE_SRC = "/images/globe-network-transparent.png";
 
 function getPostImages(post: BusinessPost): string[] {
@@ -359,7 +358,6 @@ export default function HomePage() {
         </div>
       </header>
 
-      {/* HERO - GLOBE SUDAH TIDAK KEPOTONG: tanpa scale, tanpa mask, tanpa kotak hitam */}
       <section className="hero-section">
         <div className="hero-grid">
           <div className="hero-content">
@@ -382,18 +380,30 @@ export default function HomePage() {
             </div>
           </div>
           <div className="hero-visual">
-            <div className="hero-globe-wrap">
+            <div
+              className="hero-globe-wrap"
+              style={{
+                background: "transparent",
+                WebkitMaskImage:
+                  "radial-gradient(ellipse 68% 66% at 50% 50%, #000 50%, rgba(0,0,0,0.35) 68%, transparent 86%)",
+                maskImage:
+                  "radial-gradient(ellipse 68% 66% at 50% 50%, #000 50%, rgba(0,0,0,0.35) 68%, transparent 86%)",
+              }}
+            >
               <img
                 src={HERO_GLOBE_SRC}
                 alt="v-nect global network globe"
                 className="hero-globe-img"
+                style={{
+                  mixBlendMode: "screen",
+                  background: "transparent",
+                }}
               />
             </div>
           </div>
         </div>
       </section>
 
-      {/* STATS - TAMBAHAN BIAR PAGE TIDAK KELIHATAN DIKIT */}
       <section className="stats-strip">
         <div className="stats-inner">
           <div><strong>6</strong><span>Integrated Modules</span></div>
@@ -524,7 +534,6 @@ export default function HomePage() {
         </div>
       </section>
 
-      {/* HOW IT WORKS - TAMBAHAN, FUNGSI LAMA TIDAK DIUBAH */}
       <section className="how-section">
         <div className="section-header">
           <span className="section-eyebrow">HOW IT WORKS</span>
@@ -801,7 +810,6 @@ export default function HomePage() {
         </section>
       )}
 
-      {/* WHY + TESTIMONI - TAMBAHAN */}
       <section className="why-section">
         <div className="why-grid">
           <div>
@@ -821,7 +829,6 @@ export default function HomePage() {
         </div>
       </section>
 
-      {/* ABOUT - TEKS BARU, FUNGSI TIDAK DIUBAH */}
       <section id="about" className="about-section">
         <div className="about-card">
           <span className="section-eyebrow">ABOUT V-NECT</span>
@@ -834,7 +841,6 @@ export default function HomePage() {
         </div>
       </section>
 
-      {/* CTA PENUTUP - TAMBAHAN */}
       <section className="final-cta-section">
         <div className="final-cta-card">
           <h2>Ready to Connect Beyond Boundaries?</h2>
@@ -1010,7 +1016,6 @@ export default function HomePage() {
           transition: background 0.2s ease, border-color 0.2s ease;
         }
         :global(.btn-secondary:hover) { background: rgba(24, 38, 82, 0.85); border-color: rgba(154, 178, 255, 0.5); }
-        /* HERO FIX - HILANGKAN KOTAK HITAM & JAGA GLOBE UTUH */
         .hero-visual {
           position: relative; display: flex; align-items: center; justify-content: center;
           width: 100%; min-height: 460px; background: transparent; border: none; box-shadow: none; overflow: visible;
@@ -1019,12 +1024,9 @@ export default function HomePage() {
           width: 100%; max-width: 860px;
           display: grid; place-items: center;
           background: transparent; overflow: visible;
-          -webkit-mask-image: radial-gradient(ellipse 76% 74% at 50% 50%, #000 58%, rgba(0, 0, 0, 0.45) 78%, transparent 98%);
-          mask-image: radial-gradient(ellipse 76% 74% at 50% 50%, #000 58%, rgba(0, 0, 0, 0.45) 78%, transparent 98%);
         }
         .hero-globe-img {
           width: 100%; max-width: 860px; height: auto;
-          mix-blend-mode: lighten;
           object-fit: contain; object-position: center; display: block; background: transparent;
         }
         .small-btn { padding: 9px 15px; font-size: 12.5px; }
@@ -1090,7 +1092,6 @@ export default function HomePage() {
         .video-center-play { position: absolute; left: 50%; top: 50%; transform: translate(-50%, -50%); width: 48px; height: 48px; border-radius: 50%; border: none; background: rgba(75, 107, 255, 0.92); color: #ffffff; font-size: 16px; cursor: pointer; display: grid; place-items: center; }
         .video-card-footer { display: flex; align-items: center; justify-content: space-between; font-size: 11.5px; color: #9cb0d9; margin-top: auto; }
         .about-card { background: linear-gradient(145deg, rgba(22, 36, 82, 0.92), rgba(11, 19, 46, 0.96)); border: 1px solid rgba(138, 165, 255, 0.2); border-radius: 22px; padding: 34px 36px; max-width: 960px; }
-        /* TAMBAHAN - STATS / HOW / WHY / CTA - CSS baru, CSS lama tidak diubah */
         .stats-strip { padding: 0 7% 10px; }
         .stats-inner { max-width: 1340px; margin: 0 auto; display: grid; grid-template-columns: repeat(4, minmax(0, 1fr)); gap: 12px; background: rgba(15, 25, 58, 0.6); border: 1px solid rgba(138, 165, 255, 0.16); border-radius: 16px; padding: 20px; }
         .stats-inner div { text-align: center; display: flex; flex-direction: column; gap: 2px; }
