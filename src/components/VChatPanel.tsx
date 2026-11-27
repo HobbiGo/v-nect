@@ -321,14 +321,19 @@ export function VChatPanel({
       <style jsx>{`
         .vchat-box {
           font-family: var(--font-sans), Arial, sans-serif;
-          background: #0d1e34;
-          border: 1px solid rgba(126, 232, 220, 0.16);
+          background: linear-gradient(
+            160deg,
+            rgba(20, 32, 72, 0.92),
+            rgba(11, 19, 46, 0.96)
+          );
+          border: 1px solid rgba(138, 165, 255, 0.2);
           border-radius: 16px;
           padding: 20px;
-          color: #eef4fb;
+          color: #f3f7ff;
           display: flex;
           flex-direction: column;
           gap: 14px;
+          box-shadow: 0 10px 24px rgba(3, 8, 24, 0.25);
         }
 
         .vchat-top {
@@ -344,13 +349,13 @@ export function VChatPanel({
           font-size: 11px;
           font-weight: 800;
           letter-spacing: 1.4px;
-          color: #13c8b5;
+          color: #79a6ff;
         }
 
         .vchat-top h3 {
           margin: 4px 0 0;
           font-size: 19px;
-          font-weight: 700;
+          font-weight: 750;
           color: #ffffff;
         }
 
@@ -358,13 +363,13 @@ export function VChatPanel({
           display: block;
           margin-top: 5px;
           font-size: 12px;
-          color: #b5c6dc;
+          color: #b8c7e6;
         }
 
         .vchat-inline-auth {
           border: none;
           background: transparent;
-          color: #7ee8dc;
+          color: #8ab4ff;
           font-size: 12px;
           font-weight: 700;
           text-decoration: underline;
@@ -373,9 +378,9 @@ export function VChatPanel({
         }
 
         .vchat-status-btn {
-          border: 1px solid rgba(255, 255, 255, 0.18);
+          border: 1px solid rgba(138, 165, 255, 0.24);
           background: rgba(255, 255, 255, 0.06);
-          color: #dce8f6;
+          color: #dce7ff;
           padding: 7px 13px;
           border-radius: 999px;
           font-size: 12px;
@@ -384,9 +389,9 @@ export function VChatPanel({
         }
 
         .vchat-status-btn.live {
-          border-color: #13c8b5;
-          background: rgba(19, 200, 181, 0.18);
-          color: #7ee8dc;
+          border-color: rgba(138, 180, 255, 0.5);
+          background: rgba(92, 124, 255, 0.22);
+          color: #ffffff;
         }
 
         .vchat-channels {
@@ -402,9 +407,9 @@ export function VChatPanel({
           gap: 8px;
           padding: 8px 13px;
           border-radius: 10px;
-          border: 1px solid rgba(255, 255, 255, 0.1);
-          background: #122742;
-          color: #d4e1f0;
+          border: 1px solid rgba(138, 165, 255, 0.16);
+          background: rgba(8, 16, 41, 0.82);
+          color: #c8d7f5;
           font-size: 13px;
           font-weight: 600;
           cursor: pointer;
@@ -412,23 +417,23 @@ export function VChatPanel({
         }
 
         .vchat-ch.active {
-          border-color: #13c8b5;
-          background: rgba(19, 200, 181, 0.16);
+          border-color: rgba(138, 180, 255, 0.48);
+          background: linear-gradient(110deg, rgba(75, 107, 255, 0.34), rgba(120, 84, 255, 0.34));
           color: #ffffff;
         }
 
         .vchat-ch small {
           font-size: 11px;
-          color: #7ee8dc;
+          color: #9ec0ff;
         }
 
         .vchat-note {
           padding: 9px 12px;
           border-radius: 9px;
-          background: rgba(19, 200, 181, 0.12);
-          border: 1px solid rgba(19, 200, 181, 0.3);
+          background: rgba(92, 124, 255, 0.16);
+          border: 1px solid rgba(138, 180, 255, 0.34);
           font-size: 12px;
-          color: #a8f6ec;
+          color: #dce7ff;
         }
 
         .vchat-feed {
@@ -439,13 +444,13 @@ export function VChatPanel({
           overflow-y: auto;
           padding: 12px;
           border-radius: 12px;
-          background: #091627;
-          border: 1px solid rgba(255, 255, 255, 0.08);
+          background: #081029;
+          border: 1px solid rgba(138, 165, 255, 0.16);
         }
 
         .vchat-msg {
-          background: #122640;
-          border: 1px solid rgba(255, 255, 255, 0.08);
+          background: rgba(20, 32, 72, 0.88);
+          border: 1px solid rgba(138, 165, 255, 0.16);
           border-radius: 11px;
           padding: 11px 13px;
           max-width: 88%;
@@ -453,8 +458,8 @@ export function VChatPanel({
 
         .vchat-msg.me {
           align-self: flex-end;
-          background: linear-gradient(125deg, #153c66, #13576b);
-          border-color: rgba(126, 232, 220, 0.3);
+          background: linear-gradient(125deg, rgba(75, 107, 255, 0.42), rgba(120, 84, 255, 0.42));
+          border-color: rgba(138, 180, 255, 0.42);
         }
 
         .vchat-msg-meta {
@@ -462,7 +467,7 @@ export function VChatPanel({
           align-items: center;
           gap: 8px;
           font-size: 12px;
-          color: #9cb2cc;
+          color: #9cb0d9;
         }
 
         .vchat-msg-meta strong {
@@ -479,7 +484,7 @@ export function VChatPanel({
           margin: 6px 0 0;
           font-size: 14px;
           line-height: 1.55;
-          color: #eef4fb;
+          color: #f3f7ff;
         }
 
         .vchat-attach-chip {
@@ -487,9 +492,10 @@ export function VChatPanel({
           display: inline-block;
           padding: 5px 10px;
           border-radius: 7px;
-          background: rgba(0, 0, 0, 0.25);
+          background: rgba(6, 11, 36, 0.45);
+          border: 1px solid rgba(138, 180, 255, 0.24);
           font-size: 12px;
-          color: #9ff5eb;
+          color: #c7dcff;
         }
 
         .vchat-toolbar {
@@ -500,19 +506,24 @@ export function VChatPanel({
           flex-wrap: wrap;
           padding: 9px 12px;
           border-radius: 10px;
-          background: #11243e;
-          border: 1px solid rgba(255, 255, 255, 0.09);
+          background: rgba(8, 16, 41, 0.78);
+          border: 1px solid rgba(138, 165, 255, 0.16);
         }
 
         .vchat-tool-btn {
-          border: 1px solid rgba(255, 255, 255, 0.14);
+          border: 1px solid rgba(138, 165, 255, 0.22);
           background: rgba(255, 255, 255, 0.06);
-          color: #e2ecf8;
+          color: #dce7ff;
           padding: 7px 11px;
           border-radius: 8px;
           font-size: 12px;
           font-weight: 600;
           cursor: pointer;
+        }
+
+        .vchat-tool-btn:hover {
+          border-color: rgba(138, 180, 255, 0.45);
+          color: #ffffff;
         }
 
         .vchat-emojis {
@@ -521,7 +532,7 @@ export function VChatPanel({
         }
 
         .vchat-emoji-btn {
-          border: 1px solid rgba(255, 255, 255, 0.14);
+          border: 1px solid rgba(138, 165, 255, 0.2);
           background: rgba(255, 255, 255, 0.05);
           border-radius: 7px;
           padding: 5px 8px;
@@ -535,9 +546,10 @@ export function VChatPanel({
           align-items: center;
           padding: 8px 12px;
           border-radius: 8px;
-          background: rgba(52, 124, 240, 0.18);
+          background: rgba(92, 124, 255, 0.2);
+          border: 1px solid rgba(138, 180, 255, 0.34);
           font-size: 13px;
-          color: #d7e8ff;
+          color: #dce7ff;
         }
 
         .vchat-pending-file button {
@@ -558,16 +570,25 @@ export function VChatPanel({
           min-width: 0;
           padding: 11px 14px;
           border-radius: 10px;
-          border: 1px solid rgba(255, 255, 255, 0.16);
-          background: #091627;
-          color: #ffffff;
+          border: 1px solid rgba(138, 165, 255, 0.24);
+          background: #081029;
+          color: #f3f7ff;
           font: inherit;
           font-size: 14px;
+          outline: none;
+        }
+
+        .vchat-form input::placeholder {
+          color: #889bc2;
+        }
+
+        .vchat-form input:focus {
+          border-color: #7854ff;
         }
 
         .vchat-form button {
           border: none;
-          background: linear-gradient(110deg, #347cf0, #13bcae);
+          background: linear-gradient(110deg, #4b6bff, #7854ff);
           color: #ffffff;
           padding: 0 18px;
           border-radius: 10px;
