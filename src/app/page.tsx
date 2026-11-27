@@ -1840,13 +1840,14 @@ export default function HomePage() {
           }
 
           .hero-visual {
-            min-height: 280px;
+            min-height: 340px;
           }
 
           .hero-globe-img {
-            max-width: 480px;
-            max-height: 400px;
-          }
+          width: 100%;
+          max-width: 600px;
+          max-height: 500px;
+        }
 
           .features-grid,
           .ecosystem-grid,
