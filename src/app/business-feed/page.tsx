@@ -1169,7 +1169,7 @@ export default function BusinessFeedPage() {
               )}
             </div>
 
-            <div ref={videoSectionRef}>
+            <div ref={videoSectionRef} className="video-composer-shell">
               <LiveStoriesAndVideoComposer
                 currentAuthorName={company?.company_name || "Member"}
                 onPublishVideos={handlePublishVideoBatch}
@@ -1738,13 +1738,13 @@ export default function BusinessFeedPage() {
           background:
             radial-gradient(
               circle at 78% 14%,
-              rgba(78, 108, 255, 0.32),
-              transparent 36%
+              rgba(78, 108, 255, 0.34),
+              transparent 38%
             ),
             radial-gradient(
               circle at 22% 32%,
-              rgba(120, 84, 255, 0.22),
-              transparent 42%
+              rgba(120, 84, 255, 0.24),
+              transparent 44%
             ),
             linear-gradient(180deg, #060b24 0%, #091338 55%, #060b24 100%);
         }
@@ -1756,57 +1756,69 @@ export default function BusinessFeedPage() {
         }
 
         .top-action-strip {
-          margin-bottom: 16px;
+          margin-bottom: 18px;
+          padding: 10px 14px;
+          border-radius: 14px;
+          background: rgba(13, 22, 54, 0.78);
+          border: 1px solid rgba(138, 165, 255, 0.2);
           display: flex;
           align-items: center;
           justify-content: space-between;
           gap: 12px;
           flex-wrap: wrap;
+          box-shadow: 0 8px 20px rgba(3, 8, 24, 0.24);
         }
 
         .back-home-bar {
           display: inline-flex;
           align-items: center;
-          padding: 4px;
-          border-radius: 11px;
-          background: rgba(16, 26, 58, 0.78);
-          border: 1px solid rgba(154, 178, 255, 0.28);
-          box-shadow: 0 6px 18px rgba(4, 9, 28, 0.25);
         }
 
         .back-home-button {
           display: inline-flex;
           align-items: center;
           gap: 6px;
-          padding: 9px 15px;
-          border-radius: 8px;
-          background: linear-gradient(110deg, #4b6bff, #7854ff);
-          color: #ffffff;
-          font-size: 13px;
+          padding: 9px 16px;
+          border-radius: 999px;
+          background: rgba(255, 255, 255, 0.07);
+          border: 1px solid rgba(154, 178, 255, 0.3);
+          color: #eef3ff;
+          font-size: 12.5px;
           font-weight: 700;
           text-decoration: none;
           white-space: nowrap;
+          transition: background 0.18s ease, border-color 0.18s ease;
         }
 
         .back-home-button:hover {
-          filter: brightness(1.06);
+          background: rgba(92, 124, 255, 0.2);
+          border-color: rgba(168, 196, 255, 0.55);
+          color: #ffffff;
         }
 
         .vchat-toggle-btn {
-          border: 1px solid rgba(154, 178, 255, 0.32);
-          background: rgba(16, 26, 58, 0.85);
-          color: #eef3ff;
-          padding: 10px 16px;
-          border-radius: 10px;
-          font-size: 13px;
-          font-weight: 700;
+          border: 1px solid rgba(154, 178, 255, 0.34);
+          background: linear-gradient(110deg, #4b6bff, #7854ff);
+          color: #ffffff;
+          padding: 9px 16px;
+          border-radius: 999px;
+          font-size: 12.5px;
+          font-weight: 750;
           cursor: pointer;
+          box-shadow: 0 6px 18px rgba(75, 107, 255, 0.32);
+          transition: transform 0.18s ease, box-shadow 0.18s ease,
+            filter 0.18s ease;
+        }
+
+        .vchat-toggle-btn:hover {
+          transform: translateY(-1px);
+          filter: brightness(1.06);
         }
 
         .vchat-toggle-btn.active {
-          border-color: rgba(138, 180, 255, 0.6);
-          background: linear-gradient(110deg, #4b6bff, #7854ff);
-          color: #ffffff;
+          border-color: rgba(168, 196, 255, 0.65);
+          background: rgba(92, 124, 255, 0.24);
+          box-shadow: none;
         }
 
         .vchat-drawer {
@@ -1814,20 +1826,32 @@ export default function BusinessFeedPage() {
         }
 
         .hero {
+          position: relative;
           background: linear-gradient(
             125deg,
-            rgba(22, 36, 82, 0.94),
+            rgba(26, 42, 94, 0.96),
             rgba(13, 24, 62, 0.98)
           );
-          border: 1px solid rgba(138, 165, 255, 0.24);
-          border-radius: 18px;
-          padding: 42px;
+          border: 1px solid rgba(138, 165, 255, 0.28);
+          border-radius: 20px;
+          padding: 38px 40px;
           color: #ffffff;
           display: flex;
           align-items: center;
           justify-content: space-between;
+          gap: 20px;
           overflow: hidden;
-          box-shadow: 0 14px 32px rgba(3, 8, 24, 0.36);
+          box-shadow: 0 16px 36px rgba(3, 8, 24, 0.38);
+        }
+
+        .hero::before {
+          content: "";
+          position: absolute;
+          top: 0;
+          left: 0;
+          right: 0;
+          height: 2px;
+          background: linear-gradient(90deg, #4b6bff, #7854ff, #9ec0ff);
         }
 
         .eyebrow {
@@ -1839,10 +1863,11 @@ export default function BusinessFeedPage() {
         }
 
         .hero h1 {
-          font-size: 44px;
+          font-size: 42px;
           font-weight: 850;
-          margin: 12px 0;
+          margin: 10px 0;
           color: #ffffff;
+          letter-spacing: -0.8px;
         }
 
         .hero h1 span {
@@ -1850,6 +1875,7 @@ export default function BusinessFeedPage() {
         }
 
         .hero p {
+          margin: 0;
           color: #b8c7e6;
           font-size: 15px;
           line-height: 1.7;
@@ -1857,9 +1883,10 @@ export default function BusinessFeedPage() {
         }
 
         .hero-icon {
-          font-size: 95px;
+          font-size: 88px;
           color: #8ab4ff;
-          opacity: 0.55;
+          opacity: 0.45;
+          flex-shrink: 0;
         }
 
         .feed-layout {
@@ -1882,20 +1909,38 @@ export default function BusinessFeedPage() {
         .empty-state {
           background: linear-gradient(
             160deg,
-            rgba(20, 32, 72, 0.92),
-            rgba(11, 19, 46, 0.96)
+            rgba(22, 35, 78, 0.94),
+            rgba(11, 19, 46, 0.98)
           );
-          border: 1px solid rgba(138, 165, 255, 0.18);
-          border-radius: 16px;
+          border: 1px solid rgba(138, 165, 255, 0.22);
+          border-radius: 18px;
           padding: 21px;
           color: #f3f7ff;
-          box-shadow: 0 10px 24px rgba(3, 8, 24, 0.25);
+          box-shadow: 0 12px 26px rgba(3, 8, 24, 0.28);
+        }
+
+        .video-composer-shell :global(> div) {
+          border-radius: 18px;
+          border-color: rgba(138, 165, 255, 0.26);
+          box-shadow: 0 12px 26px rgba(3, 8, 24, 0.28);
+        }
+
+        .video-composer-shell :global(input[type="file"]::file-selector-button) {
+          background: linear-gradient(110deg, #4b6bff, #7854ff);
+          color: #ffffff;
+          border: 1px solid rgba(176, 200, 255, 0.35);
+          border-radius: 8px;
+          padding: 7px 13px;
+          margin-right: 10px;
+          font-size: 12px;
+          font-weight: 700;
+          cursor: pointer;
         }
 
         .panel-heading {
           font-size: 11px;
           font-weight: 800;
-          color: #8ea3cc;
+          color: #96a8d0;
           letter-spacing: 1.4px;
           margin-bottom: 15px;
         }
@@ -1907,26 +1952,27 @@ export default function BusinessFeedPage() {
           gap: 11px;
           border: 1px solid transparent;
           background: transparent;
-          padding: 12px;
-          border-radius: 10px;
+          padding: 11px 12px;
+          border-radius: 11px;
           text-align: left;
           color: #c8d7f5;
           font-size: 13px;
-          font-weight: 500;
+          font-weight: 600;
           cursor: pointer;
           transition: background 0.2s ease, color 0.2s ease, border-color 0.2s ease;
         }
 
         .category:hover {
-          background: rgba(92, 124, 255, 0.1);
+          background: rgba(92, 124, 255, 0.14);
+          border-color: rgba(138, 165, 255, 0.2);
           color: #ffffff;
         }
 
         .category.active {
           background: linear-gradient(110deg, #4b6bff, #7854ff);
           color: #ffffff;
-          font-weight: 700;
-          box-shadow: 0 6px 18px rgba(75, 107, 255, 0.28);
+          font-weight: 750;
+          box-shadow: 0 6px 18px rgba(75, 107, 255, 0.32);
         }
 
         .company-identity {
@@ -1940,7 +1986,7 @@ export default function BusinessFeedPage() {
         .company-avatar {
           width: 44px;
           height: 44px;
-          border-radius: 11px;
+          border-radius: 12px;
           object-fit: cover;
           flex-shrink: 0;
         }
@@ -1948,9 +1994,9 @@ export default function BusinessFeedPage() {
         .company-avatar {
           display: grid;
           place-items: center;
-          background: rgba(92, 124, 255, 0.22);
-          border: 1px solid rgba(138, 180, 255, 0.35);
-          color: #9ec0ff;
+          background: linear-gradient(135deg, rgba(75, 107, 255, 0.35), rgba(120, 84, 255, 0.35));
+          border: 1px solid rgba(138, 180, 255, 0.4);
+          color: #ffffff;
           font-size: 18px;
           font-weight: 800;
         }
@@ -1958,7 +2004,7 @@ export default function BusinessFeedPage() {
         .company-identity strong {
           display: block;
           font-size: 14px;
-          font-weight: 700;
+          font-weight: 750;
           color: #ffffff;
           overflow-wrap: anywhere;
         }
@@ -1977,7 +2023,7 @@ export default function BusinessFeedPage() {
           padding: 12px;
           margin-top: 18px;
           border: none;
-          border-radius: 10px;
+          border-radius: 11px;
           background: linear-gradient(110deg, #4b6bff, #7854ff);
           color: #ffffff;
           text-align: center;
@@ -1986,11 +2032,19 @@ export default function BusinessFeedPage() {
           text-decoration: none;
           cursor: pointer;
           box-sizing: border-box;
-          box-shadow: 0 8px 20px rgba(75, 107, 255, 0.28);
+          box-shadow: 0 8px 20px rgba(75, 107, 255, 0.32);
+          transition: transform 0.18s ease, filter 0.18s ease;
+        }
+
+        .create-button:hover,
+        .publish-button:hover {
+          transform: translateY(-1px);
+          filter: brightness(1.06);
         }
 
         .manage-link {
-          display: block;
+          display: inline-flex;
+          align-items: center;
           margin-top: 15px;
           color: #8ab4ff;
           text-decoration: none;
@@ -2022,8 +2076,8 @@ export default function BusinessFeedPage() {
         }
 
         .video-clip-card {
-          border: 1px solid rgba(138, 165, 255, 0.22);
-          border-radius: 12px;
+          border: 1px solid rgba(138, 165, 255, 0.24);
+          border-radius: 14px;
           overflow: hidden;
           background: #08112b;
           color: #eef4fb;
@@ -2065,7 +2119,7 @@ export default function BusinessFeedPage() {
         }
 
         .video-clip-meta {
-          padding: 10px 12px;
+          padding: 11px 12px;
         }
 
         .video-clip-meta strong {
@@ -2109,11 +2163,11 @@ export default function BusinessFeedPage() {
           width: 100%;
           padding: 8px 10px;
           border: none;
-          border-radius: 8px;
+          border-radius: 9px;
           background: linear-gradient(110deg, #4b6bff, #7854ff);
           color: #ffffff;
           font-size: 12px;
-          font-weight: 700;
+          font-weight: 750;
           cursor: pointer;
         }
 
@@ -2124,10 +2178,10 @@ export default function BusinessFeedPage() {
 
         .feed-video-box {
           margin-top: 14px;
-          border-radius: 12px;
+          border-radius: 14px;
           overflow: hidden;
           background: #060b24;
-          border: 1px solid rgba(138, 165, 255, 0.2);
+          border: 1px solid rgba(138, 165, 255, 0.22);
         }
 
         .feed-video-player {
@@ -2138,7 +2192,7 @@ export default function BusinessFeedPage() {
         }
 
         .feed-video-caption-bar {
-          padding: 9px 13px;
+          padding: 10px 14px;
           background: #0d1a40;
           color: #e2ecff;
           font-size: 13px;
@@ -2174,7 +2228,7 @@ export default function BusinessFeedPage() {
           justify-content: space-between;
           align-items: center;
           gap: 10px;
-          padding: 5px 2px;
+          padding: 6px 4px;
         }
 
         .timeline-heading h2,
@@ -2186,13 +2240,13 @@ export default function BusinessFeedPage() {
         }
 
         .post-count {
-          background: rgba(92, 124, 255, 0.2);
-          border: 1px solid rgba(138, 180, 255, 0.3);
-          color: #9ec0ff;
-          padding: 8px 13px;
-          border-radius: 20px;
+          background: rgba(92, 124, 255, 0.22);
+          border: 1px solid rgba(138, 180, 255, 0.34);
+          color: #dce7ff;
+          padding: 8px 14px;
+          border-radius: 999px;
           font-size: 12px;
-          font-weight: 700;
+          font-weight: 750;
           white-space: nowrap;
         }
 
@@ -2233,7 +2287,7 @@ export default function BusinessFeedPage() {
           width: 100%;
           box-sizing: border-box;
           border: 1px solid rgba(138, 165, 255, 0.24);
-          border-radius: 9px;
+          border-radius: 10px;
           padding: 12px;
           background: #081029;
           color: #f3f7ff;
@@ -2259,9 +2313,9 @@ export default function BusinessFeedPage() {
 
         .upload-area {
           padding: 14px;
-          background: rgba(12, 22, 52, 0.72);
-          border: 1px dashed rgba(138, 180, 255, 0.36);
-          border-radius: 10px;
+          background: rgba(12, 22, 52, 0.78);
+          border: 1px dashed rgba(138, 180, 255, 0.42);
+          border-radius: 12px;
         }
 
         .upload-area input {
@@ -2361,6 +2415,17 @@ export default function BusinessFeedPage() {
           cursor: not-allowed;
         }
 
+        .post-card {
+          transition: transform 0.2s ease, border-color 0.2s ease,
+            box-shadow 0.2s ease;
+        }
+
+        .post-card:hover {
+          transform: translateY(-2px);
+          border-color: rgba(158, 186, 255, 0.36);
+          box-shadow: 0 16px 32px rgba(3, 8, 24, 0.38);
+        }
+
         .post-header {
           display: flex;
           justify-content: space-between;
@@ -2372,11 +2437,11 @@ export default function BusinessFeedPage() {
         }
 
         .post-category {
-          background: rgba(92, 124, 255, 0.18);
-          border: 1px solid rgba(138, 180, 255, 0.28);
-          color: #9ec0ff;
-          padding: 7px 12px;
-          border-radius: 20px;
+          background: linear-gradient(110deg, rgba(75, 107, 255, 0.26), rgba(120, 84, 255, 0.26));
+          border: 1px solid rgba(138, 180, 255, 0.34);
+          color: #dce7ff;
+          padding: 7px 13px;
+          border-radius: 999px;
           font-size: 12px;
           font-weight: 700;
         }
@@ -2389,12 +2454,13 @@ export default function BusinessFeedPage() {
         .post-body h3 {
           font-size: 20px;
           font-weight: 750;
-          margin: 0 0 12px;
+          margin: 0 0 10px;
           color: #ffffff;
           overflow-wrap: anywhere;
         }
 
         .post-body p {
+          margin: 0;
           color: #b8c7e6;
           font-size: 14px;
           line-height: 1.78;
@@ -2405,7 +2471,7 @@ export default function BusinessFeedPage() {
         .post-images-grid {
           margin-top: 18px;
           display: grid;
-          gap: 10px;
+          gap: 12px;
         }
 
         .post-images-grid.single {
@@ -2419,9 +2485,9 @@ export default function BusinessFeedPage() {
         .post-image-container {
           width: 100%;
           overflow: hidden;
-          border-radius: 11px;
+          border-radius: 13px;
           background: #070d24;
-          border: 1px solid rgba(138, 165, 255, 0.16);
+          border: 1px solid rgba(138, 165, 255, 0.2);
         }
 
         .post-image {
@@ -2431,7 +2497,7 @@ export default function BusinessFeedPage() {
           max-height: 450px;
           object-fit: contain;
           object-position: center;
-          border-radius: 11px;
+          border-radius: 12px 12px 0 0;
         }
 
         .post-images-grid.multi .post-image {
@@ -2445,7 +2511,7 @@ export default function BusinessFeedPage() {
           align-items: center;
           justify-content: space-between;
           gap: 8px;
-          padding: 9px 12px;
+          padding: 10px 13px;
           background: #0d1a40;
           color: #e6eef8;
           border-top: 1px solid rgba(138, 165, 255, 0.16);
@@ -2462,15 +2528,16 @@ export default function BusinessFeedPage() {
         }
 
         .post-image-comment-btn {
-          border: 1px solid rgba(138, 180, 255, 0.25);
+          border: 1px solid rgba(138, 180, 255, 0.28);
           background: rgba(255, 255, 255, 0.08);
           color: #ffffff;
-          border-radius: 7px;
-          padding: 4px 9px;
+          border-radius: 8px;
+          padding: 5px 10px;
           font-size: 13px;
           line-height: 1.3;
           cursor: pointer;
           flex-shrink: 0;
+          transition: background 0.18s ease;
         }
 
         .post-image-comment-btn:hover {
@@ -2576,7 +2643,7 @@ export default function BusinessFeedPage() {
 
         .alert {
           padding: 13px 15px;
-          border-radius: 10px;
+          border-radius: 12px;
           font-size: 13px;
           overflow-wrap: anywhere;
         }
@@ -2630,10 +2697,6 @@ export default function BusinessFeedPage() {
             padding: 18px 14px 45px;
           }
 
-          .back-home-bar {
-            padding: 3px;
-          }
-
           .back-home-button {
             padding: 8px 13px;
             font-size: 12px;
@@ -2641,7 +2704,7 @@ export default function BusinessFeedPage() {
 
           .hero {
             padding: 25px 20px;
-            border-radius: 13px;
+            border-radius: 16px;
           }
 
           .hero h1 {
