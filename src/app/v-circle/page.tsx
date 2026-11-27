@@ -1,9 +1,11 @@
 "use client";
 
-import { useEffect, useMemo, useState } from "react";
+import { Suspense, useEffect, useMemo, useState } from "react";
 import Link from "next/link";
+import { useRouter, useSearchParams } from "next/navigation";
 import { createClient } from "@/lib/supabase";
 import { AccountAuthModal } from "@/components/AccountAuthModal";
+import { PostThreadComments } from "@/components/PostThreadComments";
 
 type ProfessionalMember = {
   id: string;
@@ -45,7 +47,25 @@ type SupabaseCompanyRow = {
   location?: string | null;
 };
 
+type CommunityPostRow = {
+  id: string;
+  company_id: string;
+  author_id: string;
+  title: string;
+  content: string;
+  post_type: string;
+  image_url: string | null;
+  image_urls?: string[] | null;
+  status: string;
+  created_at: string;
+  companies: {
+    company_name: string;
+    logo_url: string | null;
+  } | null;
+};
+
 type ConnectionNoteMap = Record<string, string>;
+type CircleTab = "network" | "discussions";
 
 const CIRCLE_STORAGE_KEY = "v-nect_v_circle_connections_v1";
 const JOINED_GROUPS_STORAGE_KEY = "v-nect_v_circle_groups_v1";
@@ -176,6 +196,14 @@ const SECTOR_FILTERS = [
   "Marketing & Growth",
 ] as const;
 
+const DISCUSSION_TOPICS = [
+  { key: "all", label: "All Topics" },
+  { key: "announcement", label: "Official Update" },
+  { key: "company_news", label: "Business" },
+  { key: "product_launch", label: "Trending" },
+  { key: "presentation", label: "Community" },
+] as const;
+
 function mapIndustryToSector(
   industry?: string | null
 ): ProfessionalMember["sector"] {
@@ -207,8 +235,44 @@ function mapIndustryToSector(
   return "Founder & CEO";
 }
 
-export default function VCirclePage() {
+function formatCleanTitle(rawTitle: string): string {
+  const clean = (rawTitle || "")
+    .trim()
+    .replace(/^Video:\s*/i, "")
+    .replace(/\.(mp4|webm|mov|m4v|avi|mkv)$/i, "")
+    .replace(/[_-]+/g, " ")
+    .replace(/\s+/g, " ")
+    .trim();
+  if (!clean) return rawTitle || "Community Update";
+  return clean.charAt(0).toUpperCase() + clean.slice(1);
+}
+
+function formatCleanExcerpt(rawContent: string): string {
+  return (rawContent || "")
+    .replace(/\(VideoCaption:\s*[^)]*\)/gi, "")
+    .replace(/^\s*Link Video:\s*https?:\/\/\S+\s*$/gim, "")
+    .replace(/\n{3,}/g, "\n\n")
+    .trim();
+}
+
+function formatPostDate(dateStr: string): string {
+  const ts = new Date(dateStr).getTime();
+  if (Number.isNaN(ts)) return "";
+  return new Date(ts).toLocaleDateString("en-US", {
+    day: "numeric",
+    month: "short",
+    year: "numeric",
+  });
+}
+
+function VCircleContent() {
+  const router = useRouter();
+  const searchParams = useSearchParams();
   const [supabase] = useState(() => createClient());
+
+  const initialTab: CircleTab =
+    searchParams.get("tab") === "discussions" ? "discussions" : "network";
+  const [activeTab, setActiveTab] = useState<CircleTab>(initialTab);
 
   const [currentUserId, setCurrentUserId] = useState<string | null>(null);
   const [currentUserName, setCurrentUserName] = useState<string | null>(null);
@@ -216,6 +280,15 @@ export default function VCirclePage() {
 
   const [liveCompanies, setLiveCompanies] = useState<SupabaseCompanyRow[]>([]);
   const [dbSyncEnabled, setDbSyncEnabled] = useState(false);
+
+  const [communityPosts, setCommunityPosts] = useState<CommunityPostRow[]>([]);
+  const [loadingPosts, setLoadingPosts] = useState(true);
+  const [discussionQuery, setDiscussionQuery] = useState("");
+  const [selectedTopic, setSelectedTopic] = useState<string>("all");
+  const [openThreadPostIds, setOpenThreadPostIds] = useState<string[]>([]);
+  const [focusTriggerByPost, setFocusTriggerByPost] = useState<
+    Record<string, number>
+  >({});
 
   const [searchQuery, setSearchQuery] = useState("");
   const [selectedSector, setSelectedSector] = useState<string>("All");
@@ -231,6 +304,25 @@ export default function VCirclePage() {
   );
   const [draftNote, setDraftNote] = useState("");
   const [statusBanner, setStatusBanner] = useState("");
+
+  useEffect(() => {
+    const paramTab = searchParams.get("tab");
+    if (paramTab === "discussions" || paramTab === "network") {
+      setActiveTab(paramTab);
+    }
+  }, [searchParams]);
+
+  function handleSelectTab(tab: CircleTab) {
+    setActiveTab(tab);
+    const params = new URLSearchParams(searchParams.toString());
+    if (tab === "discussions") {
+      params.set("tab", "discussions");
+    } else {
+      params.delete("tab");
+    }
+    const qs = params.toString();
+    router.replace(qs ? `/v-circle?${qs}` : "/v-circle", { scroll: false });
+  }
 
   useEffect(() => {
     try {
@@ -313,6 +405,43 @@ export default function VCirclePage() {
     }
   }
 
+  async function loadCommunityDiscussionsFromSupabase() {
+    setLoadingPosts(true);
+    const { data, error } = await supabase
+      .from("business_posts")
+      .select(`
+        id,
+        company_id,
+        author_id,
+        title,
+        content,
+        post_type,
+        image_url,
+        image_urls,
+        status,
+        created_at,
+        companies (
+          company_name,
+          logo_url
+        )
+      `)
+      .eq("status", "published")
+      .order("created_at", { ascending: false })
+      .limit(12);
+
+    if (error) {
+      console.error("Community discussions load error:", error);
+      setCommunityPosts([]);
+    } else {
+      const list = (data || []) as unknown as CommunityPostRow[];
+      setCommunityPosts(list);
+      if (list[0]?.id) {
+        setOpenThreadPostIds([list[0].id]);
+      }
+    }
+    setLoadingPosts(false);
+  }
+
   async function loadUserCircleFromSupabase(uid: string) {
     const { data: connRows, error: connErr } = await supabase
       .from("v_circle_connections")
@@ -389,6 +518,7 @@ export default function VCirclePage() {
   useEffect(() => {
     let active = true;
     loadCompaniesFromSupabase();
+    loadCommunityDiscussionsFromSupabase();
     syncActiveUser();
 
     const {
@@ -411,6 +541,7 @@ export default function VCirclePage() {
     setCurrentUserId(null);
     setCurrentUserName(null);
     setDbSyncEnabled(false);
+    setStatusBanner("Anda telah keluar dari sesi akun.");
   }
 
   const allCircles = useMemo<NetworkCircle[]>(() => {
@@ -578,6 +709,20 @@ export default function VCirclePage() {
     }
   }
 
+  function toggleDiscussionThread(postId: string) {
+    setOpenThreadPostIds((prev) => {
+      const exists = prev.includes(postId);
+      if (exists) {
+        return prev.filter((id) => id !== postId);
+      }
+      return [...prev, postId];
+    });
+    setFocusTriggerByPost((prev) => ({
+      ...prev,
+      [postId]: (prev[postId] || 0) + 1,
+    }));
+  }
+
   const filteredProfessionals = useMemo(() => {
     const q = searchQuery.trim().toLowerCase();
     return allProfessionals.filter((person) => {
@@ -599,21 +744,44 @@ export default function VCirclePage() {
     });
   }, [allProfessionals, searchQuery, selectedSector, onlyOnline]);
 
+  const filteredDiscussions = useMemo(() => {
+    const q = discussionQuery.trim().toLowerCase();
+    return communityPosts.filter((post) => {
+      if (selectedTopic !== "all") {
+        const normalizedType =
+          post.post_type === "news" ? "company_news" : post.post_type;
+        if (normalizedType !== selectedTopic) return false;
+      }
+      if (!q) return true;
+      const companyName = post.companies?.company_name || "";
+      const cleanTitle = formatCleanTitle(post.title);
+      const cleanBody = formatCleanExcerpt(post.content);
+      return (
+        cleanTitle.toLowerCase().includes(q) ||
+        cleanBody.toLowerCase().includes(q) ||
+        companyName.toLowerCase().includes(q)
+      );
+    });
+  }, [communityPosts, selectedTopic, discussionQuery]);
+
   return (
     <main className="circle-page">
       <header className="circle-navbar">
         <div className="circle-nav-left">
           <Link href="/" className="circle-brand">
             v<span>-nect</span>
-            <small>V-CIRCLE NETWORK</small>
+            <small>COMMUNITY &amp; V-CIRCLE</small>
           </Link>
 
           <nav className="circle-nav-links">
             <Link href="/">Home</Link>
             <Link href="/explore">Explore</Link>
             <Link href="/v-hub">v-hub</Link>
+            <Link href="/v-circle" className="is-current">
+              Community
+            </Link>
             <Link href="/business-feed">Business Feed</Link>
-            <Link href="/company">Company</Link>
+            <Link href="/v-meet">v-meet</Link>
           </nav>
         </div>
 
@@ -645,14 +813,14 @@ export default function VCirclePage() {
         <div className="circle-hero">
           <div>
             <span className="circle-eyebrow">
-              MODULE 05 · PROFESSIONAL &amp; BUSINESS NETWORK
+              COMMUNITY HUB · V-CIRCLE &amp; DISCUSSIONS
             </span>
             <h1>
-              v-<span>circle.</span>
+              v-<span>circle</span> Community.
             </h1>
             <p>
-              Meet professionals, discover verified business leaders, and grow
-              high-trust circles across the v-nect ecosystem.
+              Connect with verified professionals and companies, join active
+              circles, and participate in live community discussions.
             </p>
           </div>
 
@@ -666,10 +834,38 @@ export default function VCirclePage() {
               <span>Joined Circles</span>
             </div>
             <div className="circle-stat">
-              <strong>{allProfessionals.filter((p) => p.online).length}</strong>
-              <span>Online Now</span>
+              <strong>{communityPosts.length}</strong>
+              <span>Discussions</span>
             </div>
           </div>
+        </div>
+
+        {/* Mode Switcher Tabs */}
+        <div className="circle-mode-tabs" role="tablist" aria-label="Community Views">
+          <button
+            type="button"
+            role="tab"
+            aria-selected={activeTab === "network"}
+            className={
+              activeTab === "network" ? "circle-mode-tab active" : "circle-mode-tab"
+            }
+            onClick={() => handleSelectTab("network")}
+          >
+            👥 Circles &amp; Professionals ({allProfessionals.length})
+          </button>
+          <button
+            type="button"
+            role="tab"
+            aria-selected={activeTab === "discussions"}
+            className={
+              activeTab === "discussions"
+                ? "circle-mode-tab active"
+                : "circle-mode-tab"
+            }
+            onClick={() => handleSelectTab("discussions")}
+          >
+            💬 Community Discussions ({communityPosts.length})
+          </button>
         </div>
 
         {statusBanner && (
@@ -681,244 +877,390 @@ export default function VCirclePage() {
           </div>
         )}
 
-        <section className="circle-section">
-          <div className="circle-section-head">
-            <div>
-              <span className="circle-eyebrow">
-                CURATED COMMUNITIES &amp; VERIFIED COMPANIES (
-                {liveCompanies.length} DB)
-              </span>
-              <h2>Active Network Circles</h2>
-            </div>
-            <Link href="/business-feed" className="circle-inline-link">
-              Share Updates in Feed →
-            </Link>
-          </div>
-
-          <div className="circle-groups-grid">
-            {allCircles.map((group) => {
-              const joined = joinedGroupIds.includes(group.id);
-              const totalMembers = group.membersCount + (joined ? 1 : 0);
-
-              return (
-                <article className="circle-group-card" key={group.id}>
-                  <div className="circle-group-top">
-                    <span className="circle-badge">
-                      {group.isLiveCompany
-                        ? `★ ${group.category}`
-                        : group.category}
-                    </span>
-                    <small>{totalMembers.toLocaleString()} members</small>
-                  </div>
-                  <h3>{group.name}</h3>
-                  <p>{group.description}</p>
-                  <div className="circle-group-foot">
-                    <span className="circle-focus-pill">
-                      ● {group.focusLabel}
-                    </span>
-                    <button
-                      type="button"
-                      className={
-                        joined ? "circle-btn-joined" : "circle-btn-primary"
-                      }
-                      onClick={() => toggleJoinCircle(group)}
-                    >
-                      {joined ? "Joined ✓" : "Join Circle"}
-                    </button>
-                  </div>
-                </article>
-              );
-            })}
-          </div>
-        </section>
-
-        <section className="circle-section">
-          <div className="circle-section-head">
-            <div>
-              <span className="circle-eyebrow">PEOPLE &amp; COMPANIES</span>
-              <h2>Professionals in Your Circle</h2>
-            </div>
-
-            <button
-              type="button"
-              className={
-                onlyOnline
-                  ? "circle-filter-chip active"
-                  : "circle-filter-chip"
-              }
-              onClick={() => setOnlyOnline((v) => !v)}
-            >
-              ● Online Only
-            </button>
-          </div>
-
-          <div className="circle-toolbar">
-            <input
-              type="search"
-              value={searchQuery}
-              onChange={(e) => setSearchQuery(e.target.value)}
-              placeholder="Cari nama, perusahaan, role, kota, atau keahlian..."
-              className="circle-search-input"
-            />
-
-            <div
-              className="circle-sector-list"
-              role="tablist"
-              aria-label="Filter Bidang"
-            >
-              {SECTOR_FILTERS.map((sector) => (
+        {activeTab === "network" ? (
+          <>
+            <section className="circle-section">
+              <div className="circle-section-head">
+                <div>
+                  <span className="circle-eyebrow">
+                    CURATED COMMUNITIES &amp; VERIFIED COMPANIES (
+                    {liveCompanies.length} DB)
+                  </span>
+                  <h2>Active Network Circles</h2>
+                </div>
                 <button
-                  key={sector}
                   type="button"
-                  className={
-                    selectedSector === sector
-                      ? "circle-filter-chip active"
-                      : "circle-filter-chip"
-                  }
-                  onClick={() => setSelectedSector(sector)}
+                  className="circle-inline-btn"
+                  onClick={() => handleSelectTab("discussions")}
                 >
-                  {sector}
+                  Open Community Discussions →
                 </button>
-              ))}
-            </div>
-          </div>
+              </div>
 
-          {filteredProfessionals.length === 0 ? (
-            <div className="circle-empty">
-              <p>Tidak ada profil yang cocok dengan filter saat ini.</p>
-              <button
-                type="button"
-                className="circle-btn-primary"
-                onClick={() => {
-                  setSearchQuery("");
-                  setSelectedSector("All");
-                  setOnlyOnline(false);
-                }}
-              >
-                Reset Filter
-              </button>
-            </div>
-          ) : (
-            <div className="circle-people-grid">
-              {filteredProfessionals.map((person) => {
-                const isConnected = connectedIds.includes(person.id);
-                const savedNote = notesByMember[person.id];
-                const isWritingNote = activeNoteTargetId === person.id;
+              <div className="circle-groups-grid">
+                {allCircles.map((group) => {
+                  const joined = joinedGroupIds.includes(group.id);
+                  const totalMembers = group.membersCount + (joined ? 1 : 0);
 
-                return (
-                  <article className="circle-person-card" key={person.id}>
-                    <div className="circle-person-top">
-                      <div className="circle-person-identity">
-                        <div className="circle-avatar-wrap">
-                          <div className="circle-avatar">{person.avatarText}</div>
-                          {person.online && (
-                            <span
-                              className="circle-online-dot"
-                              title="Online"
-                            />
-                          )}
-                        </div>
-
-                        <div>
-                          <strong>
-                            {person.name}{" "}
-                            {person.isLiveCompany && (
-                              <span className="circle-live-badge">LIVE DB</span>
-                            )}
-                          </strong>
-                          <small>
-                            {person.role} · <span>{person.company}</span>
-                          </small>
-                        </div>
-                      </div>
-
-                      <span className="circle-loc-pill">{person.location}</span>
-                    </div>
-
-                    <p className="circle-person-bio">{person.bio}</p>
-
-                    <div className="circle-tags">
-                      {person.tags.map((tag) => (
-                        <span className="circle-tag" key={tag}>
-                          #{tag}
+                  return (
+                    <article className="circle-group-card" key={group.id}>
+                      <div className="circle-group-top">
+                        <span className="circle-badge">
+                          {group.isLiveCompany
+                            ? `★ ${group.category}`
+                            : group.category}
                         </span>
-                      ))}
-                    </div>
-
-                    {savedNote && (
-                      <div className="circle-saved-note">
-                        <strong>Catatan koneksi:</strong> {savedNote}
+                        <small>{totalMembers.toLocaleString()} members</small>
                       </div>
-                    )}
-
-                    {isWritingNote && (
-                      <div className="circle-note-box">
-                        <input
-                          type="text"
-                          value={draftNote}
-                          onChange={(e) =>
-                            setDraftNote(e.target.value.slice(0, 180))
-                          }
-                          placeholder={`Tulis pesan singkat untuk ${person.name}...`}
-                        />
-                        <div className="circle-note-actions">
-                          <button
-                            type="button"
-                            className="circle-btn-primary"
-                            onClick={() => submitConnectionWithNote(person)}
-                          >
-                            Kirim &amp; Connect
-                          </button>
-                          <button
-                            type="button"
-                            className="circle-btn-secondary"
-                            onClick={() => setActiveNoteTargetId(null)}
-                          >
-                            Batal
-                          </button>
-                        </div>
-                      </div>
-                    )}
-
-                    <div className="circle-person-foot">
-                      <small>{person.mutualConnections} mutual connections</small>
-
-                      <div className="circle-card-actions">
-                        <button
-                          type="button"
-                          className="circle-btn-secondary"
-                          onClick={() => openNoteComposer(person)}
-                        >
-                          ✉ Note
-                        </button>
+                      <h3>{group.name}</h3>
+                      <p>{group.description}</p>
+                      <div className="circle-group-foot">
+                        <span className="circle-focus-pill">
+                          ● {group.focusLabel}
+                        </span>
                         <button
                           type="button"
                           className={
-                            isConnected
-                              ? "circle-btn-joined"
-                              : "circle-btn-primary"
+                            joined ? "circle-btn-joined" : "circle-btn-primary"
                           }
-                          onClick={() => toggleConnection(person)}
+                          onClick={() => toggleJoinCircle(group)}
                         >
-                          {isConnected ? "Connected ✓" : "+ Connect"}
+                          {joined ? "Joined ✓" : "Join Circle"}
                         </button>
                       </div>
-                    </div>
-                  </article>
-                );
-              })}
+                    </article>
+                  );
+                })}
+              </div>
+            </section>
+
+            <section className="circle-section">
+              <div className="circle-section-head">
+                <div>
+                  <span className="circle-eyebrow">PEOPLE &amp; COMPANIES</span>
+                  <h2>Professionals in Your Circle</h2>
+                </div>
+
+                <button
+                  type="button"
+                  className={
+                    onlyOnline
+                      ? "circle-filter-chip active"
+                      : "circle-filter-chip"
+                  }
+                  onClick={() => setOnlyOnline((v) => !v)}
+                >
+                  ● Online Only
+                </button>
+              </div>
+
+              <div className="circle-toolbar">
+                <input
+                  type="search"
+                  value={searchQuery}
+                  onChange={(e) => setSearchQuery(e.target.value)}
+                  placeholder="Cari nama, perusahaan, role, kota, atau keahlian..."
+                  className="circle-search-input"
+                />
+
+                <div
+                  className="circle-sector-list"
+                  role="tablist"
+                  aria-label="Filter Bidang"
+                >
+                  {SECTOR_FILTERS.map((sector) => (
+                    <button
+                      key={sector}
+                      type="button"
+                      className={
+                        selectedSector === sector
+                          ? "circle-filter-chip active"
+                          : "circle-filter-chip"
+                      }
+                      onClick={() => setSelectedSector(sector)}
+                    >
+                      {sector}
+                    </button>
+                  ))}
+                </div>
+              </div>
+
+              {filteredProfessionals.length === 0 ? (
+                <div className="circle-empty">
+                  <p>Tidak ada profil yang cocok dengan filter saat ini.</p>
+                  <button
+                    type="button"
+                    className="circle-btn-primary"
+                    onClick={() => {
+                      setSearchQuery("");
+                      setSelectedSector("All");
+                      setOnlyOnline(false);
+                    }}
+                  >
+                    Reset Filter
+                  </button>
+                </div>
+              ) : (
+                <div className="circle-people-grid">
+                  {filteredProfessionals.map((person) => {
+                    const isConnected = connectedIds.includes(person.id);
+                    const savedNote = notesByMember[person.id];
+                    const isWritingNote = activeNoteTargetId === person.id;
+
+                    return (
+                      <article className="circle-person-card" key={person.id}>
+                        <div className="circle-person-top">
+                          <div className="circle-person-identity">
+                            <div className="circle-avatar-wrap">
+                              <div className="circle-avatar">
+                                {person.avatarText}
+                              </div>
+                              {person.online && (
+                                <span
+                                  className="circle-online-dot"
+                                  title="Online"
+                                />
+                              )}
+                            </div>
+
+                            <div>
+                              <strong>
+                                {person.name}{" "}
+                                {person.isLiveCompany && (
+                                  <span className="circle-live-badge">
+                                    LIVE DB
+                                  </span>
+                                )}
+                              </strong>
+                              <small>
+                                {person.role} · <span>{person.company}</span>
+                              </small>
+                            </div>
+                          </div>
+
+                          <span className="circle-loc-pill">
+                            {person.location}
+                          </span>
+                        </div>
+
+                        <p className="circle-person-bio">{person.bio}</p>
+
+                        <div className="circle-tags">
+                          {person.tags.map((tag) => (
+                            <span className="circle-tag" key={tag}>
+                              #{tag}
+                            </span>
+                          ))}
+                        </div>
+
+                        {savedNote && (
+                          <div className="circle-saved-note">
+                            <strong>Catatan koneksi:</strong> {savedNote}
+                          </div>
+                        )}
+
+                        {isWritingNote && (
+                          <div className="circle-note-box">
+                            <input
+                              type="text"
+                              value={draftNote}
+                              onChange={(e) =>
+                                setDraftNote(e.target.value.slice(0, 180))
+                              }
+                              placeholder={`Tulis pesan singkat untuk ${person.name}...`}
+                            />
+                            <div className="circle-note-actions">
+                              <button
+                                type="button"
+                                className="circle-btn-primary"
+                                onClick={() => submitConnectionWithNote(person)}
+                              >
+                                Kirim &amp; Connect
+                              </button>
+                              <button
+                                type="button"
+                                className="circle-btn-secondary"
+                                onClick={() => setActiveNoteTargetId(null)}
+                              >
+                                Batal
+                              </button>
+                            </div>
+                          </div>
+                        )}
+
+                        <div className="circle-person-foot">
+                          <small>
+                            {person.mutualConnections} mutual connections
+                          </small>
+
+                          <div className="circle-card-actions">
+                            <button
+                              type="button"
+                              className="circle-btn-secondary"
+                              onClick={() => openNoteComposer(person)}
+                            >
+                              ✉ Note
+                            </button>
+                            <button
+                              type="button"
+                              className={
+                                isConnected
+                                  ? "circle-btn-joined"
+                                  : "circle-btn-primary"
+                              }
+                              onClick={() => toggleConnection(person)}
+                            >
+                              {isConnected ? "Connected ✓" : "+ Connect"}
+                            </button>
+                          </div>
+                        </div>
+                      </article>
+                    );
+                  })}
+                </div>
+              )}
+            </section>
+          </>
+        ) : (
+          <section className="circle-section">
+            <div className="circle-section-head">
+              <div>
+                <span className="circle-eyebrow">
+                  LIVE COMMUNITY THREADS · SUPABASE BUSINESS POSTS
+                </span>
+                <h2>Community Discussions</h2>
+              </div>
+
+              <Link href="/business-feed" className="circle-btn-primary link-btn">
+                + Post in Business Feed →
+              </Link>
             </div>
-          )}
-        </section>
+
+            <div className="circle-toolbar">
+              <input
+                type="search"
+                value={discussionQuery}
+                onChange={(e) => setDiscussionQuery(e.target.value)}
+                placeholder="Cari topik diskusi, judul update, atau nama perusahaan..."
+                className="circle-search-input"
+              />
+
+              <div className="circle-sector-list" aria-label="Filter Topik">
+                {DISCUSSION_TOPICS.map((topic) => (
+                  <button
+                    key={topic.key}
+                    type="button"
+                    className={
+                      selectedTopic === topic.key
+                        ? "circle-filter-chip active"
+                        : "circle-filter-chip"
+                    }
+                    onClick={() => setSelectedTopic(topic.key)}
+                  >
+                    {topic.label}
+                  </button>
+                ))}
+              </div>
+            </div>
+
+            {loadingPosts ? (
+              <div className="circle-empty">
+                <p>Memuat diskusi komunitas...</p>
+              </div>
+            ) : filteredDiscussions.length === 0 ? (
+              <div className="circle-empty">
+                <p>Belum ada diskusi yang cocok dengan pencarian atau topik ini.</p>
+                <button
+                  type="button"
+                  className="circle-btn-primary"
+                  onClick={() => {
+                    setDiscussionQuery("");
+                    setSelectedTopic("all");
+                  }}
+                >
+                  Reset Topik
+                </button>
+              </div>
+            ) : (
+              <div className="circle-discussions-list">
+                {filteredDiscussions.map((post) => {
+                  const isOpen = openThreadPostIds.includes(post.id);
+                  const cleanTitle = formatCleanTitle(post.title);
+                  const cleanExcerpt = formatCleanExcerpt(post.content);
+
+                  return (
+                    <article className="circle-discussion-card" key={post.id}>
+                      <div className="circle-disc-head">
+                        <div className="circle-disc-author">
+                          <div className="circle-avatar small-av">
+                            {post.companies?.company_name
+                              ?.charAt(0)
+                              .toUpperCase() || "V"}
+                          </div>
+                          <div>
+                            <strong>
+                              {post.companies?.company_name || "v-nect Official"}
+                            </strong>
+                            <small>{formatPostDate(post.created_at)}</small>
+                          </div>
+                        </div>
+
+                        <span className="circle-badge">
+                          {post.post_type || "Community"}
+                        </span>
+                      </div>
+
+                      <h3>{cleanTitle}</h3>
+                      {cleanExcerpt && (
+                        <p className="circle-disc-body">{cleanExcerpt}</p>
+                      )}
+
+                      <div className="circle-disc-actions">
+                        <button
+                          type="button"
+                          className={
+                            isOpen ? "circle-btn-joined" : "circle-btn-primary"
+                          }
+                          onClick={() => toggleDiscussionThread(post.id)}
+                        >
+                          {isOpen ? "Hide Discussion ▲" : "Join Discussion 💬"}
+                        </button>
+
+                        <Link
+                          href="/business-feed"
+                          className="circle-btn-secondary link-btn"
+                        >
+                          Open in Feed ↗
+                        </Link>
+                      </div>
+
+                      {isOpen && (
+                        <div className="circle-thread-wrap">
+                          <PostThreadComments
+                            supabase={supabase}
+                            postId={post.id}
+                            currentUserId={currentUserId}
+                            currentUserName={currentUserName}
+                            focusTrigger={focusTriggerByPost[post.id] || 0}
+                          />
+                        </div>
+                      )}
+                    </article>
+                  );
+                })}
+              </div>
+            )}
+          </section>
+        )}
       </section>
 
       <footer className="circle-footer">
-        v-nect v-circle ·{" "}
+        v-nect Community &amp; v-circle ·{" "}
         {currentUserId
           ? `Signed in as ${currentUserName}${
               dbSyncEnabled ? " (Supabase Sync Active)" : " (Local Sync)"
             }`
-          : "Public Network Preview"}{" "}
+          : "Public Community Preview"}{" "}
         · © {new Date().getFullYear()} v-nect
       </footer>
 
@@ -947,13 +1289,16 @@ export default function VCirclePage() {
           justify-content: space-between;
           gap: 14px;
           flex-wrap: wrap;
+          position: sticky;
+          top: 0;
+          z-index: 30;
         }
 
         .circle-nav-left,
         .circle-nav-right {
           display: flex;
           align-items: center;
-          gap: 18px;
+          gap: 16px;
           flex-wrap: wrap;
         }
 
@@ -982,19 +1327,23 @@ export default function VCirclePage() {
         .circle-nav-links {
           display: flex;
           align-items: center;
-          gap: 16px;
+          gap: 14px;
           flex-wrap: wrap;
         }
 
-        .circle-nav-links a {
+        .circle-nav-links :global(a) {
           color: #d2deed;
           text-decoration: none;
-          font-size: 14px;
+          font-size: 13.5px;
           font-weight: 600;
+          padding: 5px 8px;
+          border-radius: 7px;
         }
 
-        .circle-nav-links a:hover {
-          color: #13c8b5;
+        .circle-nav-links :global(a:hover),
+        .circle-nav-links :global(a.is-current) {
+          color: #7ee8dc;
+          background: rgba(19, 200, 181, 0.12);
         }
 
         .circle-user-pill {
@@ -1046,7 +1395,7 @@ export default function VCirclePage() {
 
         .circle-hero h1 {
           margin: 8px 0;
-          font-size: 42px;
+          font-size: 40px;
           font-weight: 800;
           line-height: 1.15;
         }
@@ -1086,8 +1435,34 @@ export default function VCirclePage() {
           color: #b5c7dd;
         }
 
+        .circle-mode-tabs {
+          margin-top: 22px;
+          display: flex;
+          gap: 10px;
+          flex-wrap: wrap;
+        }
+
+        .circle-mode-tab {
+          padding: 10px 18px;
+          border-radius: 11px;
+          border: 1px solid rgba(255, 255, 255, 0.16);
+          background: #0d1e34;
+          color: #c8d7ea;
+          font-size: 13px;
+          font-weight: 750;
+          cursor: pointer;
+          transition: all 0.2s ease;
+        }
+
+        .circle-mode-tab.active {
+          background: linear-gradient(110deg, #347cf0, #13bcae);
+          border-color: transparent;
+          color: #ffffff;
+          box-shadow: 0 8px 20px rgba(19, 200, 181, 0.22);
+        }
+
         .circle-banner {
-          margin-top: 18px;
+          margin-top: 16px;
           padding: 12px 16px;
           border-radius: 10px;
           background: rgba(19, 200, 181, 0.14);
@@ -1110,7 +1485,7 @@ export default function VCirclePage() {
         }
 
         .circle-section {
-          margin-top: 34px;
+          margin-top: 30px;
         }
 
         .circle-section-head {
@@ -1128,11 +1503,14 @@ export default function VCirclePage() {
           font-weight: 800;
         }
 
-        .circle-inline-link {
+        .circle-inline-btn {
+          border: none;
+          background: transparent;
           color: #7ee8dc;
-          text-decoration: none;
           font-size: 13px;
-          font-weight: 700;
+          font-weight: 750;
+          cursor: pointer;
+          padding: 4px 0;
         }
 
         .circle-groups-grid {
@@ -1142,7 +1520,8 @@ export default function VCirclePage() {
         }
 
         .circle-group-card,
-        .circle-person-card {
+        .circle-person-card,
+        .circle-discussion-card {
           background: #0d1e34;
           border: 1px solid rgba(255, 255, 255, 0.09);
           border-radius: 14px;
@@ -1155,7 +1534,8 @@ export default function VCirclePage() {
         .circle-group-top,
         .circle-person-top,
         .circle-group-foot,
-        .circle-person-foot {
+        .circle-person-foot,
+        .circle-disc-head {
           display: flex;
           align-items: center;
           justify-content: space-between;
@@ -1184,24 +1564,28 @@ export default function VCirclePage() {
         }
 
         .circle-group-top small,
-        .circle-person-foot small {
+        .circle-person-foot small,
+        .circle-disc-author small {
           color: #9ab0ca;
           font-size: 12px;
         }
 
-        .circle-group-card h3 {
+        .circle-group-card h3,
+        .circle-discussion-card h3 {
           margin: 2px 0 0;
           font-size: 18px;
-          font-weight: 700;
+          font-weight: 750;
           color: #ffffff;
         }
 
         .circle-group-card p,
-        .circle-person-bio {
+        .circle-person-bio,
+        .circle-disc-body {
           margin: 0;
           color: #b7c8dd;
           font-size: 13px;
           line-height: 1.65;
+          white-space: pre-wrap;
         }
 
         .circle-focus-pill {
@@ -1262,7 +1646,8 @@ export default function VCirclePage() {
           gap: 16px;
         }
 
-        .circle-person-identity {
+        .circle-person-identity,
+        .circle-disc-author {
           display: flex;
           align-items: center;
           gap: 12px;
@@ -1287,6 +1672,13 @@ export default function VCirclePage() {
           place-items: center;
         }
 
+        .circle-avatar.small-av {
+          width: 38px;
+          height: 38px;
+          font-size: 13px;
+          border-radius: 10px;
+        }
+
         .circle-online-dot {
           position: absolute;
           right: -2px;
@@ -1298,7 +1690,8 @@ export default function VCirclePage() {
           border: 2px solid #0d1e34;
         }
 
-        .circle-person-identity strong {
+        .circle-person-identity strong,
+        .circle-disc-author strong {
           display: block;
           font-size: 15px;
           color: #ffffff;
@@ -1372,43 +1765,59 @@ export default function VCirclePage() {
         }
 
         .circle-note-actions,
-        .circle-card-actions {
+        .circle-card-actions,
+        .circle-disc-actions {
           display: flex;
           gap: 8px;
           align-items: center;
+          flex-wrap: wrap;
+        }
+
+        .circle-discussions-list {
+          display: flex;
+          flex-direction: column;
+          gap: 16px;
+        }
+
+        .circle-thread-wrap {
+          margin-top: 6px;
+          padding-top: 12px;
+          border-top: 1px solid rgba(255, 255, 255, 0.08);
+          color: #131c36;
+        }
+
+        .circle-btn-primary,
+        .circle-btn-secondary,
+        .circle-btn-joined {
+          border-radius: 8px;
+          font-size: 12px;
+          font-weight: 700;
+          cursor: pointer;
+          text-decoration: none;
+          display: inline-flex;
+          align-items: center;
+          gap: 5px;
         }
 
         .circle-btn-primary {
           border: none;
           background: linear-gradient(110deg, #347cf0, #13bcae);
-          color: #ffffff;
+          color: #ffffff !important;
           padding: 8px 13px;
-          border-radius: 8px;
-          font-size: 12px;
-          font-weight: 700;
-          cursor: pointer;
         }
 
         .circle-btn-secondary {
           border: 1px solid rgba(255, 255, 255, 0.18);
           background: rgba(255, 255, 255, 0.06);
-          color: #dce8f6;
+          color: #dce8f6 !important;
           padding: 8px 11px;
-          border-radius: 8px;
-          font-size: 12px;
-          font-weight: 700;
-          cursor: pointer;
         }
 
         .circle-btn-joined {
           border: 1px solid rgba(19, 200, 181, 0.45);
           background: rgba(19, 200, 181, 0.16);
-          color: #7ee8dc;
+          color: #7ee8dc !important;
           padding: 8px 13px;
-          border-radius: 8px;
-          font-size: 12px;
-          font-weight: 700;
-          cursor: pointer;
         }
 
         .circle-empty {
@@ -1440,5 +1849,26 @@ export default function VCirclePage() {
         }
       `}</style>
     </main>
+  );
+}
+
+export default function VCirclePage() {
+  return (
+    <Suspense
+      fallback={
+        <div
+          style={{
+            minHeight: "100vh",
+            background: "#07111f",
+            color: "#eef4fb",
+            padding: "40px",
+          }}
+        >
+          Loading v-circle Community...
+        </div>
+      }
+    >
+      <VCircleContent />
+    </Suspense>
   );
 }
