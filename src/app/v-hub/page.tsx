@@ -1,101 +1,116 @@
-"use client";
-import { useEffect, useMemo, useState } from "react";
-import Link from "next/link";
-import { createClient } from "@/lib/supabase";
-import { AccountAuthModal } from "@/components/AccountAuthModal";
+Skip to content
 
-type HubCompany={id:string;company_name:string;logo_url:string|null;industry?:string|null;description?:string|null;location?:string|null;};
-type FollowEntity={id:string;name:string;handle:string;entityType:"personal"|"company";subtitle:string;destinationHref:string;destinationLabel:string;};
-type RecentPostActivity={id:string;title:string;post_type:string;created_at:string;companies:{company_name:string}|null;};
-type HubIdentityNote={headline:string;summary:string;focusAreas:string;};
-type WorkspaceCardItem={id:string;badge:string;title:string;description:string;ctaLabel:string;href?:string;scrollTargetId?:string;accent:string;};
-const HUB_NOTE_STORAGE_KEY="v-nect_v_hub_identity_v1";
-const FOLLOWS_STORAGE_KEY="v-nect_v_hub_follows_v1";
-const DEFAULT_PERSONAL_PROFILES:FollowEntity[]=[
-{id:"personal-sophia",name:"Sophia Lee",handle:"@sophialee",entityType:"personal",subtitle:"Co-Founder & Product Lead · Personal Profile",destinationHref:"/v-circle",destinationLabel:"Connect in Circle ->"},
-{id:"personal-james",name:"James Carter",handle:"@jamescarter",entityType:"personal",subtitle:"Head of Strategic Partnerships · Personal Profile",destinationHref:"/v-circle",destinationLabel:"Connect in Circle ->"},
-{id:"personal-noah",name:"Noah Smith",handle:"@noahsmith",entityType:"personal",subtitle:"Full-Stack Platform Engineer · Personal Profile",destinationHref:"/v-circle",destinationLabel:"Connect in Circle ->"},
-];
-const WORKSPACE_CARDS:WorkspaceCardItem[]=[
-{id:"ws-companies",badge:"05 · NETWORK",title:"Explore Companies",description:"Discover active businesses, compare industries, and reach out to partner companies in v-circle.",ctaLabel:"Check now",href:"/v-circle",accent:"linear-gradient(135deg, #273c8a, #4b6bff)"},
-{id:"ws-partners",badge:"05 · CONNECTIONS",title:"Find Partners & Leads",description:"Connect with founders, decision-makers, and regional collaborators across the v-nect network.",ctaLabel:"Find now",href:"/v-circle",accent:"linear-gradient(135deg, #2d2a7a, #6948ff)"},
-{id:"ws-dataroom",badge:"03 · WORKSPACE",title:"My Hub & Positioning",description:"Manage your hub headline, positioning summary, core focus areas, and recent session activity.",ctaLabel:"Get In",scrollTargetId:"hub-positioning-section",accent:"linear-gradient(135deg, #1f357a, #3b5bdb)"},
-{id:"ws-market",badge:"06 · COMMERCE",title:"Market & Suppliers",description:"Browse products, services, and verified suppliers, inspect photos, comment, and request info.",ctaLabel:"Open Market",href:"/v-market",accent:"linear-gradient(135deg, #2a2875, #7854ff)"},
-{id:"ws-launch",badge:"04 · BUSINESS FEED",title:"Publish Updates & Launches",description:"Share product launches, promo updates, and company news directly to the business feed.",ctaLabel:"Create Post",href:"/business-feed",accent:"linear-gradient(135deg, #1d3680, #4b6bff)"},
-{id:"ws-company",badge:"COMPANY PROFILE",title:"Manage Company Profile",description:"Configure company identity, linked workspace mode, and active business details.",ctaLabel:"Manage Now",href:"/company",accent:"linear-gradient(135deg, #252b6e, #5c4dff)"},
-{id:"ws-activity",badge:"LIVE TIMELINE",title:"Business & Feed Activity",description:"Track published business posts, follow updates, and recent actions in one timeline.",ctaLabel:"View Activity",scrollTargetId:"hub-activity-section",accent:"linear-gradient(135deg, #1c2f73, #4263eb)"},
-{id:"ws-outreach",badge:"FOLLOW & CONNECT",title:"Client & Profile Outreach",description:"Follow personal profiles or companies and jump straight into their connected workspace.",ctaLabel:"Start Outreach",scrollTargetId:"hub-follow-section",accent:"linear-gradient(135deg, #2b277a, #7048e8)"},
-];
+Find
 
-export default function VHubPage(){
-const supabase=createClient();
-const [currentUserId,setCurrentUserId]=useState<string|null>(null);
-const [currentUserEmail,setCurrentUserEmail]=useState<string|null>(null);
-const [currentUserName,setCurrentUserName]=useState<string|null>(null);
-const [activeProfileType,setActiveProfileType]=useState<string>("personal");
-const [activeCompany,setActiveCompany]=useState<HubCompany|null>(null);
-const [allCompanies,setAllCompanies]=useState<HubCompany[]>([]);
-const [recentPosts,setRecentPosts]=useState<RecentPostActivity[]>([]);
-const [authModalOpen,setAuthModalOpen]=useState(false);
-const [dbSyncActive,setDbSyncActive]=useState(false);
-const [savingIdentity,setSavingIdentity]=useState(false);
-const [platformSearch,setPlatformSearch]=useState("");
-const [followedIds,setFollowedIds]=useState<string[]>(["personal-sophia"]);
-const [followFilter,setFollowFilter]=useState<"all"|"company"|"personal">("all");
-const [activityLog,setActivityLog]=useState<string[]>(["Membuka dashboard v-hub & sinkronisasi aktivitas ekosistem."]);
-const [identityNote,setIdentityNote]=useState<HubIdentityNote>({headline:"Global Business & Collaboration Hub",summary:"Unified identity space connecting personal credentials, company profiles, live feeds, and partner networks.",focusAreas:"B2B Partnerships, Video Commerce, Regional Expansion"});
-const [savedNotice,setSavedNotice]=useState("");
-const [likedIds,setLikedIds]=useState<string[]>([]);
-const [showEditSheet,setShowEditSheet]=useState(false);
-useEffect(()=>{try{const r=window.localStorage.getItem(HUB_NOTE_STORAGE_KEY);if(r){const parsed=JSON.parse(r);if(parsed&&typeof parsed==="object")setIdentityNote((prev)=>({headline:typeof parsed.headline==="string"?parsed.headline:prev.headline,summary:typeof parsed.summary==="string"?parsed.summary:prev.summary,focusAreas:typeof parsed.focusAreas==="string"?parsed.focusAreas:prev.focusAreas}));}const rf=window.localStorage.getItem(FOLLOWS_STORAGE_KEY);if(rf){const pf=JSON.parse(rf);if(Array.isArray(pf))setFollowedIds(pf.filter((x):x is string=>typeof x==="string"));}}catch{}},[]);
-function pushActivity(text:string){const t=new Date().toLocaleTimeString("id-ID",{hour:"2-digit",minute:"2-digit"});setActivityLog((prev)=>[`[${t}] ${text}`,...prev.slice(0,7)]);}
-function scrollToSection(id:string){const el=document.getElementById(id);if(el)el.scrollIntoView({behavior:"smooth",block:"start"});}
-async function loadUserIdentityFromDb(uid:string){const{data,error}=await supabase.from("v_hub_identities").select("headline, summary, focus_areas").eq("user_id",uid).maybeSingle();if(!error){setDbSyncActive(true);if(data)setIdentityNote({headline:data.headline||"Global Business & Collaboration Hub",summary:data.summary||"Unified identity space connecting personal credentials, company profiles, live feeds, and partner networks.",focusAreas:data.focus_areas||"B2B Partnerships, Video Commerce, Regional Expansion"});}}
-async function loadUserFollowsFromDb(uid:string){const{data,error}=await supabase.from("v_follows").select("target_key").eq("user_id",uid);if(!error&&Array.isArray(data)){setDbSyncActive(true);if(data.length>0)setFollowedIds(data.map((r)=>r.target_key));}}
-async function syncHubData(){const{data:{user}}=await supabase.auth.getUser();const{data:companiesList}=await supabase.from("companies").select("id, company_name, logo_url, industry, description, location").order("created_at",{ascending:false}).limit(12);if(Array.isArray(companiesList))setAllCompanies(companiesList as HubCompany[]);const{data:postsList}=await supabase.from("business_posts").select(`id,title,post_type,created_at,companies ( company_name )`).eq("status","published").order("created_at",{ascending:false}).limit(5);if(Array.isArray(postsList))setRecentPosts(postsList as unknown as RecentPostActivity[]);if(!user){setCurrentUserId(null);setCurrentUserEmail(null);setCurrentUserName(null);setActiveProfileType("personal");setActiveCompany(null);setDbSyncActive(false);return;}setCurrentUserId(user.id);setCurrentUserEmail(user.email||null);const fb=(user.user_metadata?.full_name as string|undefined)?.trim()||user.email?.split("@")[0]||"Member";setCurrentUserName(fb);const{data:settings}=await supabase.from("account_settings").select("active_profile_type, active_company_id").eq("user_id",user.id).maybeSingle();const pt=settings?.active_profile_type||"personal";setActiveProfileType(pt);if(settings?.active_company_id){const{data:comp}=await supabase.from("companies").select("id, company_name, logo_url, industry, description, location").eq("id",settings.active_company_id).maybeSingle();if(comp){setActiveCompany(comp as HubCompany);if(pt==="company")setCurrentUserName(comp.company_name);}}else setActiveCompany(null);await loadUserIdentityFromDb(user.id);await loadUserFollowsFromDb(user.id);}
-useEffect(()=>{let active=true;syncHubData();const{data:{subscription}}=supabase.auth.onAuthStateChange(()=>{if(active)syncHubData();});return()=>{active=false;subscription.unsubscribe();};/* eslint-disable-next-line react-hooks/exhaustive-deps */},[supabase]);
-async function handleSignOut(){await supabase.auth.signOut();setCurrentUserId(null);setCurrentUserEmail(null);setCurrentUserName(null);setActiveCompany(null);setDbSyncActive(false);}
-async function handleSaveIdentity(e:React.FormEvent){e.preventDefault();setSavingIdentity(true);try{window.localStorage.setItem(HUB_NOTE_STORAGE_KEY,JSON.stringify(identityNote));}catch{}if(currentUserId){const{error}=await supabase.from("v_hub_identities").upsert({user_id:currentUserId,headline:identityNote.headline.trim(),summary:identityNote.summary.trim(),focus_areas:identityNote.focusAreas.trim(),updated_at:new Date().toISOString()},{onConflict:"user_id"});setSavingIdentity(false);if(!error){setDbSyncActive(true);setSavedNotice("Ringkasan identitas v-hub tersimpan ke Supabase.");pushActivity(`Memperbarui headline v-hub: "${identityNote.headline.trim()}"`);}else{setSavedNotice(`Tersimpan lokal (${error.message}). Cek tabel/policy v_hub_identities di Supabase.`);pushActivity("Menyimpan ringkasan v-hub secara lokal.");}setShowEditSheet(false);return;}setSavingIdentity(false);setSavedNotice("Ringkasan identitas v-hub tersimpan secara lokal.");pushActivity("Menyimpan ringkasan v-hub secara lokal.");setShowEditSheet(false);}
-const profileCompletion=useMemo(()=>{let s=20;if(currentUserId)s+=20;if(identityNote.headline.trim().length>3)s+=20;if(identityNote.summary.trim().length>10)s+=20;if(identityNote.focusAreas.trim().length>3)s+=10;if(activeCompany)s+=10;return Math.min(100,s);},[currentUserId,identityNote,activeCompany]);
-const followableEntities=useMemo<FollowEntity[]>(()=>{const ce:FollowEntity[]=allCompanies.map((c)=>({id:`company-${c.id}`,name:c.company_name,handle:`@${c.company_name.toLowerCase().replace(/[^a-z0-9]/g,"")||"company"}`,entityType:"company",subtitle:`${c.industry||"Company"} · ${c.location||"v-nect Business"}`,destinationHref:"/business-feed",destinationLabel:"Masuk ke Feed ->"}));return [...ce,...DEFAULT_PERSONAL_PROFILES];},[allCompanies]);
-const filteredFollowables=useMemo(()=>{const q=platformSearch.trim().toLowerCase();return followableEntities.filter((it)=>{if(followFilter!=="all"&&it.entityType!==followFilter)return false;if(!q)return true;return it.name.toLowerCase().includes(q)||it.handle.toLowerCase().includes(q)||it.subtitle.toLowerCase().includes(q);});},[followableEntities,followFilter,platformSearch]);
-const filteredWorkspaceCards=useMemo(()=>{const q=platformSearch.trim().toLowerCase();if(!q)return WORKSPACE_CARDS;return WORKSPACE_CARDS.filter((c)=>c.title.toLowerCase().includes(q)||c.description.toLowerCase().includes(q)||c.badge.toLowerCase().includes(q));},[platformSearch]);
-async function toggleFollowEntity(entity:FollowEntity){const isF=followedIds.includes(entity.id);const next=isF?followedIds.filter((id)=>id!==entity.id):[...followedIds,entity.id];setFollowedIds(next);try{window.localStorage.setItem(FOLLOWS_STORAGE_KEY,JSON.stringify(next));}catch{}if(isF){setSavedNotice(`Berhenti mengikuti ${entity.name}.`);pushActivity(`Unfollow ${entity.entityType==="company"?"company":"profil"} ${entity.name}.`);if(currentUserId){const{error}=await supabase.from("v_follows").delete().eq("user_id",currentUserId).eq("target_key",entity.id);if(error)setSavedNotice(`Unfollow lokal (${error.message}).`);}return;}setSavedNotice(`Sekarang mengikuti ${entity.name}.`);pushActivity(`Follow ${entity.entityType==="company"?"company":"profil"} ${entity.name}.`);if(currentUserId){const{error}=await supabase.from("v_follows").upsert({user_id:currentUserId,target_key:entity.id,target_name:entity.name,target_type:entity.entityType},{onConflict:"user_id,target_key"});if(error)setSavedNotice(`Follow lokal (${error.message}).`);}}
-function toggleLike(id:string){setLikedIds((p)=>p.includes(id)?p.filter((x)=>x!==id):[...p,id]);}
+Overview
+Deployments
+CI
+Logs
+Traces
+Analytics
+Speed Insights
+Observability
+Firewall
+CDN
+Environment Variables
+Domains
+Connect
+Integrations
+Storage
+Flags
+Agent
+Vulnerabilities
+AI Gateway
+Sandboxes
+Workflows
+Images
+Drives
+Daemons
+Usage
+Support
+Settings
+Enable 2FA
+Help protect your Vercel account from unauthorized access with two-factor authentication.
 
-return(
-<main className="tk-page">
-<header className="tk-top"><div className="tk-brand">v<span>-nect</span><small>V-HUB</small></div><div className="tk-top-tabs"><button className="on">For You</button><button onClick={()=>scrollToSection("hub-follow-section")}>Following</button><button onClick={()=>scrollToSection("hub-activity-section")}>Trending</button></div>{currentUserName?(<div className="tk-user"><span>● {currentUserName}</span><button onClick={handleSignOut}>Keluar</button></div>):(<button className="tk-login" onClick={()=>setAuthModalOpen(true)}>Masuk / Register</button>)}</header>
-<div className="tk-searchbar"><input value={platformSearch} onChange={(e)=>setPlatformSearch(e.target.value)} placeholder="🔍 Search workspace, company, profile..." /></div>
-{savedNotice&&(<div className="tk-toast"><span>✓ {savedNotice}</span><button onClick={()=>setSavedNotice("")}>✕</button></div>)}
-<section className="tk-profile">
-<div className="tk-cover"><div className="tk-cover-grad"><span>🎵 v-nect • original sound - v-hub</span></div><div className="tk-ava-big">{(currentUserName||"Z").charAt(0).toUpperCase()}</div></div>
-<div className="tk-profile-info"><div><h1>Hello {currentUserName||"Zefyron"}, <span>v-hub.</span></h1><p>@{ (currentUserName||"zefyron").toLowerCase().replace(/[^a-z0-9]/g,"") } · {activeProfileType==="company"?"Company Profile":"Personal Profile"} · {activeCompany?.company_name||"v-nect Member"}</p><p className="tk-headline">{identityNote.headline}</p><p className="tk-summary">{identityNote.summary}</p><div className="tk-tags">{identityNote.focusAreas.split(",").map((t)=>(<span key={t.trim()}>#{t.trim().replace(/\s+/g,"")}</span>))}</div></div>
-<div className="tk-profile-stats"><div><b>{followedIds.length}</b><i>Following</i></div><div><b>{allCompanies.length}</b><i>Companies</i></div><div><b>{profileCompletion}%</b><i>Profile</i></div></div></div>
-<div className="tk-profile-actions"><button className="tk-primary" onClick={()=>setShowEditSheet(true)}>✏️ Edit Profile</button><button className="tk-ghost" onClick={()=>setShowEditSheet(true)}>Share Profile ↗</button>{currentUserId?(<span className="tk-pill">● {activeProfileType==="company"?"Company":"Personal"} · {dbSyncActive?"Supabase Sync Active":"Local Sync"}</span>):(<button className="tk-primary" onClick={()=>setAuthModalOpen(true)}>Masuk / Register</button>)}</div>
-<div className="tk-progress"><div style={{width:`${profileCompletion}%`}}/><span>{profileCompletion}% completed</span></div>
-<div className="tk-meta"><span>Linked: {activeCompany?.company_name||"Not selected yet"}</span><span>Email: {currentUserEmail||"Guest"}</span></div>
-</section>
-<div className="tk-stories"><button className="tk-story-add" onClick={()=>scrollToSection("hub-follow-section")}>+<span>Your Story</span></button>{followableEntities.slice(0,8).map((e)=>(<button key={e.id} className="tk-story" onClick={()=>toggleFollowEntity(e)}><span className="tk-story-ava">{e.name.charAt(0)}</span><span>{e.name.split(" ")[0]}</span><small>{followedIds.includes(e.id)?"Following ✓":"Tap Follow"}</small></button>))}</div>
-<section className="tk-section"><h2>Connect to Key Modules</h2><div className="tk-feed">{filteredWorkspaceCards.map((card)=>{const liked=likedIds.includes(card.id);return(<article className="tk-card" key={card.id}><div className="tk-card-media"><div className="tk-gradient" style={{background:card.accent}}><span className="tk-big-ava">{card.title.charAt(0)}</span><span className="tk-live">{card.badge}</span><span className="tk-media-tag">v-hub</span></div><div className="tk-rail"><button className={liked?"on":""} onClick={()=>toggleLike(card.id)}>♥<small>{liked?1:0}</small></button><button onClick={()=>card.scrollTargetId?scrollToSection(card.scrollTargetId):undefined}>💬<small>Open</small></button><button>↗<small>Share</small></button></div><div className="tk-caption"><div className="tk-cap-top"><b>{card.title}</b></div><p className="tk-bio">{card.description}</p><span className="tk-badge">{card.badge}</span></div></div><div className="tk-card-actions">{card.href?(<Link href={card.href} className="tk-primary">{card.ctaLabel} →</Link>):(<button className="tk-primary" onClick={()=>card.scrollTargetId&&scrollToSection(card.scrollTargetId)}>{card.ctaLabel} →</button>)}</div></article>);})}</div></section>
-<section id="hub-positioning-section" className="tk-section tk-two"><div className="tk-card2"><span className="tk-eyebrow">ACTIVE IDENTITY</span><h2>Account & Profile Status</h2>{currentUserId?(<><div className="tk-row"><span className="tk-mini-ava">{(currentUserName||"V").charAt(0).toUpperCase()}</span><div><b>{currentUserName}</b><small>{currentUserEmail||"Authenticated Member"}</small></div></div><div className="tk-meta-list"><div><span>Active Mode</span><b>{activeProfileType==="company"?"Company Profile":"Personal Profile"}</b></div><div><span>Linked Company</span><b>{activeCompany?.company_name||"Not selected yet"}</b></div><div><span>Following</span><b>{followedIds.length} profiles / companies</b></div><div><span>Registered Companies</span><b>{allCompanies.length} in database</b></div></div></>):(<div className="tk-guest"><p>Masuk ke akun v-nect Anda untuk melihat status profil aktif, menyimpan data ke Supabase, dan mengikuti akun/perusahaan.</p><button className="tk-primary" onClick={()=>setAuthModalOpen(true)}>Masuk / Register Sekarang</button></div>)}</div>
-<div className="tk-card2"><span className="tk-eyebrow">IDENTITY POSITIONING</span><h2>Hub Headline & Focus</h2><p className="tk-muted">{identityNote.headline}</p><p className="tk-muted">{identityNote.summary}</p><p className="tk-muted">Focus: {identityNote.focusAreas}</p><button className="tk-primary" onClick={()=>setShowEditSheet(true)}>Edit Headline & Focus ✏️</button></div></section>
-<section id="hub-follow-section" className="tk-section"><div className="tk-sec-head"><h2>Follow Profiles & Workspaces</h2><div className="tk-chips"><button className={followFilter==="all"?"on":""} onClick={()=>setFollowFilter("all")}>All ({followableEntities.length})</button><button className={followFilter==="company"?"on":""} onClick={()=>setFollowFilter("company")}>Company</button><button className={followFilter==="personal"?"on":""} onClick={()=>setFollowFilter("personal")}>Personal</button></div></div><div className="tk-follow-grid">{filteredFollowables.map((item)=>{const isF=followedIds.includes(item.id);return(<article className="tk-follow" key={item.id}><div className="tk-follow-top"><span className="tk-badge">{item.entityType==="company"?"COMPANY":"PERSONAL"}</span><small>{item.handle}</small></div><div className="tk-follow-ava">{item.name.charAt(0)}</div><h3>{item.name}</h3><p>{item.subtitle}</p><div className="tk-follow-actions"><button className={isF?"tk-joined":"tk-primary"} onClick={()=>toggleFollowEntity(item)}>{isF?"Following ✓":"+ Follow"}</button><Link href={item.destinationHref} className="tk-ghost">{item.destinationLabel}</Link></div></article>);})}</div></section>
-<section id="hub-activity-section" className="tk-section"><h2>Recent Ecosystem Activity</h2><div className="tk-two"><div className="tk-card2"><span className="tk-eyebrow">PUBLISHED BUSINESS POSTS</span><h3>Latest Feed Activity</h3>{recentPosts.length===0?(<p className="tk-muted">Belum ada aktivitas post terbaru.</p>):(<ul className="tk-list">{recentPosts.map((post)=>(<li key={post.id}><b>{post.title}</b><small>{post.companies?.company_name||"Company"} · {post.post_type}</small></li>))})}<Link href="/business-feed" className="tk-ghost">Lihat Semua Post di Feed →</Link></div><div className="tk-card2"><span className="tk-eyebrow">YOUR SESSION & FOLLOW LOG</span><h3>Recent Hub Actions</h3><ul className="tk-list">{activityLog.map((e,i)=>(<li key={`${e}-${i}`}><span>{e}</span></li>))}</ul></div></div></section>
-{showEditSheet&&(<div className="tk-overlay"><div className="tk-sheet"><div className="tk-sheet-bar"/><b>Edit Hub Headline & Focus</b><form onSubmit={handleSaveIdentity} className="tk-form"><label>Headline<input value={identityNote.headline} onChange={(e)=>setIdentityNote((p)=>({...p,headline:e.target.value}))} maxLength={140}/></label><label>Summary<textarea rows={3} value={identityNote.summary} onChange={(e)=>setIdentityNote((p)=>({...p,summary:e.target.value}))} maxLength={400}/></label><label>Core Focus Areas<input value={identityNote.focusAreas} onChange={(e)=>setIdentityNote((p)=>({...p,focusAreas:e.target.value}))} maxLength={180}/></label><button className="tk-primary" type="submit" disabled={savingIdentity}>{savingIdentity?"Menyimpan...":"Simpan Ringkasan Hub"}</button><button type="button" className="tk-ghost" onClick={()=>setShowEditSheet(false)}>Batal</button></form></div></div>)}
-<nav className="tk-bottom"><Link href="/">⌂<small>Home</small></Link><Link href="/explore">🔍<small>Explore</small></Link><Link href="/business-feed" className="tk-plus">+<small>Post</small></Link><Link href="/v-circle">👥<small>Circle</small></Link><Link href="/v-hub" className="on">◎<small>v-hub</small></Link></nav>
-<footer className="tk-footer">v-nect v-hub · {currentUserId?`Signed in as ${currentUserName}${dbSyncActive?" (Supabase Sync Active)":" (Local Sync)"}`:"Public Preview"} · © {new Date().getFullYear()} v-nect</footer>
-<AccountAuthModal open={authModalOpen} initialMode="login" onClose={()=>setAuthModalOpen(false)} onSuccess={()=>syncHubData()} />
-<style jsx>{`
-.tk-page{min-height:100vh;background:#000;color:#fff;font-family:var(--font-sans),Arial,sans-serif;padding-bottom:92px}
-.tk-top{position:sticky;top:0;z-index:50;background:rgba(0,0,0,.88);backdrop-filter:blur(12px);display:flex;justify-content:space-between;align-items:center;gap:12px;padding:12px 16px;border-bottom:1px solid #222}
-.tk-brand{font-size:22px;font-weight:900}.tk-brand span{color:#fe2c55}.tk-brand small{display:block;font-size:9px;letter-spacing:2px;color:#aaa}
-.tk-top-tabs{display:flex;gap:16px}.tk-top-tabs button{background:none;border:none;color:#aaa;font-weight:800;font-size:15px;cursor:pointer}.tk-top-tabs button.on{color:#fff;border-bottom:3px solid #fe2c55}
-.tk-user,.tk-login{display:flex;gap:8px;align-items:center}.tk-user span,.tk-login{background:#1a1a1a;border:1px solid #333;padding:8px 12px;border-radius:999px;font-size:12px;font-weight:700}.tk-user button,.tk-login{cursor:pointer;color:#fff}.tk-searchbar{max-width:1100px;margin:12px auto;padding:0 16px}.tk-searchbar input{width:100%;box-sizing:border-box;background:#1a1a1a;border:1px solid #222;border-radius:999px;padding:13px 16px;color:#fff;outline:none}.tk-toast{margin:12px 16px;background:#fe2c55;padding:12px 14px;border-radius:12px;display:flex;justify-content:space-between;font-weight:700;font-size:13px}.tk-toast button{background:none;border:none;color:#fff;cursor:pointer}
-.tk-profile{max-width:1100px;margin:0 auto;padding:0 16px}.tk-cover{position:relative;height:150px;border-radius:20px;overflow:hidden;background:linear-gradient(120deg,#fe2c55,#25f4ee,#7854ff)}.tk-cover-grad{position:absolute;inset:0;background:linear-gradient(transparent,rgba(0,0,0,.7));display:flex;align-items:flex-end;padding:12px;font-size:12px}.tk-ava-big{position:absolute;left:16px;bottom:-6px;width:92px;height:92px;border-radius:50%;background:#000;border:4px solid #000;display:grid;place-items:center;font-size:36px;font-weight:900;box-shadow:0 0 0 3px #fe2c55}
-.tk-profile-info{display:flex;justify-content:space-between;gap:16px;flex-wrap:wrap;padding:18px 4px 0}.tk-profile-info h1{font-size:30px;margin:0}.tk-profile-info h1 span{color:#25f4ee}.tk-profile-info p{color:#bbb;margin:6px 0;max-width:620px}.tk-headline{color:#fff!important;font-weight:800}.tk-summary{font-size:14px;line-height:1.6}.tk-tags{display:flex;gap:6px;flex-wrap:wrap}.tk-tags span{color:#25f4ee;font-weight:700;font-size:12px}.tk-profile-stats{display:flex;gap:10px}.tk-profile-stats div{background:#111;border:1px solid #222;border-radius:14px;padding:12px 16px;text-align:center}.tk-profile-stats b{display:block;font-size:20px;color:#fe2c55}.tk-profile-stats i{font-style:normal;font-size:11px;color:#aaa}.tk-profile-actions{display:flex;gap:8px;flex-wrap:wrap;margin:14px 4px}.tk-progress{height:8px;background:#1a1a1a;border-radius:999px;overflow:hidden;position:relative;margin:0 4px}.tk-progress div{height:100%;background:linear-gradient(90deg,#fe2c55,#25f4ee)}.tk-progress span{font-size:11px;color:#aaa}.tk-meta{display:flex;gap:14px;flex-wrap:wrap;color:#aaa;font-size:12px;margin:8px 4px}.tk-pill{background:#1a1a1a;border:1px solid #333;padding:10px 13px;border-radius:999px;font-size:12px;font-weight:700}
-.tk-stories{max-width:1100px;margin:14px auto;padding:0 16px;display:flex;gap:14px;overflow-x:auto}.tk-story,.tk-story-add{flex:0 0 auto;background:none;border:none;color:#fff;cursor:pointer;display:flex;flex-direction:column;align-items:center;gap:4px;width:76px}.tk-story-ava{width:62px;height:62px;border-radius:50%;background:linear-gradient(135deg,#fe2c55,#25f4ee);display:grid;place-items:center;font-weight:900;font-size:20px}.tk-story span{font-size:12px;font-weight:700}.tk-story small{font-size:10px;color:#aaa}.tk-story-add{font-size:28px}.tk-story-add span{font-size:12px}
-.tk-section{max-width:1100px;margin:22px auto;padding:0 16px}.tk-section h2{font-size:22px}.tk-feed{max-width:520px;margin:0 auto;display:flex;flex-direction:column;gap:18px}.tk-card{background:#0a0a0a;border:1px solid #1e1e1e;border-radius:20px;overflow:hidden}.tk-card-media{position:relative;height:440px;overflow:hidden}.tk-gradient{position:absolute;inset:0;display:grid;place-items:center}.tk-big-ava{width:96px;height:96px;border-radius:50%;background:rgba(0,0,0,.35);display:grid;place-items:center;font-size:34px;font-weight:900}.tk-live{position:absolute;top:14px;left:14px;background:rgba(0,0,0,.6);padding:6px 10px;border-radius:999px;font-size:11px;font-weight:800}.tk-media-tag{position:absolute;top:14px;right:14px;background:#fe2c55;padding:5px 10px;border-radius:999px;font-size:11px;font-weight:800}.tk-rail{position:absolute;right:10px;bottom:140px;display:flex;flex-direction:column;gap:12px}.tk-rail button{width:52px;height:52px;border-radius:50%;background:rgba(0,0,0,.55);border:1px solid rgba(255,255,255,.25);color:#fff;display:flex;flex-direction:column;align-items:center;justify-content:center;font-size:20px;cursor:pointer}.tk-rail small{font-size:9px}.tk-rail button.on{background:#fe2c55}.tk-caption{position:absolute;left:0;right:0;bottom:0;padding:36px 14px 14px;background:linear-gradient(transparent,rgba(0,0,0,.92))}.tk-cap-top b{font-size:16px}.tk-bio{color:#ddd;font-size:13px;line-height:1.6}.tk-badge{background:#fe2c55;padding:4px 9px;border-radius:999px;font-size:11px;font-weight:800}.tk-card-actions{display:flex;gap:8px;padding:12px}.tk-primary{background:#fe2c55;color:#fff;border:none;padding:10px 14px;border-radius:999px;font-weight:800;cursor:pointer;text-decoration:none;display:inline-block}.tk-joined{background:#222;color:#fff;border:1px solid #444;padding:10px 14px;border-radius:999px;font-weight:800;cursor:pointer}.tk-ghost{background:#1a1a1a;color:#fff;border:1px solid #333;padding:10px 13px;border-radius:999px;font-weight:700;cursor:pointer;text-decoration:none;display:inline-block}.tk-two{display:grid;grid-template-columns:1fr 1fr;gap:14px}.tk-card2{background:#111;border:1px solid #222;border-radius:16px;padding:18px}.tk-eyebrow{color:#fe2c55;font-size:11px;letter-spacing:2px;font-weight:800}.tk-muted{color:#bbb;font-size:13px;line-height:1.6}.tk-row{display:flex;gap:10px;align-items:center;margin:12px 0}.tk-mini-ava{width:46px;height:46px;border-radius:12px;background:linear-gradient(135deg,#fe2c55,#25f4ee);display:grid;place-items:center;font-weight:900}.tk-meta-list{display:flex;flex-direction:column;gap:8px}.tk-meta-list div{display:flex;justify-content:space-between;background:#000;border:1px solid #222;padding:10px 12px;border-radius:10px;font-size:13px}.tk-meta-list span{color:#aaa}.tk-guest p{color:#bbb;line-height:1.6}.tk-sec-head{display:flex;justify-content:space-between;align-items:flex-end;flex-wrap:wrap;gap:10px}.tk-chips{display:flex;gap:8px;flex-wrap:wrap}.tk-chips button{background:#1a1a1a;border:1px solid #222;color:#ddd;padding:8px 13px;border-radius:999px;font-size:12px;font-weight:700;cursor:pointer}.tk-chips button.on{background:#fe2c55;color:#fff}.tk-follow-grid{display:grid;grid-template-columns:repeat(3,1fr);gap:12px;margin-top:12px}.tk-follow{background:#111;border:1px solid #222;border-radius:16px;padding:16px}.tk-follow-top{display:flex;justify-content:space-between}.tk-follow-top small{color:#aaa}.tk-follow-ava{width:52px;height:52px;border-radius:50%;background:linear-gradient(135deg,#fe2c55,#25f4ee);display:grid;place-items:center;font-weight:900;margin:10px 0}.tk-follow h3{margin:0}.tk-follow p{color:#bbb;font-size:12px;line-height:1.5}.tk-follow-actions{display:flex;gap:8px;flex-wrap:wrap}.tk-list{list-style:none;padding:0;display:flex;flex-direction:column;gap:8px}.tk-list li{background:#000;border:1px solid #222;padding:10px 12px;border-radius:10px;display:flex;flex-direction:column;font-size:13px}.tk-list small{color:#aaa}.tk-overlay{position:fixed;inset:0;background:rgba(0,0,0,.7);z-index:80;display:flex;align-items:flex-end;justify-content:center}.tk-sheet{background:#111;border-radius:20px 20px 0 0;padding:16px;width:100%;max-width:560px;max-height:88vh;overflow:auto}.tk-sheet-bar{width:44px;height:5px;background:#444;border-radius:999px;margin:0 auto 10px}.tk-form{display:flex;flex-direction:column;gap:10px;margin-top:10px}.tk-form label{display:flex;flex-direction:column;gap:6px;font-size:12px;font-weight:700}.tk-form input,.tk-form textarea{width:100%;box-sizing:border-box;background:#000;border:1px solid #333;color:#fff;padding:11px;border-radius:12px}.tk-bottom{position:fixed;left:0;right:0;bottom:0;z-index:60;background:#000;border-top:1px solid #222;display:flex;justify-content:space-around;padding:10px 8px calc(10px + env(safe-area-inset-bottom))}.tk-bottom a{color:#aaa;text-decoration:none;display:flex;flex-direction:column;align-items:center;font-size:20px}.tk-bottom a small{font-size:10px}.tk-bottom a.on{color:#fff}.tk-plus{background:#fe2c55!important;color:#fff!important;width:52px;height:34px;border-radius:12px;align-items:center;justify-content:center;font-size:26px!important}.tk-footer{text-align:center;color:#777;font-size:12px;padding:22px}
-@media(max-width:760px){.tk-top-tabs{display:none}.tk-two,.tk-follow-grid{grid-template-columns:1fr}.tk-card-media{height:400px}}
-`}</style></main>);}
-}
+Avatar for wenyonghan927-5614
+wenyonghan927-5614
+
+
+Deployments
+B1nDeQJGp
+
+Deployment
+Logs
+Resources
+Source
+Open Graph
+Deployment Details
+Build Failed
+Command "npm run build" exited with 1
+Created
+github/HobbiGo
+HobbiGo
+3m ago
+Status
+Error
+Stale
+Duration
+11s
+3m ago
+Environment
+Production
+Domains
+voinnect-git-main-orbiss.vercel.app
+voinnect-9npdk3cj…orbiss.vercel.app
+Source
+main
+aef438a
+Update page.tsx
+
+Deployment Settings
+2 Recommendations
+Build Logs
+11s
+44 error lines
+
+4
+
+2
+Find in logs
+Ctrl
+F
+ 83 | <section id="hub-follow-section" className="tk-section"><div className="tk-sec-head"><h2>Follow Profiles & Workspaces</h2><div className="tk-chips"><button className={followFilter==="all"?"on":""} onClick={()=>setFollowFilter("all")}>All ({followableEntities.length})</button><button className={followFilter==="company"?"on":""} onClick={()=>setFollowFilter("company")}>Company</button><button className={followFilter==="personal"?"on":""} onClick={()=>setFollowFilter("personal")}>Personal</button></div></div><div className="tk-follow-grid">{filteredFollowables.map((item)=>{const isF=followedIds.includes(item.id);return(<article className="tk-follow" key={item.id}><div className="tk-follow-top"><span className="tk-badge">{item.entityType==="company"?"COMPANY":"PERSONAL"}</span><small>{item.handle}</small></div><div className="tk-follow-ava">{item.name.charAt(0)}</div><h3>{item.name}</h3><p>{item.subtitle}</p><div className="tk-follow-actions"><button className={isF?"tk-joined":"tk-primary"} onClick={()=>toggleFollowEntity(item)}>{isF?"Following ✓":"+ Follow"}</button><Link href={item.destinationHref} className="tk-ghost">{item.destinationLabel}</Link></div></article>);})}</div></section>
+ 84 | <section id="hub-activity-section" className="tk-section"><h2>Recent Ecosystem Activity</h2><div className="tk-two"><div className="tk-card2"><span className="tk-eyebrow">PUBLISHED BUSINESS POSTS</span><h3>Latest Feed Activity</h3>{recentPosts.length===0?(<p className="tk-muted">Belum ada aktivitas post terbaru.</p>):(<ul className="tk-list">{recentPosts.map((post)=>(<li key={post.id}><b>{post.title}</b><small>{post.companies?.company_name||"Company"} · {post.post_type}</small></li>))})}<Link href="/business-feed" className="tk-ghost">Lihat Semua Post di Feed →</Link></div><div className="tk-card2"><span className="tk-eyebrow">YOUR SESSION & FOLLOW LOG</span><h3>Recent Hub Actions</h3><ul className="tk-list">{activityLog.map((e,i)=>(<li key={`${e}-${i}`}><span>{e}</span></li>))}</ul></div></div></section>
+    :                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                          ^^^^^^^^^
+ 85 | {showEditSheet&&(<div className="tk-overlay"><div className="tk-sheet"><div className="tk-sheet-bar"/><b>Edit Hub Headline & Focus</b><form onSubmit={handleSaveIdentity} className="tk-form"><label>Headline<input value={identityNote.headline} onChange={(e)=>setIdentityNote((p)=>({...p,headline:e.target.value}))} maxLength={140}/></label><label>Summary<textarea rows={3} value={identityNote.summary} onChange={(e)=>setIdentityNote((p)=>({...p,summary:e.target.value}))} maxLength={400}/></label><label>Core Focus Areas<input value={identityNote.focusAreas} onChange={(e)=>setIdentityNote((p)=>({...p,focusAreas:e.target.value}))} maxLength={180}/></label><button className="tk-primary" type="submit" disabled={savingIdentity}>{savingIdentity?"Menyimpan...":"Simpan Ringkasan Hub"}</button><button type="button" className="tk-ghost" onClick={()=>setShowEditSheet(false)}>Batal</button></form></div></div>)}
+ 86 | <nav className="tk-bottom"><Link href="/">⌂<small>Home</small></Link><Link href="/explore">🔍<small>Explore</small></Link><Link href="/business-feed" className="tk-plus">+<small>Post</small></Link><Link href="/v-circle">👥<small>Circle</small></Link><Link href="/v-hub" className="on">◎<small>v-hub</small></Link></nav>
+ 87 | <footer className="tk-footer">v-nect v-hub · {currentUserId?`Signed in as ${currentUserName}${dbSyncActive?" (Supabase Sync Active)":" (Local Sync)"}`:"Public Preview"} · © {new Date().getFullYear()} v-nect</footer>
+    `----
+Caused by:
+    Syntax Error
+Import trace for requested module:
+./src/app/v-hub/page.tsx
+> Build failed because of webpack errors
+Error: [BUILD_UTILS_SPAWN_1] Command "npm run build" exited with 1
+Deployment Summary
+Deployment Checks
+Assigning Custom Domains
+Runtime Logs
+
+View and debug runtime logs & errors
+
+Observability
+
+Monitor app health & performance
+
+Speed Insights
+
+Not Enabled
+Performance metrics from real users
+
+Web Analytics
+
+Not Enabled
+Analyze visitors & traffic in real-time
+
+Deployments
