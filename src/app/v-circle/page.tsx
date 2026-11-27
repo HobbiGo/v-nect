@@ -1,143 +1,195 @@
 "use client";
-
-import { Suspense, useEffect, useMemo, useState } from "react";
+import { useEffect, useState } from "react";
 import Link from "next/link";
-import { useRouter, useSearchParams } from "next/navigation";
-import { createClient } from "@/lib/supabase";
-import { AccountAuthModal } from "@/components/AccountAuthModal";
-import { PostThreadComments } from "@/components/PostThreadComments";
+import { createClient } from "@/lib/supabase/client";
+import LanguageSwitcher from "@/components/LanguageSwitcher";
+import { t, getLang, type Lang } from "@/lib/i18n";
 
-type ProfessionalMember={id:string;name:string;handle:string;avatarText:string;role:string;company:string;sector:"Founder & CEO"|"Product & Tech"|"Business & Partnerships"|"Marketing & Growth";location:string;bio:string;tags:string[];mutualConnections:number;online:boolean;isLiveCompany?:boolean;};
-type NetworkCircle={id:string;name:string;category:string;membersCount:number;description:string;focusLabel:string;logoUrl?:string|null;isLiveCompany?:boolean;};
-type SupabaseCompanyRow={id:string;company_name:string;logo_url:string|null;industry?:string|null;description?:string|null;location?:string|null;};
-type CommunityPostRow={id:string;company_id:string;author_id:string;title:string;content:string;post_type:string;image_url:string|null;image_urls?:string[]|null;status:string;created_at:string;companies:{company_name:string;logo_url:string|null}|null;};
-type ConnectionNoteMap=Record<string,string>;
-type CircleTab="network"|"discussions";
-const CIRCLE_STORAGE_KEY="v-nect_v_circle_connections_v1";
-const JOINED_GROUPS_STORAGE_KEY="v-nect_v_circle_groups_v1";
-const CONNECTION_NOTES_STORAGE_KEY="v-nect_v_circle_notes_v1";
-const INITIAL_PROFESSIONALS:ProfessionalMember[]=[
-{id:"pro-1",name:"Sophia Lee",handle:"@sophialee",avatarText:"SL",role:"Co-Founder & Product Lead",company:"Orbiss Commerce",sector:"Founder & CEO",location:"Singapore",bio:"Building cross-border commerce tools and video-first product showcases for emerging brands.",tags:["B2B SaaS","Product Strategy","Video Commerce"],mutualConnections:14,online:true},
-{id:"pro-2",name:"James Carter",handle:"@jamescarter",avatarText:"JC",role:"Head of Strategic Partnerships",company:"Northbridge Ventures",sector:"Business & Partnerships",location:"Jakarta & SG",bio:"Connecting regional enterprise teams, supply partners, and growth-stage startups across APAC.",tags:["Partnerships","Enterprise","Expansion"],mutualConnections:21,online:true},
-{id:"pro-3",name:"Olivia Bennett",handle:"@oliviabennett",avatarText:"OB",role:"Principal Design Systems Architect",company:"Studio Voin",sector:"Product & Tech",location:"Kuala Lumpur",bio:"Crafting cohesive multi-platform digital experiences with high clarity and responsive UI.",tags:["Design Systems","UI/UX","Web Apps"],mutualConnections:9,online:false},
-{id:"pro-4",name:"Daniel Kim",handle:"@danielkim",avatarText:"DK",role:"VP of Regional Growth",company:"Kinetix Cloud",sector:"Marketing & Growth",location:"Seoul & ID",bio:"Scaling community-led growth, live product launches, and high-trust business networks.",tags:["Community Growth","GTM","Go-To-Market"],mutualConnections:17,online:true},
-{id:"pro-5",name:"Mia Rodriguez",handle:"@miarodriguez",avatarText:"MR",role:"Operations & Trade Director",company:"Pacific Supply Co.",sector:"Business & Partnerships",location:"Manila & SG",bio:"Streamlining multi-market supplier onboarding and transparent business communications.",tags:["Supply Chain","Operations","Cross-Border"],mutualConnections:12,online:false},
-{id:"pro-6",name:"Noah Smith",handle:"@noahsmith",avatarText:"NS",role:"Full-Stack Platform Engineer",company:"V-Nect Labs",sector:"Product & Tech",location:"Bekasi & Remote",bio:"Focused on fast web architecture, realtime collaboration, and clean cloud workflows.",tags:["Next.js","Supabase","Realtime"],mutualConnections:27,online:true},
+type Person = { id: string; name: string; role: string; location: string; avatar: string; tags: string[] };
+type Circle = { id: string; name: string; members: number; desc: string; icon: string; joined: boolean };
+
+const DEMO_PEOPLE: Person[] = [
+  { id: "1", name: "Ayu Prameswari", role: "Founder • Fashion Export", location: "Jakarta, Indonesia", avatar: "A", tags: ["Fashion", "Export", "UMKM"] },
+  { id: "2", name: "David Chen", role: "Supplier • Electronics", location: "Shenzhen, China", avatar: "D", tags: ["Electronics", "OEM", "B2B"] },
+  { id: "3", name: "Sato Yuki", role: "Buyer • Retail Japan", location: "Osaka, Japan", avatar: "S", tags: ["Retail", "Import", "Japan"] },
+  { id: "4", name: "Maria Gonzalez", role: "Distributor • Food", location: "Madrid, Spain", avatar: "M", tags: ["Food", "Distribution"] },
 ];
-const INITIAL_CIRCLES:NetworkCircle[]=[
-{id:"circle-founders",name:"APAC Founders & Operators",category:"Leadership",membersCount:428,description:"Weekly founder roundtables, product feedback loops, and operational playbooks.",focusLabel:"Active Discussions"},
-{id:"circle-commerce",name:"Brand & Video Commerce Hub",category:"Commerce",membersCount:312,description:"Sharing short-form product clips, launch campaigns, and conversion experiments.",focusLabel:"Weekly Showcase"},
-{id:"circle-partners",name:"Global B2B & Channel Partners",category:"Alliances",membersCount:256,description:"Find trusted regional distributors, agencies, and co-marketing collaborators.",focusLabel:"Partner Match"},
+
+const DEMO_CIRCLES: Circle[] = [
+  { id: "c1", name: "Export Indonesia → Global", members: 1240, desc: "Diskusi export, bea cukai, buyer luar negeri.", icon: "🌏", joined: true },
+  { id: "c2", name: "Supplier & Pabrik Asia", members: 860, desc: "Cari supplier, MOQ, harga pabrik.", icon: "🏭", joined: false },
+  { id: "c3", name: "Founder & UMKM Naik Kelas", members: 2100, desc: "Branding, marketplace, pendanaan.", icon: "🚀", joined: false },
 ];
-const SECTOR_FILTERS=["All","Founder & CEO","Product & Tech","Business & Partnerships","Marketing & Growth"] as const;
-const DISCUSSION_TOPICS=[{key:"all",label:"All Topics"},{key:"announcement",label:"Official Update"},{key:"company_news",label:"Business"},{key:"product_launch",label:"Trending"},{key:"presentation",label:"Community"}] as const;
-function mapIndustryToSector(industry?:string|null):ProfessionalMember["sector"]{const l=(industry||"").toLowerCase();if(l.includes("tech")||l.includes("software")||l.includes("digital")||l.includes("it"))return "Product & Tech";if(l.includes("market")||l.includes("growth")||l.includes("media")||l.includes("brand"))return "Marketing & Growth";if(l.includes("trade")||l.includes("supply")||l.includes("partner")||l.includes("consult"))return "Business & Partnerships";return "Founder & CEO";}
-function formatCleanTitle(raw:string){const c=(raw||"").trim().replace(/^Video:\s*/i,"").replace(/\.(mp4|webm|mov|m4v|avi|mkv)$/i,"").replace(/[_-]+/g," ").replace(/\s+/g," ").trim();if(!c)return raw||"Community Update";return c.charAt(0).toUpperCase()+c.slice(1);}
-function formatCleanExcerpt(raw:string){return (raw||"").replace(/\(VideoCaption:\s*[^)]*\)/gi,"").replace(/^\s*Link Video:\s*https?:\/\/\S+\s*$/gim,"").replace(/\n{3,}/g,"\n\n").trim();}
-function formatPostDate(d:string){const ts=new Date(d).getTime();if(Number.isNaN(ts))return "";return new Date(ts).toLocaleDateString("en-US",{day:"numeric",month:"short",year:"numeric"});}
 
-function VCircleContent(){
-const router=useRouter();const searchParams=useSearchParams();const [supabase]=useState(()=>createClient());
-const initialTab:CircleTab=searchParams.get("tab")==="discussions"?"discussions":"network";
-const [activeTab,setActiveTab]=useState<CircleTab>(initialTab);
-const [currentUserId,setCurrentUserId]=useState<string|null>(null);
-const [currentUserName,setCurrentUserName]=useState<string|null>(null);
-const [authModalOpen,setAuthModalOpen]=useState(false);
-const [liveCompanies,setLiveCompanies]=useState<SupabaseCompanyRow[]>([]);
-const [dbSyncEnabled,setDbSyncEnabled]=useState(false);
-const [communityPosts,setCommunityPosts]=useState<CommunityPostRow[]>([]);
-const [loadingPosts,setLoadingPosts]=useState(true);
-const [discussionQuery,setDiscussionQuery]=useState("");
-const [selectedTopic,setSelectedTopic]=useState<string>("all");
-const [openThreadPostIds,setOpenThreadPostIds]=useState<string[]>([]);
-const [focusTriggerByPost,setFocusTriggerByPost]=useState<Record<string,number>>({});
-const [searchQuery,setSearchQuery]=useState("");
-const [selectedSector,setSelectedSector]=useState<string>("All");
-const [onlyOnline,setOnlyOnline]=useState(false);
-const [connectedIds,setConnectedIds]=useState<string[]>(["pro-1"]);
-const [joinedGroupIds,setJoinedGroupIds]=useState<string[]>(["circle-founders"]);
-const [notesByMember,setNotesByMember]=useState<ConnectionNoteMap>({});
-const [activeNoteTargetId,setActiveNoteTargetId]=useState<string|null>(null);
-const [draftNote,setDraftNote]=useState("");
-const [statusBanner,setStatusBanner]=useState("");
-const [likedIds,setLikedIds]=useState<string[]>([]);
-const [savedIds,setSavedIds]=useState<string[]>([]);
-useEffect(()=>{const t=searchParams.get("tab");if(t==="discussions"||t==="network")setActiveTab(t);},[searchParams]);
-function handleSelectTab(tab:CircleTab){setActiveTab(tab);const params=new URLSearchParams(searchParams.toString());if(tab==="discussions")params.set("tab","discussions");else params.delete("tab");const qs=params.toString();router.replace(qs?`/v-circle?${qs}`:"/v-circle",{scroll:false});}
-useEffect(()=>{try{const s=window.localStorage.getItem(CIRCLE_STORAGE_KEY);if(s){const parsed=JSON.parse(s);if(Array.isArray(parsed))setConnectedIds(parsed.filter((x):x is string=>typeof x==="string"));}const g=window.localStorage.getItem(JOINED_GROUPS_STORAGE_KEY);if(g){const parsed=JSON.parse(g);if(Array.isArray(parsed))setJoinedGroupIds(parsed.filter((x):x is string=>typeof x==="string"));}const n=window.localStorage.getItem(CONNECTION_NOTES_STORAGE_KEY);if(n){const parsed=JSON.parse(n);if(parsed&&typeof parsed==="object")setNotesByMember(parsed as ConnectionNoteMap);}}catch{}},[]);
-useEffect(()=>{try{window.localStorage.setItem(CIRCLE_STORAGE_KEY,JSON.stringify(connectedIds));}catch{}},[connectedIds]);
-useEffect(()=>{try{window.localStorage.setItem(JOINED_GROUPS_STORAGE_KEY,JSON.stringify(joinedGroupIds));}catch{}},[joinedGroupIds]);
-useEffect(()=>{try{window.localStorage.setItem(CONNECTION_NOTES_STORAGE_KEY,JSON.stringify(notesByMember));}catch{}},[notesByMember]);
-async function loadCompaniesFromSupabase(){const{data,error}=await supabase.from("companies").select("id, company_name, logo_url, industry, description, location").order("created_at",{ascending:false}).limit(12);if(!error&&Array.isArray(data))setLiveCompanies(data as SupabaseCompanyRow[]);}
-async function loadCommunityDiscussionsFromSupabase(){setLoadingPosts(true);const{data,error}=await supabase.from("business_posts").select(`id,company_id,author_id,title,content,post_type,image_url,image_urls,status,created_at,companies ( company_name, logo_url )`).eq("status","published").order("created_at",{ascending:false}).limit(12);if(error){console.error("Community discussions load error:",error);setCommunityPosts([]);}else{const list=(data||[]) as unknown as CommunityPostRow[];setCommunityPosts(list);if(list[0]?.id)setOpenThreadPostIds([list[0].id]);}setLoadingPosts(false);}
-async function loadUserCircleFromSupabase(uid:string){const{data:connRows,error:connErr}=await supabase.from("v_circle_connections").select("target_key, note").eq("user_id",uid);const{data:memRows,error:memErr}=await supabase.from("v_circle_memberships").select("circle_id").eq("user_id",uid);if(!connErr&&Array.isArray(connRows)){setDbSyncEnabled(true);setConnectedIds(connRows.map((r)=>r.target_key));const m:ConnectionNoteMap={};for(const r of connRows){if(r.note&&r.note.trim())m[r.target_key]=r.note.trim();}setNotesByMember(m);}if(!memErr&&Array.isArray(memRows)){setDbSyncEnabled(true);setJoinedGroupIds(memRows.map((m)=>m.circle_id));}}
-async function syncActiveUser(){const{data:{user}}=await supabase.auth.getUser();if(!user){setCurrentUserId(null);setCurrentUserName(null);setDbSyncEnabled(false);return;}setCurrentUserId(user.id);const fb=(user.user_metadata?.full_name as string|undefined)?.trim()||user.email?.split("@")[0]||"Member";setCurrentUserName(fb);const{data:settings}=await supabase.from("account_settings").select("active_profile_type, active_company_id").eq("user_id",user.id).maybeSingle();if(settings?.active_profile_type==="company"&&settings.active_company_id){const{data:companyData}=await supabase.from("companies").select("company_name").eq("id",settings.active_company_id).maybeSingle();if(companyData?.company_name)setCurrentUserName(companyData.company_name);}await loadUserCircleFromSupabase(user.id);}
-useEffect(()=>{let active=true;loadCompaniesFromSupabase();loadCommunityDiscussionsFromSupabase();syncActiveUser();const{data:{subscription}}=supabase.auth.onAuthStateChange(()=>{if(active)syncActiveUser();});return()=>{active=false;subscription.unsubscribe();};/* eslint-disable-next-line react-hooks/exhaustive-deps */},[supabase]);
-async function handleSignOut(){await supabase.auth.signOut();setCurrentUserId(null);setCurrentUserName(null);setDbSyncEnabled(false);setStatusBanner("Anda telah keluar dari sesi akun.");}
-const allCircles=useMemo<NetworkCircle[]>(()=>{const cc:NetworkCircle[]=liveCompanies.slice(0,3).map((comp)=>({id:`company-circle-${comp.id}`,name:comp.company_name,category:comp.industry||"Verified Company",membersCount:64,description:comp.description?.trim()||`Official v-circle space for ${comp.company_name} updates, partnerships, and community discussions.`,focusLabel:comp.location||"Verified Hub",logoUrl:comp.logo_url,isLiveCompany:true}));return [...cc,...INITIAL_CIRCLES];},[liveCompanies]);
-const allProfessionals=useMemo<ProfessionalMember[]>(()=>{const cp:ProfessionalMember[]=liveCompanies.map((comp)=>{const clean=comp.company_name.trim()||"Company";const initials=clean.split(/\s+/).slice(0,2).map((x)=>x.charAt(0).toUpperCase()).join("");return{id:`company-member-${comp.id}`,name:clean,handle:`@${clean.toLowerCase().replace(/[^a-z0-9]/g,"")||"company"}`,avatarText:initials||"VN",role:comp.industry||"Verified Business Profile",company:clean,sector:mapIndustryToSector(comp.industry),location:comp.location||"Global · v-nect",bio:comp.description?.trim()||`Active company profile on v-nect open for collaborations, product updates, and business networking.`,tags:[(comp.industry||"Business").replace(/\s+/g,""),"VerifiedCompany","v-nect"],mutualConnections:18,online:true,isLiveCompany:true};});return [...cp,...INITIAL_PROFESSIONALS];},[liveCompanies]);
-async function persistConnectionToDb(member:ProfessionalMember,connected:boolean,noteText:string){if(!currentUserId)return;if(!connected){await supabase.from("v_circle_connections").delete().eq("user_id",currentUserId).eq("target_key",member.id);return;}await supabase.from("v_circle_connections").upsert({user_id:currentUserId,target_key:member.id,target_name:member.name,note:noteText},{onConflict:"user_id,target_key"});}
-async function persistMembershipToDb(circle:NetworkCircle,joined:boolean){if(!currentUserId)return;if(!joined){await supabase.from("v_circle_memberships").delete().eq("user_id",currentUserId).eq("circle_id",circle.id);return;}await supabase.from("v_circle_memberships").upsert({user_id:currentUserId,circle_id:circle.id,circle_name:circle.name},{onConflict:"user_id,circle_id"});}
-async function toggleConnection(member:ProfessionalMember,customNote?:string){const already=connectedIds.includes(member.id);const noteToSave=customNote!==undefined?customNote.trim():(notesByMember[member.id]||"").trim();if(already&&customNote===undefined){setConnectedIds((p)=>p.filter((id)=>id!==member.id));setStatusBanner(`Koneksi dengan ${member.name} dilepas.`);await persistConnectionToDb(member,false,"");return;}if(!already)setConnectedIds((p)=>[...p,member.id]);if(customNote&&customNote.trim()){setNotesByMember((p)=>({...p,[member.id]:customNote.trim()}));setStatusBanner(`Permintaan & catatan koneksi terkirim ke ${member.name}.`);}else setStatusBanner(`Terhubung dengan ${member.name} (${member.company}).`);await persistConnectionToDb(member,true,noteToSave);}
-function openNoteComposer(member:ProfessionalMember){setActiveNoteTargetId(member.id);setDraftNote(notesByMember[member.id]||"");}
-async function submitConnectionWithNote(member:ProfessionalMember){await toggleConnection(member,draftNote);setActiveNoteTargetId(null);setDraftNote("");}
-async function toggleJoinCircle(circle:NetworkCircle){const j=joinedGroupIds.includes(circle.id);if(j){setJoinedGroupIds((p)=>p.filter((id)=>id!==circle.id));setStatusBanner(`Keluar dari circle "${circle.name}".`);await persistMembershipToDb(circle,false);}else{setJoinedGroupIds((p)=>[...p,circle.id]);setStatusBanner(`Bergabung ke circle "${circle.name}".`);await persistMembershipToDb(circle,true);}}
-function toggleDiscussionThread(postId:string){setOpenThreadPostIds((p)=>{const e=p.includes(postId);if(e)return p.filter((id)=>id!==postId);return [...p,postId];});setFocusTriggerByPost((p)=>({...p,[postId]:(p[postId]||0)+1}));}
-function toggleLike(id:string){setLikedIds((p)=>p.includes(id)?p.filter((x)=>x!==id):[...p,id]);}
-function toggleSave(id:string){setSavedIds((p)=>p.includes(id)?p.filter((x)=>x!==id):[...p,id]);}
-const filteredProfessionals=useMemo(()=>{const q=searchQuery.trim().toLowerCase();return allProfessionals.filter((person)=>{if(selectedSector!=="All"&&person.sector!==selectedSector)return false;if(onlyOnline&&!person.online)return false;if(!q)return true;return person.name.toLowerCase().includes(q)||person.company.toLowerCase().includes(q)||person.role.toLowerCase().includes(q)||person.location.toLowerCase().includes(q)||person.tags.some((t)=>t.toLowerCase().includes(q));});},[allProfessionals,searchQuery,selectedSector,onlyOnline]);
-const filteredDiscussions=useMemo(()=>{const q=discussionQuery.trim().toLowerCase();return communityPosts.filter((post)=>{if(selectedTopic!=="all"){const nt=post.post_type==="news"?"company_news":post.post_type;if(nt!==selectedTopic)return false;}if(!q)return true;const cn=post.companies?.company_name||"";const ct=formatCleanTitle(post.title);const cb=formatCleanExcerpt(post.content);return ct.toLowerCase().includes(q)||cb.toLowerCase().includes(q)||cn.toLowerCase().includes(q);});},[communityPosts,selectedTopic,discussionQuery]);
+export default function VCirclePage() {
+  const [supabase] = useState(() => createClient());
+  const [lang, setLang] = useState<Lang>(getLang());
+  const [tab, setTab] = useState<"people"|"circles"|"messages">("people");
+  const [connected, setConnected] = useState<string[]>([]);
+  const [joined, setJoined] = useState<string[]>(["c1"]);
+  const [search, setSearch] = useState("");
+  const [userName, setUserName] = useState<string | null>(null);
 
-return(
-<main className="tk-page">
-<header className="tk-top"><div className="tk-brand">v<span>-nect</span><small>v-circle</small></div><div className="tk-top-tabs"><button className={activeTab==="network"?"on":""} onClick={()=>handleSelectTab("network")}>Following</button><button className={activeTab==="discussions"?"on":""} onClick={()=>handleSelectTab("discussions")}>For You</button><button onClick={()=>{handleSelectTab("discussions");setSelectedTopic("product_launch");}}>Trending</button></div>{currentUserName?(<div className="tk-user"><span>● {currentUserName}</span><button onClick={handleSignOut}>Keluar</button></div>):(<button className="tk-login" onClick={()=>setAuthModalOpen(true)}>Masuk / Register</button>)}</header>
-{statusBanner&&(<div className="tk-toast"><span>✓ {statusBanner}</span><button onClick={()=>setStatusBanner("")}>✕</button></div>)}
-{activeTab==="network"?(<>
-<div className="tk-hero"><div><span className="tk-eyebrow">COMMUNITY HUB · V-CIRCLE</span><h1>v-circle <span>Community.</span></h1><p>Connect with verified professionals, join active circles, swipe & discover like TikTok.</p></div><div className="tk-stats"><div><b>{connectedIds.length}</b><i>Connections</i></div><div><b>{joinedGroupIds.length}</b><i>Joined</i></div><div><b>{communityPosts.length}</b><i>Discussions</i></div></div></div>
-<div className="tk-stories"><button className="tk-story-add" onClick={()=>handleSelectTab("discussions")}>+<span>Your Story</span></button>{allCircles.map((c)=>(<button key={c.id} className={joinedGroupIds.includes(c.id)?"tk-story joined":"tk-story"} onClick={()=>toggleJoinCircle(c)}><span className="tk-story-ava">{c.logoUrl?<img src={c.logoUrl} alt=""/>:c.name.charAt(0)}</span><span>{c.name.split(" ").slice(0,2).join(" ")}</span><small>{joinedGroupIds.includes(c.id)?"Joined ✓":"Tap to Join"}</small></button>))}</div>
-<div className="tk-toolbar"><input value={searchQuery} onChange={(e)=>setSearchQuery(e.target.value)} placeholder="🔍 Cari nama, perusahaan, role, kota..." /><div className="tk-chips">{SECTOR_FILTERS.map((s)=>(<button key={s} className={selectedSector===s?"on":""} onClick={()=>setSelectedSector(s)}>{s}</button>))}<button className={onlyOnline?"on":""} onClick={()=>setOnlyOnline((v)=>!v)}>● Online Only</button></div></div>
-{filteredProfessionals.length===0?(<div className="tk-empty"><p>Tidak ada profil yang cocok.</p><button onClick={()=>{setSearchQuery("");setSelectedSector("All");setOnlyOnline(false);}}>Reset Filter</button></div>):(
-<div className="tk-feed">{filteredProfessionals.map((person)=>{const isConn=connectedIds.includes(person.id);const saved=notesByMember[person.id];const writing=activeNoteTargetId===person.id;const liked=likedIds.includes(person.id);return(
-<article className="tk-card" key={person.id}>
-<div className="tk-card-media"><div className="tk-gradient"><span className="tk-big-ava">{person.avatarText}</span><span className="tk-live">● LIVE · {person.company}</span><span className="tk-media-tag">{person.sector}</span></div>
-<div className="tk-rail"><button className={liked?"on":""} onClick={()=>toggleLike(person.id)}>♥<small>{person.mutualConnections+ (liked?1:0)}</small></button><button onClick={()=>openNoteComposer(person)}>💬<small>Note</small></button><button onClick={()=>toggleSave(person.id)}>{savedIds.includes(person.id)?"★":"☆"}<small>Save</small></button><button onClick={()=>toggleConnection(person)}>{isConn?"✓":"+"}<small>{isConn?"Connected":"Connect"}</small></button></div>
-<div className="tk-caption"><div className="tk-cap-top"><b>{person.name} {person.isLiveCompany&&<em>LIVE DB</em>}</b><button onClick={()=>toggleConnection(person)}>{isConn?"Following ✓":"Follow"}</button></div><p>{person.role} · {person.company} · {person.location}</p><p className="tk-bio">{person.bio}</p><div className="tk-tags">{person.tags.map((t)=>(<span key={t}>#{t}</span>))}</div><small>🎵 {person.mutualConnections} mutual connections · {person.online?"Online now":"Offline"}</small>{saved&&(<div className="tk-note">📝 Catatan: {saved}</div>)}</div>
-</div>
-{writing&&(<div className="tk-sheet"><div className="tk-sheet-bar"/><b>Kirim pesan ke {person.name}</b><input value={draftNote} onChange={(e)=>setDraftNote(e.target.value.slice(0,180))} placeholder={`Tulis pesan singkat untuk ${person.name}...`} /><div><button className="tk-primary" onClick={()=>submitConnectionWithNote(person)}>Kirim & Connect</button><button onClick={()=>setActiveNoteTargetId(null)}>Batal</button></div></div>)}
-<div className="tk-card-actions"><button className="tk-note-btn" onClick={()=>openNoteComposer(person)}>✉ Note</button><button className={isConn?"tk-joined":"tk-primary"} onClick={()=>toggleConnection(person)}>{isConn?"Connected ✓":"+ Connect"}</button><button className="tk-ghost" onClick={()=>handleSelectTab("discussions")}>Open Discussions →</button></div>
-</article>);})}</div>)}
-<section className="tk-circles"><h2>Active Network Circles</h2><div className="tk-circle-grid">{allCircles.map((g)=>{const j=joinedGroupIds.includes(g.id);return(<article key={g.id}><span className="tk-badge">{g.isLiveCompany?`★ ${g.category}`:g.category}</span><h3>{g.name}</h3><p>{g.description}</p><small>● {g.focusLabel} · {(g.membersCount+(j?1:0)).toLocaleString()} members</small><button className={j?"tk-joined":"tk-primary"} onClick={()=>toggleJoinCircle(g)}>{j?"Joined ✓":"Join Circle"}</button></article>);})}</div></section>
-</>):(
-<section className="tk-discuss">
-<div className="tk-toolbar"><input value={discussionQuery} onChange={(e)=>setDiscussionQuery(e.target.value)} placeholder="🔍 Cari topik, judul, perusahaan..." /><div className="tk-chips">{DISCUSSION_TOPICS.map((t)=>(<button key={t.key} className={selectedTopic===t.key?"on":""} onClick={()=>setSelectedTopic(t.key)}>{t.label}</button>))}<Link href="/business-feed" className="tk-primary">+ Post in Business Feed →</Link></div></div>
-{loadingPosts?(<div className="tk-empty"><p>Memuat diskusi komunitas...</p></div>):filteredDiscussions.length===0?(<div className="tk-empty"><p>Belum ada diskusi yang cocok.</p><button onClick={()=>{setDiscussionQuery("");setSelectedTopic("all");}}>Reset Topik</button></div>):(
-<div className="tk-feed tk-feed-full">{filteredDiscussions.map((post)=>{const isOpen=openThreadPostIds.includes(post.id);const title=formatCleanTitle(post.title);const excerpt=formatCleanExcerpt(post.content);const img=(post.image_urls&&post.image_urls[0])||post.image_url;const liked=likedIds.includes(post.id);return(
-<article className="tk-card tk-disc-card" key={post.id}>
-<div className="tk-card-media">{img?<img className="tk-post-img" src={img} alt={title}/>:<div className="tk-gradient"><span className="tk-big-ava">{post.companies?.company_name?.charAt(0).toUpperCase()||"V"}</span><span className="tk-media-tag">{post.post_type||"Community"}</span></div>}
-<div className="tk-rail"><button className={liked?"on":""} onClick={()=>toggleLike(post.id)}>♥<small>{liked?1:0}</small></button><button onClick={()=>toggleDiscussionThread(post.id)}>💬<small>Discuss</small></button><button onClick={()=>toggleSave(post.id)}>{savedIds.includes(post.id)?"★":"☆"}<small>Save</small></button><Link href="/business-feed">↗<small>Feed</small></Link></div>
-<div className="tk-caption"><div className="tk-cap-top"><b>{post.companies?.company_name||"v-nect Official"}</b><span>{formatPostDate(post.created_at)}</span></div><h3>{title}</h3>{excerpt&&(<p className="tk-bio">{excerpt}</p>)}<span className="tk-badge">{post.post_type||"Community"}</span></div></div>
-<div className="tk-card-actions"><button className={isOpen?"tk-joined":"tk-primary"} onClick={()=>toggleDiscussionThread(post.id)}>{isOpen?"Hide Discussion ▲":"Join Discussion 💬"}</button><Link href="/business-feed" className="tk-ghost">Open in Feed ↗</Link></div>
-{isOpen&&(<div className="tk-sheet tk-comments"><div className="tk-sheet-bar"/><b>Comments · {title}</b><div className="tk-thread"><PostThreadComments supabase={supabase} postId={post.id} currentUserId={currentUserId} currentUserName={currentUserName} focusTrigger={focusTriggerByPost[post.id]||0} /></div></div>)}
-</article>);})}</div>)}
-</section>)}
-<nav className="tk-bottom"><Link href="/">⌂<small>Home</small></Link><Link href="/explore">🔍<small>Explore</small></Link><Link href="/business-feed" className="tk-plus">+<small>Post</small></Link><Link href="/v-circle" className="on">👥<small>Circle</small></Link><Link href="/v-hub">◎<small>v-hub</small></Link></nav>
-<footer className="tk-footer">v-nect Community & v-circle · {currentUserId?`Signed in as ${currentUserName}${dbSyncEnabled?" (Supabase Sync Active)":" (Local Sync)"}`:"Public Community Preview"} · © {new Date().getFullYear()} v-nect</footer>
-<AccountAuthModal open={authModalOpen} initialMode="login" onClose={()=>setAuthModalOpen(false)} onSuccess={()=>syncActiveUser()} />
-<style jsx>{`
-.tk-page{min-height:100vh;background:#000;color:#fff;font-family:var(--font-sans),Arial,sans-serif;padding-bottom:90px}
-.tk-top{position:sticky;top:0;z-index:50;background:rgba(0,0,0,.85);backdrop-filter:blur(12px);display:flex;align-items:center;justify-content:space-between;gap:12px;padding:12px 16px;border-bottom:1px solid #222}
-.tk-brand{font-size:22px;font-weight:900}.tk-brand span{color:#fe2c55}.tk-brand small{display:block;font-size:9px;letter-spacing:2px;color:#aaa}
-.tk-top-tabs{display:flex;gap:16px}.tk-top-tabs button{background:none;border:none;color:#aaa;font-weight:800;font-size:15px;cursor:pointer;padding:6px 2px}.tk-top-tabs button.on{color:#fff;border-bottom:3px solid #fe2c55}
-.tk-user,.tk-login{display:flex;gap:8px;align-items:center}.tk-user span,.tk-login{background:#1a1a1a;border:1px solid #333;padding:8px 12px;border-radius:999px;font-size:12px;font-weight:700}.tk-user button,.tk-login{cursor:pointer;color:#fff}.tk-toast{margin:12px 16px;background:#fe2c55;padding:12px 14px;border-radius:12px;display:flex;justify-content:space-between;font-size:13px;font-weight:700}.tk-toast button{background:none;border:none;color:#fff;cursor:pointer}
-.tk-hero{max-width:1100px;margin:14px auto;padding:18px 16px;display:flex;justify-content:space-between;gap:16px;flex-wrap:wrap}.tk-eyebrow{color:#fe2c55;font-size:11px;letter-spacing:2px;font-weight:800}.tk-hero h1{font-size:38px;line-height:1;margin:8px 0}.tk-hero h1 span{color:#25f4ee}.tk-hero p{color:#bbb;max-width:520px}.tk-stats{display:flex;gap:10px}.tk-stats div{background:#111;border:1px solid #222;border-radius:14px;padding:12px 16px;text-align:center}.tk-stats b{display:block;font-size:22px;color:#fe2c55}.tk-stats i{font-style:normal;font-size:11px;color:#aaa}
-.tk-stories{max-width:1100px;margin:0 auto;padding:6px 16px;display:flex;gap:14px;overflow-x:auto;scrollbar-width:none}.tk-story,.tk-story-add{flex:0 0 auto;background:none;border:none;color:#fff;cursor:pointer;display:flex;flex-direction:column;align-items:center;gap:4px;width:76px}.tk-story-ava{width:62px;height:62px;border-radius:50%;background:linear-gradient(135deg,#fe2c55,#25f4ee);padding:3px;display:grid;place-items:center;font-weight:900;font-size:20px;overflow:hidden}.tk-story-ava img{width:100%;height:100%;object-fit:cover;border-radius:50%}.tk-story span{font-size:12px;font-weight:700;text-align:center}.tk-story small{font-size:10px;color:#aaa}.tk-story.joined .tk-story-ava{box-shadow:0 0 0 3px #fe2c55}.tk-story-add{font-size:28px}.tk-story-add span{font-size:12px}
-.tk-toolbar{max-width:1100px;margin:14px auto;padding:0 16px}.tk-toolbar input{width:100%;box-sizing:border-box;background:#1a1a1a;border:1px solid #222;border-radius:999px;padding:13px 16px;color:#fff;outline:none}.tk-chips{display:flex;gap:8px;flex-wrap:wrap;margin-top:10px}.tk-chips button{background:#1a1a1a;border:1px solid #222;color:#ddd;padding:8px 13px;border-radius:999px;font-size:12px;font-weight:700;cursor:pointer}.tk-chips button.on,.tk-chips a.tk-primary{background:#fe2c55;color:#fff;border-color:#fe2c55}
-.tk-feed{max-width:520px;margin:0 auto;display:flex;flex-direction:column;gap:18px;padding:0 12px;scroll-snap-type:y mandatory}.tk-card{background:#0a0a0a;border:1px solid #1e1e1e;border-radius:20px;overflow:hidden;scroll-snap-align:start}.tk-card-media{position:relative;height:560px;overflow:hidden}.tk-gradient{position:absolute;inset:0;background:linear-gradient(160deg,#1a0a1e,#0a1a2e 55%,#000);display:grid;place-items:center}.tk-big-ava{width:110px;height:110px;border-radius:50%;background:linear-gradient(135deg,#fe2c55,#25f4ee);display:grid;place-items:center;font-size:38px;font-weight:900}.tk-live{position:absolute;top:14px;left:14px;background:rgba(0,0,0,.6);padding:6px 10px;border-radius:999px;font-size:11px;font-weight:800}.tk-media-tag{position:absolute;top:14px;right:14px;background:#fe2c55;padding:5px 10px;border-radius:999px;font-size:11px;font-weight:800}.tk-post-img{position:absolute;inset:0;width:100%;height:100%;object-fit:cover}
-.tk-rail{position:absolute;right:10px;bottom:150px;display:flex;flex-direction:column;gap:14px;z-index:5}.tk-rail button,.tk-rail a{width:52px;height:52px;border-radius:50%;background:rgba(0,0,0,.55);border:1px solid rgba(255,255,255,.25);color:#fff;display:flex;flex-direction:column;align-items:center;justify-content:center;font-size:20px;cursor:pointer;text-decoration:none}.tk-rail small{font-size:9px;margin-top:1px}.tk-rail button.on{background:#fe2c55;border-color:#fe2c55}
-.tk-caption{position:absolute;left:0;right:0;bottom:0;padding:36px 14px 14px;background:linear-gradient(transparent,rgba(0,0,0,.92));z-index:4}.tk-cap-top{display:flex;justify-content:space-between;align-items:center;gap:8px}.tk-cap-top b{font-size:16px}.tk-cap-top b em{font-size:9px;background:#25f4ee;color:#000;padding:2px 6px;border-radius:999px;font-style:normal;margin-left:6px}.tk-cap-top button{background:#fe2c55;border:none;color:#fff;padding:7px 12px;border-radius:999px;font-weight:800;cursor:pointer}.tk-caption p{margin:6px 0 0;color:#ddd;font-size:13px}.tk-bio{line-height:1.6;display:-webkit-box;-webkit-line-clamp:3;-webkit-box-orient:vertical;overflow:hidden}.tk-tags{display:flex;gap:6px;flex-wrap:wrap;margin-top:8px}.tk-tags span{color:#25f4ee;font-size:12px;font-weight:700}.tk-caption small{color:#aaa}.tk-note{margin-top:8px;background:rgba(255,255,255,.12);padding:8px 10px;border-radius:10px;font-size:12px}
-.tk-card-actions{display:flex;gap:8px;padding:12px;flex-wrap:wrap}.tk-primary{background:#fe2c55;color:#fff;border:none;padding:10px 14px;border-radius:999px;font-weight:800;cursor:pointer;text-decoration:none;display:inline-block}.tk-joined{background:#222;color:#fff;border:1px solid #444;padding:10px 14px;border-radius:999px;font-weight:800;cursor:pointer}.tk-ghost,.tk-note-btn{background:#1a1a1a;color:#fff;border:1px solid #333;padding:10px 13px;border-radius:999px;font-weight:700;cursor:pointer;text-decoration:none}.tk-sheet{background:#111;border-top:1px solid #222;padding:14px;border-radius:20px 20px 0 0}.tk-sheet-bar{width:44px;height:5px;background:#444;border-radius:999px;margin:0 auto 10px}.tk-sheet input{width:100%;box-sizing:border-box;background:#000;border:1px solid #333;color:#fff;padding:11px;border-radius:12px;margin:10px 0}.tk-sheet>div:last-child{display:flex;gap:8px}.tk-comments{max-height:520px;overflow:auto}.tk-thread{color:#111;background:#fff;border-radius:14px;padding:10px;margin-top:10px}.tk-empty{background:#111;border:1px solid #222;border-radius:16px;padding:28px;text-align:center;margin:16px}.tk-empty button{margin-top:10px}
-.tk-circles{max-width:1100px;margin:22px auto;padding:0 16px}.tk-circles h2{font-size:22px}.tk-circle-grid{display:grid;grid-template-columns:repeat(3,1fr);gap:12px}.tk-circle-grid article{background:#111;border:1px solid #222;border-radius:16px;padding:16px;display:flex;flex-direction:column;gap:8px}.tk-circle-grid h3{margin:0}.tk-circle-grid p{color:#bbb;font-size:13px;line-height:1.6;margin:0}.tk-badge{background:#fe2c55;padding:4px 9px;border-radius:999px;font-size:11px;font-weight:800;align-self:flex-start}.tk-disc-card h3{font-size:18px;margin:8px 0 0}
-.tk-bottom{position:fixed;left:0;right:0;bottom:0;z-index:60;background:#000;border-top:1px solid #222;display:flex;justify-content:space-around;padding:10px 8px calc(10px + env(safe-area-inset-bottom))}.tk-bottom a{color:#aaa;text-decoration:none;display:flex;flex-direction:column;align-items:center;font-size:20px}.tk-bottom a small{font-size:10px}.tk-bottom a.on{color:#fff}.tk-plus{background:#fe2c55!important;color:#fff!important;width:52px;height:34px;border-radius:12px;align-items:center;justify-content:center;font-size:26px!important}.tk-footer{text-align:center;color:#777;font-size:12px;padding:22px}
-@media(max-width:760px){.tk-top-tabs{display:none}.tk-hero h1{font-size:30px}.tk-card-media{height:520px}.tk-circle-grid{grid-template-columns:1fr}.tk-feed{padding:0 8px}}
-`}</style></main>);}
-export default function VCirclePage(){return(<Suspense fallback={<div style={{minHeight:"100vh",background:"#000",color:"#fff",padding:"40px"}}>Loading v-circle Community...</div>}><VCircleContent/></Suspense>);}
+  useEffect(() => {
+    const h = (e: any) => setLang(e.detail as Lang);
+    window.addEventListener("vnect-lang-change", h);
+    return () => window.removeEventListener("vnect-lang-change", h);
+  }, []);
+
+  useEffect(() => {
+    supabase.auth.getUser().then(({ data }) => {
+      if (data.user) setUserName(data.user.user_metadata?.full_name || data.user.email?.split("@")[0] || "Member");
+    });
+  }, [supabase]);
+
+  function toggleConnect(id: string) {
+    setConnected(p => p.includes(id) ? p.filter(x => x !== id) : [...p, id]);
+  }
+  function toggleJoin(id: string) {
+    setJoined(p => p.includes(id) ? p.filter(x => x !== id) : [...p, id]);
+  }
+
+  const filteredPeople = DEMO_PEOPLE.filter(p => (p.name + p.role + p.location + p.tags.join(" ")).toLowerCase().includes(search.toLowerCase()));
+
+  return (
+    <div className="vc">
+      {/* TOPNAV - SAMA KAYAK HOMEPAGE + BUSINESS FEED */}
+      <header className="topnav">
+        <div className="top-left">
+          <Link href="/" className="brand">v<span>-nect</span></Link>
+          <Link href="/" className="home-pill">
+            <span className="home-icon">⌂</span>
+            <span>{lang==="id" ? "Beranda" : lang==="en" ? "Home" : lang==="zh" ? "首页" : lang==="ja" ? "ホーム" : "Home"}</span>
+            <span className="home-dot">●</span>
+          </Link>
+        </div>
+        <nav className="nav-desktop">
+          <Link href="/" className="nav-tab">▦ {t("explore", lang)}</Link>
+          <Link href="/#feed" className="nav-tab">▶ {t("feed", lang)}</Link>
+          <Link href="/v-circle" className="nav-tab active">👥 {t("community", lang)}</Link>
+          <Link href="/v-market" className="nav-link">🛒 {t("market", lang)}</Link>
+          <Link href="/v-meet" className="nav-link">🎥 {t("meet", lang)}</Link>
+        </nav>
+        <div className="top-right">
+          <LanguageSwitcher />
+          {userName ? <span className="chip">● {userName}</span> : <Link href="/dashboard" className="btn-ghost">Sign In</Link>}
+        </div>
+      </header>
+
+      <main className="vc-main">
+        {/* HEADER - JELAS, NGGAK GRADASI */}
+        <div className="vc-head">
+          <span className="eyebrow">COMMUNITY • V-CIRCLE</span>
+          <h1>v-circle {t("community", lang)}</h1>
+          <p>Founder, profesional & perusahaan. Cari partner, diskusi, tanya produk — di satu circle.</p>
+        </div>
+
+        {/* SEARCH - 1 BARIS, JELAS */}
+        <input className="search" value={search} onChange={e=>setSearch(e.target.value)} placeholder="🔍 Cari orang, circle, produk, negara..." />
+
+        {/* TABS - CUMA 3 */}
+        <div className="tabs">
+          <button onClick={()=>setTab("people")} className={tab==="people"?"tab active":"tab"}>👥 Orang</button>
+          <button onClick={()=>setTab("circles")} className={tab==="circles"?"tab active":"tab"}>⭕ Circle</button>
+          <button onClick={()=>setTab("messages")} className={tab==="messages"?"tab active":"tab"}>✉️ Kotak Masuk</button>
+        </div>
+
+        {tab==="people" && (
+          <div className="list">
+            {filteredPeople.length===0 && <div className="empty">Nggak ketemu. Coba kata lain.</div>}
+            {filteredPeople.map(p=>(
+              <div key={p.id} className="person-card">
+                <span className="avatar">{p.avatar}</span>
+                <div className="person-info">
+                  <b>{p.name}</b>
+                  <span>{p.role}</span>
+                  <span className="loc">📍 {p.location}</span>
+                  <div className="tags">{p.tags.map(tag=><span key={tag} className="tag">{tag}</span>)}</div>
+                </div>
+                <button onClick={()=>toggleConnect(p.id)} className={connected.includes(p.id) ? "btn-connected" : "btn-connect"}>
+                  {connected.includes(p.id) ? "✓ Terhubung" : "+ Connect"}
+                </button>
+              </div>
+            ))}
+          </div>
+        )}
+
+        {tab==="circles" && (
+          <div className="list">
+            {DEMO_CIRCLES.map(c=>(
+              <div key={c.id} className="circle-card">
+                <span className="circle-icon">{c.icon}</span>
+                <div className="person-info">
+                  <b>{c.name}</b>
+                  <span>{c.members.toLocaleString()} anggota</span>
+                  <span className="loc">{c.desc}</span>
+                </div>
+                <button onClick={()=>toggleJoin(c.id)} className={joined.includes(c.id) ? "btn-connected" : "btn-connect"}>
+                  {joined.includes(c.id) ? "✓ Gabung" : "Gabung"}
+                </button>
+              </div>
+            ))}
+          </div>
+        )}
+
+        {tab==="messages" && (
+          <div className="empty">
+            <div className="empty-logo">✉️</div>
+            <h3>Kotak Masuk</h3>
+            <p>Chat sama orang yang udah kamu Connect akan muncul di sini.</p>
+            <button onClick={()=>setTab("people")} className="btn-primary">Cari Orang →</button>
+          </div>
+        )}
+      </main>
+
+      <footer className="footer"><b>v<span>-nect</span></b><p>Connect Beyond Boundaries.</p><small>© 2026 v-nect</small></footer>
+
+      <nav className="bottom-nav">
+        <Link href="/" className="bnav bnav-home">⌂<small>{lang==="id"?"Beranda":"Home"}</small></Link>
+        <Link href="/v-market" className="bnav">🛒<small>{t("market", lang)}</small></Link>
+        <Link href="/#feed" className="bnav plus">+<small></small></Link>
+        <Link href="/v-circle?tab=messages" className="bnav">✉️<small>Kotak Masuk</small></Link>
+        <Link href="/v-hub" className="bnav">●<small>Profil</small></Link>
+      </nav>
+
+      <style jsx>{`
+        .vc{background:#060B24;color:#f3f7ff;min-height:100vh;font-family:var(--font-sans),Arial,sans-serif;padding-bottom:70px;overflow-x:hidden}
+        .topnav{position:sticky;top:0;z-index:30;display:flex;justify-content:space-between;align-items:center;gap:12px;padding:12px 6%;background:#060B24;border-bottom:1px solid rgba(138,165,255,.15)}
+        .top-left{display:flex;align-items:center;gap:12px}
+        .brand{font-size:21px;font-weight:850;color:#fff;text-decoration:none;white-space:nowrap}.brand span,.footer span{color:#8ab4ff}
+        .home-pill{display:flex;align-items:center;gap:7px;background:#fff;color:#060B24;border:2px solid #fff;padding:8px 16px;border-radius:999px;font-size:13.5px;font-weight:800;text-decoration:none;box-shadow:0 6px 18px rgba(255,255,255,.18);white-space:nowrap}
+        .home-icon{font-size:17px;line-height:1}.home-dot{color:#0CAA91;font-size:9px}
+        .nav-desktop{display:flex;gap:8px;align-items:center}
+        .nav-tab{background:rgba(255,255,255,.06);border:1px solid rgba(154,178,255,.25);color:#d9e4ff;padding:8px 16px;border-radius:999px;font-size:13px;font-weight:700;text-decoration:none;white-space:nowrap}.nav-tab.active{background:#fff;color:#060b24;border-color:#fff}
+        .nav-link{color:#d9e4ff;text-decoration:none;font-size:13px;font-weight:600;padding:8px 12px;border-radius:999px;white-space:nowrap}
+        .top-right{display:flex;align-items:center;gap:10px}
+        .chip{background:rgba(138,180,255,.14);border:1px solid rgba(138,180,255,.35);padding:7px 12px;border-radius:999px;font-size:12px;font-weight:700;white-space:nowrap}
+        .btn-ghost{background:rgba(255,255,255,.06);border:1px solid rgba(154,178,255,.28);color:#eef3ff;padding:8px 14px;border-radius:10px;font-size:12px;font-weight:700;text-decoration:none}
+        .vc-main{max-width:680px;margin:0 auto;padding:24px 16px}
+        .eyebrow{color:#79a6ff;font-size:10.5px;font-weight:800;letter-spacing:2.6px}
+        .vc-head h1{margin:8px 0 6px;font-size:30px}.vc-head p{color:#a9b9da;font-size:13.5px;margin:0;line-height:1.6}
+        .search{width:100%;box-sizing:border-box;background:#0E183A;border:1px solid rgba(138,165,255,.25);border-radius:12px;padding:12px 14px;color:#fff;font-size:14px;margin:18px 0 14px;outline:none}.search::placeholder{color:#8A9DC2}
+        .tabs{display:flex;gap:8px;margin-bottom:16px;flex-wrap:wrap}
+        .tab{background:rgba(255,255,255,.06);border:1px solid rgba(154,178,255,.25);color:#d9e4ff;padding:9px 18px;border-radius:999px;font-size:13px;font-weight:700;cursor:pointer}.tab.active{background:#fff;color:#060b24;border-color:#fff}
+        .list{display:flex;flex-direction:column;gap:12px}
+        .person-card,.circle-card{background:#0E183A;border:1px solid rgba(138,165,255,.16);border-radius:18px;padding:16px;display:flex;gap:12px;align-items:flex-start}
+        .avatar{width:48px;height:48px;flex-shrink:0;border-radius:50%;background:#4B6BFF;display:grid;place-items:center;font-weight:800;font-size:18px}
+        .circle-icon{width:48px;height:48px;flex-shrink:0;border-radius:14px;background:#1A2A5A;display:grid;place-items:center;font-size:22px}
+        .person-info{display:flex;flex-direction:column;gap:2px;min-width:0;flex:1}.person-info b{font-size:15px}.person-info span{font-size:12.5px;color:#B4C6E7;line-height:1.4}.person-info .loc{color:#9CB0D9}
+        .tags{display:flex;gap:6px;flex-wrap:wrap;margin-top:6px}.tag{background:rgba(138,180,255,.14);border:1px solid rgba(138,180,255,.25);padding:3px 9px;border-radius:999px;font-size:11px;color:#C8D7F5}
+        .btn-connect{background:#4B6BFF;color:#fff;border:none;padding:9px 16px;border-radius:999px;font-size:12.5px;font-weight:750;cursor:pointer;white-space:nowrap;flex-shrink:0}.btn-connected{background:#0CAA91;color:#fff;border:none;padding:9px 16px;border-radius:999px;font-size:12.5px;font-weight:750;cursor:pointer;white-space:nowrap;flex-shrink:0}
+        .empty{padding:40px 20px;text-align:center;background:#0E183A;border:1px solid rgba(138,165,255,.16);border-radius:18px;color:#a9b9da}.empty-logo{font-size:26px;font-weight:850;color:#8ab4ff}.empty h3{color:#fff;margin:10px 0 4px}.empty p{margin:0 0 16px;font-size:13.5px}
+        .btn-primary{background:#4B6BFF;color:#fff;text-decoration:none;padding:12px 20px;border-radius:11px;font-size:13px;font-weight:750;display:inline-block;border:none;cursor:pointer}
+        .footer{text-align:center;padding:28px;color:#96a8d0}.footer b{color:#fff;font-size:22px}
+        .bottom-nav{display:none}
+        @media(max-width:640px){
+          .nav-desktop{display:none}.topnav{padding:10px 4%}.home-pill{padding:7px 12px;font-size:12.5px}.vc-main{padding:18px 12px}
+          .person-card,.circle-card{padding:14px}.btn-connect,.btn-connected{padding:8px 12px;font-size:12px}
+          .bottom-nav{display:flex;position:fixed;left:0;right:0;bottom:0;z-index:40;background:#060B24;border-top:1px solid rgba(138,165,255,.2);justify-content:space-around;padding:8px 4px 12px}
+          .bottom-nav a{color:#c8d7f5;text-decoration:none;display:flex;flex-direction:column;align-items:center;font-size:18px}.bottom-nav small{font-size:9px;margin-top:2px}.bottom-nav .plus{background:#4B6BFF;width:44px;height:44px;border-radius:14px;display:flex;flex-direction:column;align-items:center;justify-content:center;color:#fff;margin-top:-18px}
+          .bnav-home{color:#fff}.bnav-home small{color:#fff;font-weight:800}
+        }
+      `}</style>
+    </div>
+  );
+}
