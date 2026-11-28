@@ -263,7 +263,7 @@ export default function HomePage() {
       {mainTab==="feed" && (
       <div id="feed">
       <section id="explore" className="explore">
-        <div className="sec-head"><div><span className="eyebrow">EXPLORE</span><h2>{lang==="id" ? "Jelajahi Suite v-nect" : lang==="zh" ? "探索 v-nect 套件" : lang==="ja" ? "v-nect スイートを探索" : lang==="ko" ? "v-nect 스위트 탐색" : "Explore the v-nect Suite"}</h2></div><Link href="/explore" className="link">{lang==="id" ? "Semua modul ↗" : lang==="zh" ? "全部模块 ↗" : lang==="ja" ? "全モジュール ↗" : lang==="ko" ? "모든 모듈 ↗" : "{lang==="id" ? "Semua modul" : "All modules"} ↗"}</Link></div>
+        <div className="sec-head"><div><span className="eyebrow">EXPLORE</span><h2>{lang==="id" ? "Jelajahi Suite v-nect" : lang==="zh" ? "探索 v-nect 套件" : lang==="ja" ? "v-nect スイートを探索" : lang==="ko" ? "v-nect 스위트 탐색" : "Explore the v-nect Suite"}</h2></div><Link href="/explore" className="link">{lang==="id" ? "Semua modul ↗" : lang==="zh" ? "全部模块 ↗" : lang==="ja" ? "全モジュール ↗" : lang==="ko" ? "모든 모듈 ↗" : "All modules ↗"}</Link></div>
         <div className="module-grid">
           {MODULES.map(m=>(
             <Link key={m.id} href={m.href} className="module-card">
