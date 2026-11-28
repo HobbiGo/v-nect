@@ -163,6 +163,7 @@ export default function VCirclePage() {
 
   return (
     <main className="vcircle">
+      {/* V-CIRCLE SEMPURNA - People / Companies / Circles terpisah, Connect lock, tanpa garis */}
       <TopNav active="community" />
       <section className="head">
         <h1>{tr("title")}</h1>
