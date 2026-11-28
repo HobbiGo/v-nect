@@ -1,6 +1,6 @@
 "use client";
 import { useState } from "react";
-import { useLang, t } from "@/lib/i18n";
+import { useLang } from "@/lib/i18n";
 
 export const dynamic = "force-dynamic";
 
@@ -20,7 +20,7 @@ const PRODUCTS: Product[] = [
 const CATS = ["All","Fashion","Electronics","Furniture","Home","Beauty","Sports","Packaging","Food"];
 
 export default function MarketPage(){
-  const { lang } = useLang();
+  const { lang } = useLang(); // FIX: t removed, useLang only returns lang
   const [q,setQ] = useState("");
   const [cat,setCat] = useState("All");
   const [showCats,setShowCats] = useState(false);
