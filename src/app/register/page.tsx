@@ -1,4 +1,3 @@
-
 "use client";
 
 import { useState } from "react";
@@ -57,7 +56,6 @@ export default function RegisterPage() {
           data: {
             full_name: fullName.trim(),
           },
-          emailRedirectTo: `https://voinnect.vercel.app/auth/callback`,
         },
       });
 
@@ -65,7 +63,7 @@ export default function RegisterPage() {
         console.error("v-nect SIGNUP ERROR:", error);
 
         setErrorMessage(
-          `Registration failed: ${error.message}`
+          Registration failed: ${error.message}
         );
         return;
       }
