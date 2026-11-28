@@ -54,7 +54,14 @@ export const DICT: Record<string, Record<Lang, string>> = {
   forYou: { id: "Untuk Kamu", en: "For You", zh: "为你推荐", ja: "あなたへ", ko: "추천" },
 };
 
-export function t(lang: Lang, key: string): string {
+// t() bisa dipanggil 2 cara: t(lang, "explore") ATAU t("explore", lang) — dua-duanya jalan, biar file lama gak error
+export function t(a: Lang | string, b: Lang | string): string {
+  const isLang = (x: any) => (["id","en","zh","ja","ko"] as string[]).includes(x);
+  let lang: Lang = "en";
+  let key: string = "";
+  if (isLang(a) && !isLang(b)) { lang = a as Lang; key = b as string; }
+  else if (!isLang(a) && isLang(b)) { key = a as string; lang = b as Lang; }
+  else { key = String(a); lang = "en"; }
   return DICT[key]?.[lang] ?? DICT[key]?.["en"] ?? key;
 }
 
