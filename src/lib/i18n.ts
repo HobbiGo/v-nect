@@ -76,17 +76,3 @@ export function useLang() {
   };
   return { lang, setLang };
 }
-
-// Komponen pilih bendera — taruh di depan website (TopNav / Beranda), sekali klik, semua halaman ikut
-export function LangPicker() {
-  const { lang, setLang } = useLang();
-  return (
-    <div style={{ display: "flex", gap: 6 }}>
-      {LANGS.map((l) => (
-        <button key={l} onClick={() => setLang(l)} style={{ background: lang === l ? "#4B6BFF" : "#eee", color: lang === l ? "#fff" : "#111", border: "none", borderRadius: 999, padding: "6px 10px", fontWeight: 700, cursor: "pointer" }}>
-          {LANG_LABEL[l]}
-        </button>
-      ))}
-    </div>
-  );
-}
