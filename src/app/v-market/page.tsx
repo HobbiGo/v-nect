@@ -1,5 +1,5 @@
 "use client";
-import { useEffect, useState } from "react";
+import { Suspense, useEffect, useState } from "react";
 import { useSearchParams, useRouter } from "next/navigation";
 import TopNav from "@/components/TopNav";
 import SignOutButton from "@/components/SignOutButton";
@@ -12,7 +12,7 @@ function makeCode() {
   return s;
 }
 
-export default function VMeetPage() {
+function VMeetContent() {
   const router = useRouter();
   const params = useSearchParams();
   const [room, setRoom] = useState("");
@@ -129,6 +129,14 @@ export default function VMeetPage() {
         </div>
       )}
     </main>
+  );
+}
+
+export default function VMeetPage() {
+  return (
+    <Suspense fallback={<main style={{ padding: 24 }}>Loading V-Meet...</main>}>
+      <VMeetContent />
+    </Suspense>
   );
 }
 
