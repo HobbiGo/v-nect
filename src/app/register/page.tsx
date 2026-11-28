@@ -61,7 +61,7 @@ export default function RegisterPage() {
 
       if (error) {
         console.error("v-nect SIGNUP ERROR:", error);
-        setErrorMessage("Registration failed.");
+        setErrorMessage("Registration failed: " + error.message);
         return;
       }
 
