@@ -1,5 +1,5 @@
 "use client";
-import { useEffect, useState } from "react";
+import { useEffect, useRef, useState } from "react";
 import TopNav from "@/components/TopNav";
 import Footer from "@/components/Footer";
 import { getLang, type Lang } from "@/lib/i18n";
@@ -162,6 +162,47 @@ export default function VMeetPage() {
   const [cam, setCam] = useState(true);
   const [subOn, setSubOn] = useState(true);
   const [chat, setChat] = useState<{ who: string; text: string; trans: string }[]>([]);
+  const [camError, setCamError] = useState("");
+  const selfVideoRef = useRef<HTMLVideoElement>(null);
+  const streamRef = useRef<MediaStream | null>(null);
+
+  // KAMERA BENERAN - pakai kamera HP/laptop, bukan emoji lagi
+  const startCamera = async () => {
+    setCamError("");
+    try {
+      const stream = await navigator.mediaDevices.getUserMedia({ video: true, audio: true });
+      streamRef.current = stream;
+      if (selfVideoRef.current) {
+        selfVideoRef.current.srcObject = stream;
+        selfVideoRef.current.play().catch(() => {});
+      }
+      setCam(true); setMic(true); setIsLive(true);
+    } catch (e: any) {
+      // Kalau user tolak izin kamera / buka di HTTP / browser block
+      if (e?.name === "NotAllowedError") setCamError("Izin kamera ditolak. Klik ikon 🔒 / 🎥 di address bar browser → Allow kamera & mic → refresh.");
+      else if (e?.name === "NotFoundError") setCamError("Kamera tidak ditemukan di perangkat ini.");
+      else if (e?.name === "NotSupportedError" || location.protocol !== "https:" && location.hostname !== "localhost") setCamError("Kamera hanya jalan di HTTPS. Buka via https://voinnect.vercel.app, jangan via IP / HTTP.");
+      else setCamError("Kamera gagal dibuka: " + (e?.message || "coba refresh & Allow kamera."));
+    }
+  };
+  const stopCamera = () => {
+    streamRef.current?.getTracks().forEach((t) => t.stop());
+    streamRef.current = null;
+    if (selfVideoRef.current) selfVideoRef.current.srcObject = null;
+    setIsLive(false);
+  };
+  // Mic / Cam toggle beneran - matiin track-nya, bukan cuma ganti label
+  const toggleMicReal = () => {
+    const track = streamRef.current?.getAudioTracks()[0];
+    if (track) track.enabled = !mic;
+    setMic(!mic);
+  };
+  const toggleCamReal = () => {
+    const track = streamRef.current?.getVideoTracks()[0];
+    if (track) track.enabled = !cam;
+    setCam(!cam);
+  };
+  useEffect(() => { return () => { streamRef.current?.getTracks().forEach((t) => t.stop()); }; }, []);
   const [msg, setMsg] = useState("");
 
   useEffect(() => {
@@ -218,7 +259,7 @@ export default function VMeetPage() {
       {/* VIDEO AREA - Subtitle DI DALAM video */}
       <section className="videos">
         <div className="video main">
-          <div className="video-bg">👩‍💼</div>
+          <div className="video-bg">👩‍💼</div><p className="partner-note">Partner video muncul setelah partner join via link yang sama (butuh Daily / Agora untuk 2 arah)</p>
           <span className={isLive ? "badge live" : "badge off"}>{isLive ? tr("live") : tr("offline")}</span>
           <span className="name">{theirFlag} {tr("partner")} • {LANGS.find((l) => l.id === theirLang)?.name}</span>
           {subOn && (
@@ -229,7 +270,15 @@ export default function VMeetPage() {
           )}
         </div>
         <div className="video self">
-          <div className="video-bg">🧑</div>
+          {cam && streamRef.current ? (
+            <video ref={selfVideoRef} autoPlay playsInline muted className="real-video" />
+          ) : (
+            <>
+              <video ref={selfVideoRef} autoPlay playsInline muted className="real-video" style={{ display: streamRef.current ? "block" : "none" }} />
+              {!streamRef.current && <div className="video-bg">🧑</div>}
+              {!cam && streamRef.current && <div className="video-bg">📷❌</div>}
+            </>
+          )}
           <span className="name">{myFlag} {tr("you")} • {LANGS.find((l) => l.id === myLang)?.name}</span>
           {subOn && <div className="subtitle small"><span>{myFlag} {TR[myLang]?.hello || ""}</span></div>}
         </div>
@@ -237,16 +286,17 @@ export default function VMeetPage() {
 
       {/* CONTROLS */}
       <section className="controls">
-        <button onClick={() => setMic(!mic)} className={mic ? "ctl on" : "ctl off"}>🎤 {mic ? tr("micOn") : tr("micOff")}</button>
-        <button onClick={() => setCam(!cam)} className={cam ? "ctl on" : "ctl off"}>📷 {cam ? tr("camOn") : tr("camOff")}</button>
+        <button onClick={toggleMicReal} className={mic ? "ctl on" : "ctl off"}>🎤 {mic ? tr("micOn") : tr("micOff")}</button>
+        <button onClick={toggleCamReal} className={cam ? "ctl on" : "ctl off"}>📷 {cam ? tr("camOn") : tr("camOff")}</button>
         <button onClick={() => setSubOn(!subOn)} className={subOn ? "ctl on" : "ctl off"}>💬 {subOn ? tr("subtitleOn") : tr("subtitleOff")}</button>
         {!isLive ? (
-          <button onClick={() => setIsLive(true)} className="ctl start">▶ {tr("start")}</button>
+          <button onClick={startCamera} className="ctl start">▶ {tr("start")}</button>
         ) : (
-          <button onClick={() => setIsLive(false)} className="ctl end">■ {tr("end")}</button>
+          <button onClick={stopCamera} className="ctl end">■ {tr("end")}</button>
         )}
       </section>
 
+      {camError && <div className="cam-error">⚠️ {camError}</div>}
       {/* QUICK PICK + CHAT */}
       <section className="bottom">
         <div className="quick">
@@ -285,7 +335,7 @@ export default function VMeetPage() {
         .auto { font-size: 12px; color: #AFC6FF; font-weight: 700; }
         .videos { max-width: 1100px; margin: 16px auto 0; padding: 0 4%; display: grid; grid-template-columns: 2fr 1fr; gap: 12px; }
         .video { position: relative; background: #0E183A; border: 1px solid rgba(138,165,255,.2); border-radius: 18px; overflow: hidden; min-height: 320px; display: grid; place-items: center; }
-        .video-bg { font-size: 90px; }
+        .video-bg { font-size: 90px; } .real-video { width: 100%; height: 100%; object-fit: cover; position: absolute; inset: 0; } .partner-note { position: absolute; bottom: 64px; left: 12px; right: 12px; text-align: center; font-size: 11px; color: #B4C6E7; background: rgba(0,0,0,.5); padding: 6px; border-radius: 8px; } .cam-error { max-width: 1100px; margin: 12px auto 0; padding: 0 4%; } .cam-error { background: #FEF3C7; color: #92400E; border-radius: 12px; padding: 12px 14px; font-size: 13px; line-height: 1.5; font-weight: 700; }
         .badge { position: absolute; top: 12px; left: 12px; padding: 6px 12px; border-radius: 999px; font-size: 12px; font-weight: 800; }
         .badge.live { background: #EF4444; color: #fff; }
         .badge.off { background: rgba(255,255,255,.15); color: #fff; }
