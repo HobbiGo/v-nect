@@ -177,7 +177,7 @@ export default function HomePage() {
         <div className="top-left">
           {/* LOGO ASLI di pojok kiri atas - upload file logo ke public/logo.png */}
           <Link href="/" className="brand-logo">
-            <img src="/logo.png" alt="v-nect" className="logo-img" onError={(e)=>{ (e.currentTarget as HTMLImageElement).style.display="none"; }} />
+            <img src="/images/V-NECT-logo.png" alt="v-nect" className="logo-img" onError={(e)=>{ (e.currentTarget as HTMLImageElement).style.display="none"; }} />
             <span className="logo-fallback">V<span>-NECT</span></span>
           </Link>
           <button onClick={()=>setMainTab("jelajahi")} className="home-pill">
@@ -241,8 +241,8 @@ export default function HomePage() {
         <div className="module-grid">
           {MODULES.map(m=>(
             m.id==="v-feed"
-            ? <button key={m.id} onClick={()=>setMainTab("feed")} className="module-card"><span className="m-icon" style={{background:m.color}}>{m.icon}</span><b>{m.name}</b><small>{m.tag}</small><p>{m.desc}</p></button>
-            : <Link key={m.id} href={m.href} className="module-card"><span className="m-icon" style={{background:m.color}}>{m.icon}</span><b>{m.name}</b><small>{m.tag}</small><p>{m.desc}</p></Link>
+            ? <button key={m.id} onClick={()=>setMainTab("feed")} className="module-card"><span className="m-icon" style={{background:m.color}}>{m.icon}</span><b>{m.name} </b><small>{m.tag}</small><p>{m.desc}</p></button>
+            : <Link key={m.id} href={m.href} className="module-card"><span className="m-icon" style={{background:m.color}}>{m.icon}</span><b>{m.name} </b><small>{m.tag}</small><p>{m.desc}</p></Link>
           ))}
         </div>
         <div className="more">
@@ -261,7 +261,7 @@ export default function HomePage() {
           {MODULES.map(m=>(
             <Link key={m.id} href={m.href} className="module-card">
               <span className="m-icon" style={{background:m.color}}>{m.icon}</span>
-              <b>{m.name}</b><small>{m.tag}</small><p>{m.desc}</p>
+              <b>{m.name} </b><small>{m.tag}</small><p>{m.desc}</p>
             </Link>
           ))}
         </div>
