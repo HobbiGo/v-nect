@@ -6,6 +6,7 @@ import { AccountAuthModal } from "@/components/AccountAuthModal";
 import { PostThreadComments } from "@/components/PostThreadComments";
 import LanguageSwitcher from "@/components/LanguageSwitcher";
 import { t, getLang, type Lang } from "@/lib/i18n";
+import Footer from "@/components/Footer";
 
 interface BusinessPost {
   id: string; company_id: string; author_id: string; title: string; content: string;
@@ -245,12 +246,7 @@ export default function HomePage() {
             : <Link key={m.id} href={m.href} className="module-card"><span className="m-icon" style={{background:m.color}}>{m.icon}</span><b>{m.name} </b><small>{m.tag}</small><p>{m.desc}</p></Link>
           ))}
         </div>
-        <div className="more">
-          <h2>One Platform. Every Business Connection.</h2>
-          <p>Chat, meet, feed & market dalam 1 akun. Dibuat untuk bisnis lintas negara.</p>
-          <button onClick={()=>setMainTab("feed")} className="btn-primary">▶ {t("watchFeed", lang)} →</button>
-        </div>
-      </section>
+</section>
       </div>
       )}
       {mainTab==="feed" && (
@@ -313,7 +309,7 @@ export default function HomePage() {
       </div>
       )}
 
-      <footer className="footer"><b>v<span>-nect</span></b><p>Connect Beyond Boundaries.</p><small>© 2026 v-nect</small></footer>
+      <Footer />
 
       <nav className="bottom-nav">
         <button onClick={()=>setMainTab("jelajahi")} className="bnav bnav-home">⌂<small>{lang==="id"?"Beranda":"Home"}</small></button><a href="/v-market" className="bnav">🛒<small>{t("market", lang)}</small></a><button onClick={()=>setMainTab("feed")} className="bnav plus">+<small></small></button><a href="/v-circle?tab=messages" className="bnav">✉️<small>Kotak Masuk</small></a><a href="/v-hub" className="bnav">●<small>Profil</small></a>
