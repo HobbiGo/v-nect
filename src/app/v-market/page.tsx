@@ -1,39 +1,127 @@
 "use client";
 import { useEffect, useState } from "react";
-import Link from "next/link";
-import { createClient } from "@/lib/supabase/client";
-import LanguageSwitcher from "@/components/LanguageSwitcher";
-import { t, getLang, type Lang } from "@/lib/i18n";
+import TopNav from "@/components/TopNav";
+import { getLang, type Lang } from "@/lib/i18n";
 
-type Product = {
-  id: string; name: string; price: number; price2: number; price3: number;
-  moq: number; unit: string; supplier: string; country: string; verified: boolean;
-  category: string; img: string; rating: number; sold: number;
+// v-market - FULL FIX Alibaba style: MOQ + Tiered Price + RFQ + Verified + Translate Full
+// File: src/app/v-market/page.tsx - timpa file lama
+
+const TR: Record<string, Record<string, string>> = {
+  id: {
+    title: "v-market",
+    subtitle: "Marketplace B2B ala Alibaba. Cari supplier terverifikasi, bandingkan MOQ & harga bertingkat, kirim RFQ.",
+    search: "Cari produk, supplier, kategori...",
+    all: "Semua",
+    verified: "Terverifikasi ✓",
+    moq: "Min. Order",
+    price: "Harga",
+    tier: "Harga Bertingkat",
+    rfq: "Minta Penawaran",
+    rfqSent: "RFQ Terkirim ✓",
+    chat: "Chat Supplier",
+    store: "Kunjungi Toko",
+    supplier: "Supplier",
+    category: "Kategori",
+    location: "Lokasi",
+    empty: "Tidak ada produk yang cocok.",
+    catAll: "Semua Kategori",
+    catFood: "Makanan & Minuman",
+    catElec: "Elektronik",
+    catFashion: "Fashion",
+    catBeauty: "Kecantikan",
+    sort: "Urutkan",
+  },
+  en: {
+    title: "v-market",
+    subtitle: "Alibaba-style B2B marketplace. Find verified suppliers, compare MOQ & tiered pricing, send RFQ.",
+    search: "Search products, suppliers, categories...",
+    all: "All",
+    verified: "Verified ✓",
+    moq: "Min. Order",
+    price: "Price",
+    tier: "Tiered Pricing",
+    rfq: "Request Quote",
+    rfqSent: "RFQ Sent ✓",
+    chat: "Chat Supplier",
+    store: "Visit Store",
+    supplier: "Supplier",
+    category: "Category",
+    location: "Location",
+    empty: "No products matched.",
+    catAll: "All Categories",
+    catFood: "Food & Beverage",
+    catElec: "Electronics",
+    catFashion: "Fashion",
+    catBeauty: "Beauty",
+    sort: "Sort",
+  },
+  zh: {
+    title: "v-market",
+    subtitle: "阿里巴巴风格 B2B 市场。找认证供应商，对比起订量与阶梯价，发送询盘。",
+    search: "搜索产品、供应商、类目...",
+    all: "全部",
+    verified: "已认证 ✓",
+    moq: "起订量",
+    price: "价格",
+    tier: "阶梯价格",
+    rfq: "获取报价",
+    rfqSent: "询盘已发送 ✓",
+    chat: "联系供应商",
+    store: "访问店铺",
+    supplier: "供应商",
+    category: "类目",
+    location: "位置",
+    empty: "没有匹配的产品。",
+    catAll: "全部类目",
+    catFood: "食品饮料",
+    catElec: "电子产品",
+    catFashion: "服装",
+    catBeauty: "美妆",
+    sort: "排序",
+  },
+  ja: {
+    title: "v-market",
+    subtitle: "アリババ式 B2B マーケット。認証サプライヤーを探し、MOQと段階価格を比較、見積依頼を送る。",
+    search: "製品、サプライヤー、カテゴリを検索...",
+    all: "すべて",
+    verified: "認証済み ✓",
+    moq: "最小注文数",
+    price: "価格",
+    tier: "段階価格",
+    rfq: "見積依頼",
+    rfqSent: "見積依頼送信済み ✓",
+    chat: "サプライヤーに連絡",
+    store: "店舗を見る",
+    supplier: "サプライヤー",
+    category: "カテゴリ",
+    location: "場所",
+    empty: "一致する製品がありません。",
+    catAll: "すべてのカテゴリ",
+    catFood: "食品・飲料",
+    catElec: "電子機器",
+    catFashion: "ファッション",
+    catBeauty: "美容",
+    sort: "並び替え",
+  },
 };
 
-const CATS = ["Semua", "Fashion", "Elektronik", "Makanan", "Kecantikan", "Rumah", "Otomotif"];
+type Product = { id: string; name: string; supplier: string; country: string; cat: string; price: number; moq: number; tiers: { qty: string; price: string }[]; verified: boolean; emoji: string; rating: string };
 
-const DEMO: Product[] = [
-  { id: "p1", name: "Kemeja Linen Premium Export", price: 85000, price2: 78000, price3: 69000, moq: 100, unit: "pcs", supplier: "PT Sinar Fashion Jaya", country: "Indonesia", verified: true, category: "Fashion", img: "👔", rating: 4.9, sold: 1240 },
-  { id: "p2", name: "TWS Earbuds Bluetooth 5.3 OEM", price: 125000, price2: 110000, price3: 95000, moq: 500, unit: "pcs", supplier: "Shenzhen Tech Co.", country: "China", verified: true, category: "Elektronik", img: "🎧", rating: 4.8, sold: 8600 },
-  { id: "p3", name: "Kopi Arabika Gayo 1kg - Green Bean", price: 145000, price2: 135000, price3: 120000, moq: 50, unit: "kg", supplier: "Koperasi Gayo Aceh", country: "Indonesia", verified: true, category: "Makanan", img: "☕", rating: 5.0, sold: 3200 },
-  { id: "p4", name: "Serum Vitamin C 30ml - Private Label", price: 45000, price2: 39000, price3: 34000, moq: 1000, unit: "pcs", supplier: "PT Kosmetik Nusantara", country: "Indonesia", verified: false, category: "Kecantikan", img: "🧴", rating: 4.7, sold: 5400 },
-  { id: "p5", name: "Lampu LED Smart Home WiFi", price: 98000, price2: 88000, price3: 76000, moq: 200, unit: "pcs", supplier: "Guangzhou Light Factory", country: "China", verified: true, category: "Rumah", img: "💡", rating: 4.8, sold: 2100 },
-  { id: "p6", name: "Sarung Tangan Motor Kulit Asli", price: 175000, price2: 160000, price3: 145000, moq: 100, unit: "pasang", supplier: "CV Kulit Garut", country: "Indonesia", verified: true, category: "Otomotif", img: "🧤", rating: 4.9, sold: 980 },
+const PRODUCTS: Product[] = [
+  { id: "1", name: "Kopi Arabika Gayo 1kg - Single Origin", supplier: "Nusantara Coffee Co.", country: "Indonesia", cat: "food", price: 12.5, moq: 100, tiers: [{ qty: "100-499", price: "$12.50" }, { qty: "500-999", price: "$11.20" }, { qty: "1000+", price: "$9.80" }], verified: true, emoji: "☕", rating: "4.9" },
+  { id: "2", name: "Wireless Earbuds TWS Pro - Bluetooth 5.3", supplier: "Tokyo Earbuds Factory", country: "Japan", cat: "elec", price: 8.9, moq: 500, tiers: [{ qty: "500-999", price: "$8.90" }, { qty: "1000-4999", price: "$7.50" }, { qty: "5000+", price: "$6.20" }], verified: true, emoji: "🎧", rating: "4.8" },
+  { id: "3", name: "Oversized Hoodie Cotton 400GSM", supplier: "Shanghai Fashion Lab", country: "China", cat: "fashion", price: 6.5, moq: 200, tiers: [{ qty: "200-499", price: "$6.50" }, { qty: "500-999", price: "$5.80" }, { qty: "1000+", price: "$4.90" }], verified: true, emoji: "� hoodies".replace(" ", ""), rating: "4.7" },
+  { id: "4", name: "Vitamin C Serum 30ml - Brightening", supplier: "Madrid Beauty Supply", country: "Spain", cat: "beauty", price: 3.2, moq: 300, tiers: [{ qty: "300-999", price: "$3.20" }, { qty: "1000-2999", price: "$2.75" }, { qty: "3000+", price: "$2.30" }], verified: false, emoji: "💧", rating: "4.6" },
+  { id: "5", name: "Teh Herbal Chamomile 500g Bulk", supplier: "Nusantara Coffee Co.", country: "Indonesia", cat: "food", price: 4.1, moq: 100, tiers: [{ qty: "100-499", price: "$4.10" }, { qty: "500+", price: "$3.60" }], verified: true, emoji: "🍵", rating: "4.9" },
+  { id: "6", name: "Smart Watch Fitness AMOLED", supplier: "Tokyo Earbuds Factory", country: "Japan", cat: "elec", price: 18.5, moq: 200, tiers: [{ qty: "200-499", price: "$18.50" }, { qty: "500+", price: "$16.00" }], verified: true, emoji: "⌚", rating: "4.8" },
 ];
 
-function fmt(n: number) { return "Rp " + n.toLocaleString("id-ID"); }
-
 export default function VMarketPage() {
-  const [supabase] = useState(() => createClient());
   const [lang, setLang] = useState<Lang>(getLang());
-  const [cat, setCat] = useState("Semua");
-  const [search, setSearch] = useState("");
-  const [onlyVerified, setOnlyVerified] = useState(false);
-  const [rfqOpen, setRfqOpen] = useState<string | null>(null);
-  const [rfqMsg, setRfqMsg] = useState("");
-  const [userName, setUserName] = useState<string | null>(null);
-  const [saved, setSaved] = useState<string[]>([]);
+  const [q, setQ] = useState("");
+  const [cat, setCat] = useState("all");
+  const [rfqSent, setRfqSent] = useState<string[]>([]);
+  const [busy, setBusy] = useState<string[]>([]);
 
   useEffect(() => {
     const h = (e: any) => setLang(e.detail as Lang);
@@ -41,176 +129,92 @@ export default function VMarketPage() {
     return () => window.removeEventListener("vnect-lang-change", h);
   }, []);
 
-  useEffect(() => {
-    supabase.auth.getUser().then(({ data }) => {
-      if (data.user) setUserName(data.user.user_metadata?.full_name || data.user.email?.split("@")[0] || "Member");
-    });
-  }, [supabase]);
+  const tr = (k: string) => TR[lang]?.[k] || TR.en[k] || k;
+  const list = PRODUCTS.filter((p) => (cat === "all" || p.cat === cat) && (p.name + p.supplier + p.country).toLowerCase().includes(q.toLowerCase()));
 
-  const list = DEMO.filter(p =>
-    (cat === "Semua" || p.category === cat) &&
-    (!onlyVerified || p.verified) &&
-    (p.name + p.supplier + p.country).toLowerCase().includes(search.toLowerCase())
-  );
+  const sendRFQ = (id: string) => {
+    if (busy.includes(id) || rfqSent.includes(id)) return;
+    setBusy((b) => [...b, id]);
+    setRfqSent((prev) => [...prev, id]);
+    setTimeout(() => setBusy((b) => b.filter((x) => x !== id)), 600);
+  };
 
-  function sendRfq(p: Product) {
-    setRfqMsg(`✅ RFQ terkirim ke ${p.supplier} untuk "${p.name}". Supplier akan balas di Kotak Masuk.`);
-    setRfqOpen(null);
-  }
+  const cats = [
+    { id: "all", label: tr("catAll") },
+    { id: "food", label: tr("catFood") },
+    { id: "elec", label: tr("catElec") },
+    { id: "fashion", label: tr("catFashion") },
+    { id: "beauty", label: tr("catBeauty") },
+  ];
 
   return (
-    <div className="mk">
-      {/* TOPNAV - SAMA PERSIS KAYAK SEMUA HALAMAN LAIN */}
-      <header className="topnav">
-        <div className="top-left">
-          <Link href="/" className="brand">v<span>-nect</span></Link>
-          <Link href="/" className="home-pill">
-            <span className="home-icon">⌂</span>
-            <span>{lang==="id" ? "Beranda" : lang==="en" ? "Home" : lang==="zh" ? "首页" : lang==="ja" ? "ホーム" : "Home"}</span>
-            <span className="home-dot">●</span>
-          </Link>
-        </div>
-        <nav className="nav-desktop">
-          <Link href="/" className="nav-tab">▦ {t("explore", lang)}</Link>
-          <Link href="/#feed" className="nav-tab">▶ {t("feed", lang)}</Link>
-          <Link href="/v-circle" className="nav-link">👥 {t("community", lang)}</Link>
-          <Link href="/v-market" className="nav-tab active">🛒 {t("market", lang)}</Link>
-          <Link href="/v-meet" className="nav-link">🎥 {t("meet", lang)}</Link>
-        </nav>
-        <div className="top-right">
-          <LanguageSwitcher />
-          {userName ? <span className="chip">● {userName}</span> : <Link href="/dashboard" className="btn-ghost">Sign In</Link>}
-        </div>
-      </header>
-
-      <main className="mk-main">
-        {/* HEADER - JELAS, NGGAK GRADASI */}
-        <div className="mk-head">
-          <span className="eyebrow">MARKETPLACE • B2B • V-MARKET</span>
-          <h1>v-market — {t("market", lang)}</h1>
-          <p>Cari supplier, bandingin harga pabrik, nego MOQ — kayak Alibaba, tapi di dalam v-nect.</p>
-        </div>
-
-        {/* SEARCH + FILTER - 1 BARIS JELAS */}
-        <input className="search" value={search} onChange={e=>setSearch(e.target.value)} placeholder="🔍 Cari produk, supplier, negara... contoh: kopi, earbuds, fashion" />
+    <main className="market">
+      <TopNav active="market" />
+      <section className="head">
+        <h1>{tr("title")}</h1>
+        <p>{tr("subtitle")}</p>
+        <div className="searchbar"><span>🔍</span><input value={q} onChange={(e) => setQ(e.target.value)} placeholder={tr("search")} /></div>
         <div className="cats">
-          {CATS.map(c=>(
-            <button key={c} onClick={()=>setCat(c)} className={cat===c ? "cat active" : "cat"}>{c}</button>
+          {cats.map((c) => (
+            <button key={c.id} onClick={() => setCat(c.id)} className={cat === c.id ? "cat active" : "cat"}>{c.label}</button>
           ))}
-          <button onClick={()=>setOnlyVerified(v=>!v)} className={onlyVerified ? "cat verified-on" : "cat"}>{onlyVerified ? "✓ Hanya Verified" : "✓ Verified saja"}</button>
         </div>
-
-        {rfqMsg && <div className="msg ok">{rfqMsg}</div>}
-
-        {/* INFO HARGA BERTINGKAT - JELAS DI ATAS */}
-        <div className="tier-info">
-          <div><b>💰 Harga Bertingkat</b><p>Makin banyak beli, makin murah. Lihat 3 harga di tiap kartu.</p></div>
-          <div><b>📦 MOQ</b><p>Minimum order. Bisa nego lewat RFQ.</p></div>
-          <div><b>✓ Verified</b><p>Supplier terverifikasi v-nect, lebih aman.</p></div>
-        </div>
-
-        {/* GRID PRODUK - SOLID NAVY, NGGAK KEPOTONG */}
-        {list.length===0 ? (
-          <div className="empty"><div className="empty-logo">🛒</div><h3>Nggak ketemu.</h3><p>Coba kata lain atau matiin filter Verified.</p></div>
-        ) : (
-          <div className="grid">
-            {list.map(p=>(
-              <article key={p.id} className="prod">
-                <div className="prod-img">{p.img}<span className="prod-cat">{p.category}</span></div>
-                <div className="prod-body">
-                  <h3>{p.name}</h3>
-                  <div className="supplier-row">
-                    <span className="supplier">{p.supplier}</span>
-                    {p.verified && <span className="verified">✓ Verified</span>}
-                  </div>
-                  <span className="country">📍 {p.country} • ⭐ {p.rating} • Terjual {p.sold.toLocaleString()}</span>
-                  {/* HARGA BERTINGKAT - JELAS */}
-                  <div className="tiers">
-                    <div><span>MOQ {p.moq} {p.unit}</span><b>{fmt(p.price)}</b></div>
-                    <div><span>≥ {p.moq*2} {p.unit}</span><b>{fmt(p.price2)}</b></div>
-                    <div className="best"><span>≥ {p.moq*5} {p.unit}</span><b>{fmt(p.price3)}</b><small>BEST</small></div>
-                  </div>
-                  <div className="prod-actions">
-                    <button onClick={()=>setRfqOpen(rfqOpen===p.id ? null : p.id)} className="btn-rfq">📩 Minta Penawaran (RFQ)</button>
-                    <button onClick={()=>setSaved(s=>s.includes(p.id) ? s.filter(x=>x!==p.id) : [...s, p.id])} className={saved.includes(p.id) ? "btn-save saved" : "btn-save"}>{saved.includes(p.id) ? "★ Tersimpan" : "☆ Simpan"}</button>
-                  </div>
-                  {rfqOpen===p.id && (
-                    <div className="rfq-box">
-                      <b>RFQ ke {p.supplier}</b>
-                      <p>Mau pesan berapa {p.unit}? Supplier akan balas harga + ongkir di Kotak Masuk.</p>
-                      <div className="rfq-row">
-                        <input defaultValue={String(p.moq)} type="number" />
-                        <span>{p.unit}</span>
-                        <button onClick={()=>sendRfq(p)} className="btn-send">Kirim RFQ →</button>
-                      </div>
-                    </div>
-                  )}
-                  <Link href="/v-circle" className="chat-link">💬 Chat Supplier →</Link>
-                </div>
-              </article>
-            ))}
-          </div>
-        )}
-
-        {/* SUPPLIER CTA */}
-        <div className="supplier-cta">
-          <div><h2>Punya produk? Jadi Supplier di v-market.</h2><p>Buka Storefront, upload produk, terima RFQ dari buyer global.</p></div>
-          <Link href="/company" className="btn-white">🏢 Buka Storefront →</Link>
-        </div>
-      </main>
-
-      <footer className="footer"><b>v<span>-nect</span></b><p>Connect Beyond Boundaries.</p><small>© 2026 v-nect</small></footer>
-
-      <nav className="bottom-nav">
-        <Link href="/" className="bnav bnav-home">⌂<small>{lang==="id"?"Beranda":"Home"}</small></Link>
-        <Link href="/v-market" className="bnav active">🛒<small>{t("market", lang)}</small></Link>
-        <Link href="/#feed" className="bnav plus">+<small></small></Link>
-        <Link href="/v-circle?tab=messages" className="bnav">✉️<small>Kotak Masuk</small></Link>
-        <Link href="/v-hub" className="bnav">●<small>Profil</small></Link>
-      </nav>
-
+      </section>
+      <section className="grid">
+        {list.length === 0 ? <p className="empty">{tr("empty")}</p> : list.map((p) => (
+          <article key={p.id} className="card">
+            <div className="thumb">{p.emoji}</div>
+            <h3>{p.name}</h3>
+            <p className="supplier">🏢 {p.supplier} {p.verified && <span className="verified">✓ {tr("verified")}</span>}</p>
+            <p className="meta">📍 {p.country} • ⭐ {p.rating} • {tr("moq")}: {p.moq} pcs</p>
+            <div className="price-row"><span className="price">${p.price.toFixed(2)}</span><span className="per">/ pcs</span></div>
+            <div className="tiers">
+              <b>{tr("tier")}</b>
+              {p.tiers.map((t) => <div key={t.qty} className="tier"><span>{t.qty} pcs</span><b>{t.price}</b></div>)}
+            </div>
+            <div className="actions">
+              <button onClick={() => sendRFQ(p.id)} disabled={busy.includes(p.id) || rfqSent.includes(p.id)} className={rfqSent.includes(p.id) ? "btn-done" : "btn-primary"}>
+                {rfqSent.includes(p.id) ? tr("rfqSent") : tr("rfq")}
+              </button>
+              <button className="btn-ghost">{tr("chat")}</button>
+            </div>
+            <button className="store">{tr("store")} →</button>
+          </article>
+        ))}
+      </section>
       <style jsx>{`
-        .mk{background:#060B24;color:#f3f7ff;min-height:100vh;font-family:var(--font-sans),Arial,sans-serif;padding-bottom:70px;overflow-x:hidden}
-        .topnav{position:sticky;top:0;z-index:30;display:flex;justify-content:space-between;align-items:center;gap:12px;padding:12px 6%;background:#060B24;border-bottom:1px solid rgba(138,165,255,.15)}
-        .top-left{display:flex;align-items:center;gap:12px}
-        .brand{font-size:21px;font-weight:850;color:#fff;text-decoration:none;white-space:nowrap}.brand span,.footer span{color:#8ab4ff}
-        .home-pill{display:flex;align-items:center;gap:7px;background:#fff;color:#060B24;border:2px solid #fff;padding:8px 16px;border-radius:999px;font-size:13.5px;font-weight:800;text-decoration:none;box-shadow:0 6px 18px rgba(255,255,255,.18);white-space:nowrap}
-        .home-icon{font-size:17px;line-height:1}.home-dot{color:#0CAA91;font-size:9px}
-        .nav-desktop{display:flex;gap:8px;align-items:center}
-        .nav-tab{background:rgba(255,255,255,.06);border:1px solid rgba(154,178,255,.25);color:#d9e4ff;padding:8px 16px;border-radius:999px;font-size:13px;font-weight:700;text-decoration:none;white-space:nowrap}.nav-tab.active{background:#fff;color:#060b24;border-color:#fff}
-        .nav-link{color:#d9e4ff;text-decoration:none;font-size:13px;font-weight:600;padding:8px 12px;border-radius:999px;white-space:nowrap}
-        .top-right{display:flex;align-items:center;gap:10px}
-        .chip{background:rgba(138,180,255,.14);border:1px solid rgba(138,180,255,.35);padding:7px 12px;border-radius:999px;font-size:12px;font-weight:700;white-space:nowrap}
-        .btn-ghost{background:rgba(255,255,255,.06);border:1px solid rgba(154,178,255,.28);color:#eef3ff;padding:8px 14px;border-radius:10px;font-size:12px;font-weight:700;text-decoration:none}
-        .mk-main{max-width:1100px;margin:0 auto;padding:24px 16px}
-        .eyebrow{color:#79a6ff;font-size:10.5px;font-weight:800;letter-spacing:2.6px}
-        .mk-head h1{margin:8px 0 6px;font-size:30px}.mk-head p{color:#a9b9da;font-size:13.5px;margin:0;line-height:1.6;max-width:640px}
-        .search{width:100%;box-sizing:border-box;background:#0E183A;border:1px solid rgba(138,165,255,.25);border-radius:12px;padding:12px 14px;color:#fff;font-size:14px;margin:18px 0 12px;outline:none}.search::placeholder{color:#8A9DC2}
-        .cats{display:flex;gap:8px;flex-wrap:wrap;margin-bottom:14px}
-        .cat{background:rgba(255,255,255,.06);border:1px solid rgba(154,178,255,.25);color:#d9e4ff;padding:8px 16px;border-radius:999px;font-size:12.5px;font-weight:700;cursor:pointer}.cat.active{background:#fff;color:#060b24;border-color:#fff}.cat.verified-on{background:#0CAA91;color:#fff;border-color:#0CAA91}
-        .msg{padding:12px 14px;border-radius:12px;font-weight:700;margin-bottom:12px}.msg.ok{background:#0CAA91}
-        .tier-info{display:grid;grid-template-columns:repeat(3,1fr);gap:12px;margin-bottom:16px}.tier-info div{background:#0E183A;border:1px solid rgba(138,165,255,.16);border-radius:14px;padding:14px}.tier-info b{font-size:14px}.tier-info p{font-size:12.5px;color:#B4C6E7;margin:4px 0 0;line-height:1.5}
-        .grid{display:grid;grid-template-columns:repeat(3,1fr);gap:14px}
-        .prod{background:#0E183A;border:1px solid rgba(138,165,255,.16);border-radius:18px;overflow:hidden;display:flex;flex-direction:column;min-width:0}
-        .prod-img{height:130px;background:#16224F;display:grid;place-items:center;font-size:56px;position:relative}.prod-cat{position:absolute;top:10px;left:10px;background:rgba(0,0,0,.5);padding:4px 10px;border-radius:999px;font-size:11px}
-        .prod-body{padding:14px;display:flex;flex-direction:column;gap:6px;min-width:0}.prod-body h3{margin:0;font-size:15px;line-height:1.4}
-        .supplier-row{display:flex;gap:6px;align-items:center;flex-wrap:wrap}.supplier{font-size:12.5px;color:#C8D7F5}.verified{background:#0CAA91;color:#fff;padding:3px 9px;border-radius:999px;font-size:11px;font-weight:800}.country{font-size:11.5px;color:#9CB0D9}
-        .tiers{display:grid;grid-template-columns:repeat(3,1fr);gap:6px;margin:8px 0}.tiers div{background:#060B24;border:1px solid rgba(138,165,255,.2);border-radius:10px;padding:8px 6px;display:flex;flex-direction:column;text-align:center;min-width:0}.tiers span{font-size:10.5px;color:#9CB0D9}.tiers b{font-size:12.5px;color:#fff}.tiers .best{border-color:#0CAA91;background:#0A2E2A}.tiers .best small{font-size:9px;color:#25F4EE;font-weight:800}
-        .prod-actions{display:flex;gap:8px}.btn-rfq{flex:1;background:#4B6BFF;color:#fff;border:none;padding:10px 8px;border-radius:10px;font-size:12.5px;font-weight:750;cursor:pointer}.btn-save{background:rgba(255,255,255,.06);border:1px solid rgba(154,178,255,.3);color:#fff;padding:10px 10px;border-radius:10px;font-size:12.5px;font-weight:700;cursor:pointer;white-space:nowrap}.btn-save.saved{color:#FBBF24;border-color:#FBBF24}
-        .rfq-box{background:#16224F;border:1px solid rgba(138,165,255,.25);border-radius:12px;padding:12px}.rfq-box b{font-size:13px}.rfq-box p{font-size:12px;color:#B4C6E7;margin:4px 0 8px;line-height:1.5}.rfq-row{display:flex;gap:6px;align-items:center}.rfq-row input{width:70px;background:#060B24;border:1px solid rgba(138,165,255,.3);border-radius:8px;padding:8px;color:#fff}.rfq-row span{font-size:12px}.btn-send{background:#0CAA91;color:#fff;border:none;padding:8px 12px;border-radius:8px;font-size:12px;font-weight:750;cursor:pointer;flex:1}
-        .chat-link{color:#9EC0FF;text-decoration:none;font-size:12.5px;font-weight:700;text-align:center;margin-top:2px}
-        .empty{padding:40px 20px;text-align:center;background:#0E183A;border:1px solid rgba(138,165,255,.16);border-radius:18px;color:#a9b9da}.empty-logo{font-size:26px;font-weight:850;color:#8ab4ff}.empty h3{color:#fff;margin:10px 0 4px}.empty p{margin:0;font-size:13.5px}
-        .supplier-cta{background:#0E183A;border:1px solid #4B6BFF;border-radius:18px;padding:20px;margin-top:18px;display:flex;justify-content:space-between;align-items:center;gap:16px}.supplier-cta h2{margin:0 0 4px;font-size:19px}.supplier-cta p{margin:0;color:#B4C6E7;font-size:13px}.btn-white{background:#fff;color:#060B24;padding:12px 18px;border-radius:11px;font-size:13px;font-weight:800;text-decoration:none;white-space:nowrap}
-        .footer{text-align:center;padding:28px;color:#96a8d0}.footer b{color:#fff;font-size:22px}
-        .bottom-nav{display:none}
-        @media(max-width:640px){
-          .nav-desktop{display:none}.topnav{padding:10px 4%}.home-pill{padding:7px 12px;font-size:12.5px}.mk-main{padding:18px 12px}
-          .tier-info{grid-template-columns:1fr}.grid{grid-template-columns:1fr 1fr;gap:10px}.prod-img{height:100px;font-size:40px}.prod-body{padding:12px}.prod-body h3{font-size:13.5px}.supplier-cta{flex-direction:column;align-items:flex-start}.btn-white{width:100%;text-align:center;box-sizing:border-box}
-          .bottom-nav{display:flex;position:fixed;left:0;right:0;bottom:0;z-index:40;background:#060B24;border-top:1px solid rgba(138,165,255,.2);justify-content:space-around;padding:8px 4px 12px}
-          .bottom-nav a{color:#c8d7f5;text-decoration:none;display:flex;flex-direction:column;align-items:center;font-size:18px}.bottom-nav small{font-size:9px;margin-top:2px}.bottom-nav .plus{background:#4B6BFF;width:44px;height:44px;border-radius:14px;display:flex;flex-direction:column;align-items:center;justify-content:center;color:#fff;margin-top:-18px}
-          .bnav-home{color:#fff}.bnav-home small{color:#fff;font-weight:800}.bnav.active{color:#fff}.bnav.active small{color:#fff;font-weight:800}
-        }
+        .market { background: #060B24; color: #F3F7FF; min-height: 100vh; padding-bottom: 40px; }
+        .head { max-width: 1150px; margin: 0 auto; padding: 28px 4% 10px; }
+        .head h1 { font-size: 36px; margin: 0 0 8px; }
+        .head p { color: #B4C6E7; margin: 0 0 18px; line-height: 1.6; }
+        .searchbar { display: flex; gap: 10px; align-items: center; background: #0E183A; border: 1px solid rgba(138,165,255,.25); border-radius: 14px; padding: 12px 14px; }
+        .searchbar input { flex: 1; background: transparent; border: none; outline: none; color: #fff; font-size: 14px; }
+        .searchbar input::placeholder { color: #8A9CC4; }
+        .cats { display: flex; gap: 8px; flex-wrap: wrap; margin-top: 16px; }
+        .cat { background: rgba(255,255,255,.07); border: 1px solid rgba(154,178,255,.28); color: #E2ECFF; padding: 9px 16px; border-radius: 999px; font-weight: 700; cursor: pointer; }
+        .cat.active { background: #fff; color: #060B24; border-color: #fff; }
+        .grid { max-width: 1150px; margin: 0 auto; padding: 18px 4%; display: grid; grid-template-columns: repeat(3,1fr); gap: 14px; }
+        .card { background: #0E183A; border: 1px solid rgba(138,165,255,.18); border-radius: 18px; padding: 18px; display: flex; flex-direction: column; gap: 8px; }
+        .thumb { height: 110px; border-radius: 12px; background: #1A2A5A; display: grid; place-items: center; font-size: 44px; }
+        .card h3 { font-size: 15px; line-height: 1.4; margin: 6px 0 0; }
+        .supplier { font-size: 13px; color: #B4C6E7; margin: 0; }
+        .verified { color: #4ADE80; font-weight: 800; font-size: 12px; }
+        .meta { font-size: 12px; color: #B4C6E7; margin: 0; }
+        .price-row { display: flex; gap: 4px; align-items: baseline; margin-top: 4px; }
+        .price { font-size: 22px; font-weight: 850; color: #FF6B35; }
+        .per { font-size: 12px; color: #B4C6E7; }
+        .tiers { background: rgba(255,255,255,.04); border-radius: 12px; padding: 10px 12px; display: flex; flex-direction: column; gap: 6px; }
+        .tiers b { font-size: 12px; }
+        .tier { display: flex; justify-content: space-between; font-size: 12px; color: #B4C6E7; }
+        .tier b { color: #fff; }
+        .actions { display: flex; gap: 8px; margin-top: 6px; }
+        .btn-primary { flex: 1; background: #FF6B35; color: #fff; border: none; padding: 11px; border-radius: 11px; font-weight: 800; cursor: pointer; }
+        .btn-done { flex: 1; background: rgba(74,222,128,.15); color: #4ADE80; border: 1px solid rgba(74,222,128,.4); padding: 11px; border-radius: 11px; font-weight: 800; cursor: pointer; }
+        .btn-ghost { background: rgba(255,255,255,.07); color: #fff; border: 1px solid rgba(154,178,255,.28); padding: 11px 14px; border-radius: 11px; font-weight: 700; cursor: pointer; }
+        .store { background: transparent; border: none; color: #8AB4FF; font-weight: 800; cursor: pointer; padding: 6px; }
+        .empty { color: #B4C6E7; grid-column: 1 / -1; text-align: center; padding: 30px; }
+        @media (max-width: 700px) { .grid { grid-template-columns: 1fr; } }
       `}</style>
-    </div>
+    </main>
   );
 }
