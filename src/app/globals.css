@@ -1,3 +1,5 @@
+/* globals.css - TANPA TAILWIND, pure CSS biar nggak error lagi */
+
 /* ===== v-nect base ===== */
 :root {
   --navy: #060B24;
@@ -5,7 +7,7 @@
   --blue: #4B6BFF;
   --light: #8AB4FF;
 }
- 
+
 * { box-sizing: border-box; }
 
 html, body {
@@ -71,3 +73,13 @@ a { color: inherit; }
 .bg-gradient-to-br {
   background-image: none !important;
 }
+
+/* ===== BARU: Logo kiri atas + Community tanpa garis ===== */
+a, a *, .fc-community, .fc-community *, .pill, .pill * { text-decoration: none !important; }
+.brand-logo { display:flex; align-items:center; text-decoration:none !important; }
+.logo-img { height:40px; width:auto; object-fit:contain; }
+.nav-pills { display:flex; gap:6px; align-items:center; }
+.nav-pills .pill { min-width:96px; justify-content:center; }
+.fc-community { text-decoration:none !important; }
+.comm-stats-clean { border:none !important; background:none !important; }
+.comm-stats-clean span { background:none !important; border:none !important; }
