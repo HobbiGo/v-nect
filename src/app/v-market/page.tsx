@@ -150,6 +150,7 @@ export default function VMarketPage() {
 
   return (
     <main className="market">
+      {/* V-MARKET SEMPURNA - Alibaba style, MOQ + Tiered + Verified + RFQ lock */}
       <TopNav active="market" />
       <section className="head">
         <h1>{tr("title")}</h1>
