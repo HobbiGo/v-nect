@@ -19,16 +19,37 @@ const MODULES = [
   { id: "v-chat", name: "v-chat", tag: "Chat & Messaging", desc: "Connect and communicate.", href: "/business-feed", icon: "💬", color: "#36b9ff" },
   { id: "v-meet", name: "v-meet", tag: "Live Meetings", desc: "Voice & video meetings.", href: "/v-meet", icon: "🎥", color: "#bd78ff" },
   { id: "v-hub", name: "v-hub", tag: "Identity Hub", desc: "Build your professional identity.", href: "/v-hub", icon: "✣", color: "#32dce9" },
-  { id: "v-feed", name: "v-business feed", tag: "Business Feed", desc: "Feed-nya ada di tab Feed di bawah.", href: "#feed", icon: "▤", color: "#559fff" },
+  { id: "v-feed", name: "v-business feed", tag: "Business Feed", desc: "Business Feed is in the Feed tab below.", href: "#feed", icon: "▤", color: "#559fff" },
   { id: "v-circle", name: "v-circle", tag: "Network Circle", desc: "Grow your network.", href: "/v-circle", icon: "👥", color: "#4B6BFF" },
   { id: "v-market", name: "v-market", tag: "Marketplace", desc: "Products & suppliers.", href: "/v-market", icon: "🛒", color: "#fbbf24" },
 ];
 
-const FEATURES = [
-  { icon: "💬", title: "Direct & Group Messaging", desc: "Chat real-time sama partner, tim & kontak bisnis." },
-  { icon: "🎥", title: "Voice & Video Meetings", desc: "Pitch & meeting cross-border langsung di dalam v-nect." },
-  { icon: "🌐", title: "Business Network & Feed", desc: "Share update, launch & insight ke seluruh ekosistem." },
-];
+// TRANSLATE FIX: Feature jangan ditulis manual, harus ikut bahasa yang dipilih
+// Kalau di i18n.ts belum ada key-nya, yang ini yang dipakai - jadi nggak campur lagi
+const FEATURES_BY_LANG: Record<string, {icon:string;title:string;desc:string}[]> = {
+  id: [
+    { icon: "💬", title: "Pesan Langsung & Grup", desc: "Chat real-time sama partner, tim & kontak bisnis." },
+    { icon: "🎥", title: "Rapat Suara & Video", desc: "Pitch & meeting lintas negara langsung di dalam v-nect." },
+    { icon: "🌐", title: "Jaringan Bisnis & Feed", desc: "Bagikan update, peluncuran & insight ke seluruh ekosistem." },
+  ],
+  en: [
+    { icon: "💬", title: "Direct & Group Messaging", desc: "Real-time chat with partners, teams & business contacts." },
+    { icon: "🎥", title: "Voice & Video Meetings", desc: "Pitch & meet cross-border directly inside v-nect." },
+    { icon: "🌐", title: "Business Network & Feed", desc: "Share updates, launches & insights across the whole ecosystem." },
+  ],
+  zh: [
+    { icon: "💬", title: "直接与群组消息", desc: "与合作伙伴、团队和商业联系人实时聊天。" },
+    { icon: "🎥", title: "语音与视频会议", desc: "在 v-nect 内直接进行跨境推介与会议。" },
+    { icon: "🌐", title: "商业网络与动态", desc: "向整个生态分享更新、发布与洞察。" },
+  ],
+  ja: [
+    { icon: "💬", title: "ダイレクト＆グループメッセージ", desc: "パートナー、チーム、ビジネス連絡先とリアルタイムでチャット。" },
+    { icon: "🎥", title: "音声＆ビデオ会議", desc: "v-nect 内で国境を越えてピッチ＆ミーティング。" },
+    { icon: "🌐", title: "ビジネスネットワーク＆フィード", desc: "エコシステム全体に更新、発表、洞察を共有。" },
+  ],
+};
+const getFeatures = (lang: string) => FEATURES_BY_LANG[lang] || FEATURES_BY_LANG.en;
+const FEATURES = FEATURES_BY_LANG.en;
 
 function isVideoUrl(u: string) {
   const c = (u||"").toLowerCase();
@@ -93,6 +114,7 @@ export default function HomePage() {
   const [savedIds, setSavedIds] = useState<string[]>([]);
   const [mainTab, setMainTab] = useState<"jelajahi"|"feed">("jelajahi");
   const [feedTab, setFeedTab] = useState<"foryou"|"following">("foryou");
+  const FEATURES = getFeatures(lang);
   const feedRef = useRef<HTMLDivElement>(null);
 
   useEffect(() => {
@@ -183,7 +205,7 @@ export default function HomePage() {
         <h1>{t("heroTitle1", lang)}<br/><span>{t("heroTitle2", lang)}</span></h1>
         <p>{t("heroDesc", lang)}</p>
         <div className="hero-btns"><button onClick={()=>setMainTab("jelajahi")} className="btn-primary">▦ {t("exploreAll", lang)} →</button><button onClick={()=>setMainTab("feed")} className="btn-secondary">▶ {t("watchFeed", lang)}</button></div>
-        <div className="hero-stats"><b>2</b> Menu Besar  •  <b>1</b> Klik Nyampe  •  <b>6</b> Modul di Dalamnya</div>
+        <div className="hero-stats">{lang==="id" ? "2 Menu Besar • 1 Klik Nyampe • 6 Modul di Dalamnya" : lang==="zh" ? "2 个大菜单 • 1 次点击到达 • 内含 6 个模块" : lang==="ja" ? "2つの大きなメニュー • 1クリックで到達 • 6つのモジュール内蔵" : "2 Big Menus • 1 Click Away • 6 Modules Inside"}</div>
       </section>
 
       {mainTab==="jelajahi" && (
@@ -194,7 +216,7 @@ export default function HomePage() {
           <div className="fc-feature">
             <span className="eyebrow">FEATURE</span>
             <h2>{t("featureTitle", lang)}</h2>
-            <p className="fc-sub">Satu ekosistem, 3 cara utama buat connect.</p>
+            <p className="fc-sub">{lang==="id" ? "Satu ekosistem, 3 cara utama buat connect." : lang==="zh" ? "一个生态，3 种主要的连接方式。" : lang==="ja" ? "1つのエコシステム、3つの主要なつながり方。" : "One ecosystem, 3 main ways to connect."}</p>
             <div className="feature-list">
               {FEATURES.map(f=>(
                 <div key={f.title} className="feature-row"><span className="f-icon">{f.icon}</span><div><b>{f.title}</b><p>{f.desc}</p></div></div>
@@ -204,18 +226,18 @@ export default function HomePage() {
           {/* COMMUNITY BARU - TANPA GARIS, TANPA KOTAK: div bukan Link, jadi nggak ada underline */}
           <div className="fc-community">
             <span className="eyebrow">COMMUNITY</span>
-            <div className="comm-head"><span className="comm-icon">👥</span><div><h2>v-circle Community</h2><p>Grow your network.</p></div></div>
-            <p className="comm-desc">Founder, profesional & perusahaan. Diskusi, tanya produk, cari partner — di satu circle.</p>
+            <div className="comm-head"><span className="comm-icon">👥</span><div><h2>v-circle Community</h2><p>{lang==="id" ? "Kembangkan jaringanmu." : lang==="zh" ? "拓展你的人脉。" : lang==="ja" ? "ネットワークを広げよう。" : "Grow your network."}</p></div></div>
+            <p className="comm-desc">{lang==="id" ? "Founder, profesional & perusahaan. Diskusi, tanya produk, cari partner — di satu circle." : lang==="zh" ? "创始人、专业人士与企业。在一个圈子里讨论、咨询产品、寻找伙伴。" : lang==="ja" ? "創業者、専門家、企業。1つのサークルで議論し、製品について聞き、パートナーを見つけよう。" : "Founders, professionals & companies. Discuss, ask about products, find partners — in one circle."}</p>
             <div className="comm-avatars"><span>👩</span><span>👨</span><span>🧑</span><span>👩‍💼</span><span>👨‍💼</span><span className="comm-more">+12k</span></div>
             <div className="comm-stats-clean">
-              <span><b>{posts.length || "0"}</b> Post terbaru</span><span className="comm-dot">•</span><span><b>{Object.values(likeCounts).reduce((a,b)=>a+b,0) || "0"}</b> Total likes</span><span className="comm-dot">•</span><span><b>{Object.values(commentCounts).reduce((a,b)=>a+b,0) || "0"}</b> Diskusi</span>
+              <span><b>{posts.length || "0"}</b> {lang==="id" ? "Post terbaru" : lang==="zh" ? "最新帖子" : lang==="ja" ? "最新の投稿" : "Latest posts"}</span><span className="comm-dot">•</span><span><b>{Object.values(likeCounts).reduce((a,b)=>a+b,0) || "0"}</b> {lang==="id" ? "Total suka" : lang==="zh" ? "总点赞" : lang==="ja" ? "総いいね" : "Total likes"}</span><span className="comm-dot">•</span><span><b>{Object.values(commentCounts).reduce((a,b)=>a+b,0) || "0"}</b> {lang==="id" ? "Diskusi" : lang==="zh" ? "讨论" : lang==="ja" ? "ディスカッション" : "Discussions"}</span>
             </div>
             <Link href="/v-circle" className="btn-join">{t("joinCommunity", lang)} →</Link>
           </div>
         </div>
       </section>
       <section id="explore" className="explore">
-        <div className="sec-head"><div><span className="eyebrow">EXPLORE • ECOSYSTEM</span><h2>Explore the v-nect Suite</h2><p className="eco-note">Business Feed sudah di dalam sini — klik kartu Business Feed untuk pindah ke tab Feed.</p></div><span className="link">6 modul • 1 tempat</span></div>
+        <div className="sec-head"><div><span className="eyebrow">EXPLORE • ECOSYSTEM</span><h2>Explore the v-nect Suite</h2><p className="eco-note">{lang==="id" ? "Business Feed sudah di dalam sini — klik kartu Business Feed untuk pindah ke tab Feed." : lang==="zh" ? "Business Feed 已在这里 — 点击 Business Feed 卡片切换到 Feed 标签。" : lang==="ja" ? "Business Feed はここにあります — Business Feed カードをクリックして Feed タブへ移動。" : "Business Feed is inside here — click the Business Feed card to go to the Feed tab."}</p></div><span className="link">6 modul • 1 tempat</span></div>
         <div className="module-grid">
           {MODULES.map(m=>(
             m.id==="v-feed"
