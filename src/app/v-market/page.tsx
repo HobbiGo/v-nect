@@ -1,138 +1,96 @@
 "use client";
 import { useState } from "react";
 import { useLang } from "@/lib/i18n";
-
 export const dynamic = "force-dynamic";
 
-type Product = { id:number; name:string; price:string; moq:string; supplier:string; cat:string; emoji:string; verified:boolean };
-
-const PRODUCTS: Product[] = [
-  { id:1, name:"Fashion - Premium T-Shirt", price:"$25", moq:"MOQ: 10 pieces", supplier:"Batik Solo", cat:"Fashion", emoji:"👕", verified:true },
-  { id:2, name:"Furniture - Wooden Chair", price:"$120", moq:"MOQ: 1 piece", supplier:"Jepara Wood", cat:"Furniture", emoji:"🪑", verified:true },
-  { id:3, name:"Electronics - EV Charger 7kW", price:"$899", moq:"MOQ: 1 piece", supplier:"EV Indo", cat:"Electronics", emoji:"🔌", verified:true },
-  { id:4, name:"Home & Garden - Solar Panel", price:"$350", moq:"MOQ: 2 pieces", supplier:"Solar Nusantara", cat:"Home", emoji:"☀️", verified:false },
-  { id:5, name:"Beauty - Skincare Set", price:"$18", moq:"MOQ: 50 pieces", supplier:"Beauty Lab", cat:"Beauty", emoji:"🧴", verified:true },
-  { id:6, name:"Sports - Bicycle MTB", price:"$420", moq:"MOQ: 1 piece", supplier:"Bike Factory", cat:"Sports", emoji:"🚲", verified:false },
-  { id:7, name:"Packaging - Box Custom", price:"$0.8", moq:"MOQ: 1000 pieces", supplier:"Pack Indo", cat:"Packaging", emoji:"📦", verified:true },
-  { id:8, name:"Food - Coffee Beans 1kg", price:"$15", moq:"MOQ: 20 kg", supplier:"Gayo Coffee", cat:"Food", emoji:"☕", verified:true },
+type P = { id:number; name:string; price:number; old?:number; rating:string; reviews:number; img:string; supplier:string; cat:string; badge?:string };
+const PRODUCTS: P[] = [
+  { id:1, name:"VNECT AirPods Pro+", price:189, old:249, rating:"4.8", reviews:128, img:"https://images.unsplash.com/photo-1590658268037-6bf12165a8df?w=600&q=80", supplier:"Batik Solo • Verified", cat:"Earbuds", badge:"15% OFF" },
+  { id:2, name:"VNECT Chrono Classic", price:429, old:520, rating:"4.9", reviews:98, img:"https://images.unsplash.com/photo-1523275335684-37898b6baf30?w=600&q=80", supplier:"Jepara Wood • Verified", cat:"Watches", badge:"Premium" },
+  { id:3, name:"VNECT Leather Tote", price:189, rating:"4.7", reviews:76, img:"https://images.unsplash.com/photo-1548036328-c9fa89d128fa?w=600&q=80", supplier:"Solo Leather • Verified", cat:"Bags", badge:"Best Seller" },
+  { id:4, name:"ProPods X1", price:199, rating:"4.8", reviews:214, img:"https://images.unsplash.com/photo-1572569511254-d8f925fe2cbb?w=600&q=80", supplier:"EV Indo • Verified", cat:"Earbuds" },
+  { id:5, name:"Ceramic Coffee Mug", price:18, rating:"4.6", reviews:64, img:"https://images.unsplash.com/photo-1514228742587-6b1558fcca3d?w=600&q=80", supplier:"Gayo Coffee", cat:"Home" },
+  { id:6, name:"Modern Desk Lamp", price:64, rating:"4.7", reviews:92, img:"https://images.unsplash.com/photo-1507473885765-e6ed057f782c?w=600&q=80", supplier:"Solar Nusantara", cat:"Home" },
 ];
-
-const CATS = ["All","Fashion","Electronics","Furniture","Home","Beauty","Sports","Packaging","Food"];
-
+const CATS = ["All","Earbuds","Watches","Bags","Home","Accessories","New Arrivals","Sale"];
 export default function MarketPage(){
-  const { lang } = useLang(); // FIX: t removed, useLang only returns lang
+  const { lang } = useLang();
   const [q,setQ] = useState("");
   const [cat,setCat] = useState("All");
-  const [showCats,setShowCats] = useState(false);
-
-  const filtered = PRODUCTS.filter(p => (cat==="All"||p.cat===cat) && p.name.toLowerCase().includes(q.toLowerCase()));
-
-  const title = lang==="id" ? "Market" : lang==="zh" ? "市场" : lang==="ja" ? "マーケット" : lang==="ko" ? "마켓" : "Market";
-  const searchPh = lang==="id" ? "Cari produk, supplier, kategori..." : "Search products, suppliers, categories...";
-  const catTitle = lang==="id" ? "Kategori untuk Anda" : "Categories for you";
-  const freqTitle = lang==="id" ? "Sering dicari" : "Frequently searched";
-  const guaranteed = lang==="id" ? "Voinnect Terjamin" : "Voinnect Guaranteed";
-  const recTitle = lang==="id" ? "Rekomendasi untuk bisnis Anda" : "Recommended for your business";
-  const view = lang==="id" ? "Lihat →" : "View →";
-
+  const [cart,setCart] = useState<number[]>([]);
+  const [showCart,setShowCart] = useState(false);
+  const [orderType,setOrderType] = useState<"Bulk"|"Sample">("Bulk");
+  const [showCheckout,setShowCheckout] = useState(false);
+  const filtered = PRODUCTS.filter(p=>(cat==="All"||p.cat===cat||cat==="New Arrivals"||cat==="Sale") && p.name.toLowerCase().includes(q.toLowerCase()));
+  const cartItems = PRODUCTS.filter(p=>cart.includes(p.id));
+  const subtotal = cartItems.reduce((s,p)=>s+p.price,0);
+  const fee = Math.round(subtotal*0.05*100)/100;
+  const total = Math.round((subtotal+fee)*100)/100;
+  const add = (id:number)=>{ if(!cart.includes(id)) setCart([...cart,id]); setShowCart(true); };
   return (
-    <div style={{background:"#f5f6f8",minHeight:"100vh",paddingBottom:40}}>
-      {/* TOP BAR - NO SIGN OUT HERE */}
-      <div style={{background:"#fff",padding:"12px 16px",borderBottom:"1px solid #eee",position:"sticky",top:0,zIndex:20}}>
-        <div style={{maxWidth:1100,margin:"0 auto",display:"flex",gap:12,alignItems:"center",flexWrap:"wrap"}}>
-          <div style={{fontWeight:900,fontSize:22,color:"#111"}}>V<span style={{color:"#ff6a00"}}>NECT</span> <span style={{fontSize:13,color:"#888",fontWeight:600}}>Market</span></div>
-          <div style={{flex:1,minWidth:220,display:"flex",border:"2px solid #ff6a00",borderRadius:999,overflow:"hidden",background:"#fff"}}>
-            <input value={q} onChange={e=>setQ(e.target.value)} placeholder={searchPh} style={{flex:1,padding:"10px 14px",border:"none",outline:"none",fontSize:14}} />
-            <button style={{background:"#ff6a00",color:"#fff",border:"none",padding:"0 20px",fontWeight:700,cursor:"pointer"}}>🔍 {lang==="id"?"Cari":"Search"}</button>
+    <div style={{background:"#f6f7fb",minHeight:"100vh",fontFamily:"system-ui"}}>
+      <div style={{background:"#0A1A33",color:"#fff",padding:"12px 16px",position:"sticky",top:0,zIndex:20}}>
+        <div style={{maxWidth:1120,margin:"0 auto",display:"flex",gap:14,alignItems:"center",flexWrap:"wrap"}}>
+          <div style={{fontWeight:900,fontSize:24,letterSpacing:0.5}}>VN<span style={{color:"#FF6A00"}}>ECT</span><span style={{fontSize:12,background:"#FF6A00",padding:"2px 7px",borderRadius:999,marginLeft:8}}>MARKET</span></div>
+          <div style={{flex:1,minWidth:220,display:"flex",background:"#fff",borderRadius:999,overflow:"hidden"}}>
+            <input value={q} onChange={e=>setQ(e.target.value)} placeholder={lang==="id"?"Cari produk, supplier...":"Search products, suppliers..."} style={{flex:1,padding:"11px 16px",border:"none",outline:"none",fontSize:14}} />
+            <button style={{background:"#FF6A00",color:"#fff",border:"none",padding:"0 22px",fontWeight:800,cursor:"pointer"}}>🔍</button>
           </div>
-          <button onClick={()=>setShowCats(!showCats)} style={{border:"1px solid #ddd",background:"#fff",padding:"10px 14px",borderRadius:999,cursor:"pointer",fontWeight:600}}>☰ {lang==="id"?"Semua Kategori":"All categories"}</button>
-        </div>
-        <div style={{maxWidth:1100,margin:"8px auto 0",display:"flex",gap:16,fontSize:13,color:"#555",flexWrap:"wrap"}}>
-          <span style={{fontWeight:700,color:"#ff6a00"}}>Products</span><span>Verified Suppliers</span><span>Dropshipping</span><span>About Market</span><span>Help Center</span>
+          <div style={{display:"flex",gap:14,fontSize:14,alignItems:"center"}}><span>Shop</span><span>Collections</span><span>Deals</span><span>👤</span><span>♡</span><button onClick={()=>setShowCart(!showCart)} style={{background:"#FF6A00",color:"#fff",border:"none",padding:"8px 14px",borderRadius:999,fontWeight:800,cursor:"pointer"}}>🛒 Cart ({cart.length})</button></div>
         </div>
       </div>
-
-      <div style={{maxWidth:1100,margin:"0 auto",padding:"16px"}}>
-        {/* CATEGORIES + HERO */}
-        <div style={{display:"flex",gap:16,flexWrap:"wrap"}}>
-          <div style={{width:230,background:"#fff",borderRadius:16,padding:12}}>
-            <div style={{fontWeight:800,marginBottom:8}}>⭐ {catTitle}</div>
-            {CATS.map(c=>(
-              <button key={c} onClick={()=>setCat(c)} style={{display:"block",width:"100%",textAlign:"left",padding:"9px 10px",border:"none",borderRadius:10,cursor:"pointer",background:cat===c?"#fff1e6":"transparent",fontWeight:cat===c?700:400}}>{c==="All"?"✨ "+(lang==="id"?"Semua":"All"): "• "+c} {cat===c?"›":""}</button>
-            ))}
+      <div style={{maxWidth:1120,margin:"0 auto",padding:"16px"}}>
+        <div style={{display:"flex",gap:8,overflowX:"auto",paddingBottom:6}}>{CATS.map(c=>(<button key={c} onClick={()=>setCat(c)} style={{whiteSpace:"nowrap",border:"none",padding:"9px 16px",borderRadius:999,cursor:"pointer",background:cat===c?"#0A1A33":"#fff",color:cat===c?"#fff":"#333",fontWeight:700,boxShadow:"0 2px 8px rgba(0,0,0,0.06)"}}>{c}</button>))}</div>
+        <div style={{background:"linear-gradient(135deg,#0A1A33 0%,#1A3A6A 55%,#FF6A00 130%)",borderRadius:24,padding:22,display:"flex",gap:18,alignItems:"center",flexWrap:"wrap",color:"#fff",marginTop:12}}>
+          <div style={{flex:1,minWidth:260}}>
+            <div style={{fontSize:12,letterSpacing:2,color:"#FFB27A",fontWeight:800}}>VOINNECT MARKET • PREMIUM</div>
+            <h1 style={{fontSize:34,lineHeight:1.1,margin:"10px 0"}}>Elevate Your<br/>Everyday, Crafted<br/>in Luxury.</h1>
+            <p style={{opacity:0.85,fontSize:14}}>Produk pilihan dari supplier terverifikasi. Sample untuk bisnis, Bulk untuk order besar.</p>
+            <div style={{display:"flex",gap:10,marginTop:14,flexWrap:"wrap"}}><button onClick={()=>document.getElementById("products")?.scrollIntoView({behavior:"smooth"})} style={{background:"#FF6A00",color:"#fff",border:"none",padding:"12px 20px",borderRadius:999,fontWeight:800,cursor:"pointer"}}>Shop Now →</button><span style={{fontSize:12,alignSelf:"center"}}>✓ Free Shipping $100+ • 1-Year Warranty • Secure Checkout</span></div>
           </div>
-
-          <div style={{flex:1,minWidth:280}}>
-            {showCats && (
-              <div style={{background:"#fff",borderRadius:16,padding:16,marginBottom:12}}>
-                <div style={{fontWeight:800,marginBottom:12}}>{catTitle}</div>
-                <div style={{display:"grid",gridTemplateColumns:"repeat(4,1fr)",gap:12}}>
-                  {CATS.filter(c=>c!=="All").map(c=>(
-                    <button key={c} onClick={()=>{setCat(c); setShowCats(false);}} style={{border:"1px solid #eee",background:"#fafafa",borderRadius:12,padding:12,cursor:"pointer"}}>
-                      <div style={{fontSize:28}}>{c==="Fashion"?"👕":c==="Electronics"?"🔌":c==="Furniture"?"🪑":c==="Home"?"🏠":c==="Beauty"?"💄":c==="Sports"?"⚽":c==="Packaging"?"📦":"☕"}</div>
-                      <div style={{fontSize:12,marginTop:6,fontWeight:600}}>{c}</div>
-                    </button>
-                  ))}
-                </div>
-              </div>
-            )}
-
-            <div style={{background:"#fff",borderRadius:16,padding:16,display:"flex",gap:12,flexWrap:"wrap"}}>
-              <div style={{flex:1,minWidth:200}}>
-                <div style={{fontWeight:800}}>{freqTitle} - EV Charger</div>
-                <div style={{fontSize:44,marginTop:10}}>🔌</div>
-                <div style={{fontSize:13,color:"#666"}}>7kW • Portable • Fast Charging</div>
-              </div>
-              <div style={{flex:1,minWidth:200}}>
-                <div style={{fontWeight:800}}>{freqTitle} - Coffee</div>
-                <div style={{fontSize:44,marginTop:10}}>☕</div>
-                <div style={{fontSize:13,color:"#666"}}>Gayo • Single Origin • 1kg</div>
-              </div>
-              <div style={{flex:1,minWidth:200,background:"linear-gradient(135deg,#ff6a00,#ffb347)",borderRadius:12,padding:14,color:"#fff"}}>
-                <div style={{fontWeight:900,fontSize:18}}>Hot Picks</div>
-                <div style={{fontSize:13,opacity:.9}}>Best sellers this week</div>
-                <div style={{fontSize:36,marginTop:8}}>🎒 👕 🪑</div>
-              </div>
-            </div>
-
-            {/* GUARANTEED */}
-            <div style={{background:"#3b2320",color:"#fff",borderRadius:16,padding:16,marginTop:12,display:"flex",gap:16,alignItems:"center",flexWrap:"wrap"}}>
-              <div style={{flex:1,minWidth:200}}>
-                <div style={{fontWeight:900,fontSize:20,color:"#ffb347"}}>Voinnect <span style={{color:"#fff"}}>{guaranteed}</span></div>
-                <div style={{fontSize:13,marginTop:6,lineHeight:1.6}}>✓ {lang==="id"?"Order cepat & bayar aman":"Quick order and pay"}<br/>✓ {lang==="id"?"Pengiriman tepat waktu":"On-time delivery"}<br/>✓ {lang==="id"?"Garansi uang kembali":"Money-back guarantee"}</div>
-                <button style={{marginTop:10,background:"#fff",border:"none",padding:"8px 14px",borderRadius:999,fontWeight:700,cursor:"pointer"}}>Explore now</button>
-              </div>
-              <div style={{display:"flex",gap:10}}>
-                <div style={{background:"#fff",color:"#111",borderRadius:12,padding:10,width:120,textAlign:"center"}}><div style={{fontSize:28}}>🚗</div><div style={{fontWeight:800}}>Rp 1.313.976</div><div style={{fontSize:11,color:"#666"}}>Delivery by 01 Jan</div></div>
-                <div style={{background:"#fff",color:"#111",borderRadius:12,padding:10,width:120,textAlign:"center"}}><div style={{fontSize:28}}>🔌</div><div style={{fontWeight:800}}>Rp 1.914.650</div><div style={{fontSize:11,color:"#666"}}>Delivery by 01 Jan</div></div>
-              </div>
-            </div>
-          </div>
+          <div style={{display:"flex",gap:10}}><img src={PRODUCTS[0].img} style={{width:140,height:170,objectFit:"cover",borderRadius:18}} alt="earbuds" /><img src={PRODUCTS[1].img} style={{width:140,height:170,objectFit:"cover",borderRadius:18}} alt="watch" /><img src={PRODUCTS[2].img} style={{width:140,height:170,objectFit:"cover",borderRadius:18}} alt="tote" /></div>
         </div>
-
-        {/* PRODUCTS */}
-        <div style={{marginTop:18,display:"flex",justifyContent:"space-between",alignItems:"center"}}>
-          <h3 style={{margin:0}}>— {recTitle} —</h3>
-          <span style={{fontSize:13,color:"#888"}}>{filtered.length} products</span>
-        </div>
-
-        <div style={{display:"grid",gridTemplateColumns:"repeat(auto-fill,minmax(220px,1fr))",gap:14,marginTop:12}}>
+        <div style={{display:"flex",justifyContent:"space-between",alignItems:"center",marginTop:22}}><h2 id="products" style={{margin:0}}>Featured Products</h2><span style={{fontSize:13,color:"#666"}}>{filtered.length} products • Fee Voinnect 5% • Supplier 95%</span></div>
+        <div style={{display:"grid",gridTemplateColumns:"repeat(auto-fill,minmax(240px,1fr))",gap:16,marginTop:14}}>
           {filtered.map(p=>(
-            <div key={p.id} style={{background:"#fff",borderRadius:16,overflow:"hidden",border:"1px solid #eee"}}>
-              <div style={{height:160,display:"flex",alignItems:"center",justifyContent:"center",fontSize:64,background:"#fafafa"}}>{p.emoji}</div>
-              <div style={{padding:12}}>
-                <div style={{fontWeight:700,fontSize:14,lineHeight:1.4,minHeight:38}}>{p.name}</div>
-                <div style={{fontSize:12,color:"#888",marginTop:4}}>{p.moq}</div>
-                <div style={{fontWeight:900,fontSize:17,marginTop:6}}>{p.price}</div>
-                <div style={{fontSize:12,color:"#555",marginTop:2}}>Supplier: {p.supplier} {p.verified?"✓ Verified":""}</div>
-                <button style={{marginTop:10,width:"100%",background:"#2563eb",color:"#fff",border:"none",padding:"9px",borderRadius:999,fontWeight:700,cursor:"pointer"}}>{view}</button>
+            <div key={p.id} style={{background:"#fff",borderRadius:20,overflow:"hidden",boxShadow:"0 6px 20px rgba(0,0,0,0.07)"}}>
+              <div style={{position:"relative"}}><img src={p.img} style={{width:"100%",height:190,objectFit:"cover",display:"block"}} alt={p.name} />{p.badge && <span style={{position:"absolute",top:10,left:10,background:"#FF6A00",color:"#fff",fontSize:11,padding:"4px 8px",borderRadius:999,fontWeight:800}}>{p.badge}</span>}</div>
+              <div style={{padding:14}}>
+                <div style={{fontSize:12,color:"#888"}}>{p.cat} • {p.supplier}</div>
+                <div style={{fontWeight:800,fontSize:16,marginTop:4}}>{p.name}</div>
+                <div style={{fontSize:13,marginTop:4}}>⭐ {p.rating} <span style={{color:"#888"}}>({p.reviews} reviews)</span></div>
+                <div style={{display:"flex",gap:8,alignItems:"baseline",marginTop:8}}><span style={{fontWeight:900,fontSize:20,color:"#FF6A00"}}>${p.price}.00</span>{p.old && <span style={{textDecoration:"line-through",color:"#999",fontSize:13}}>${p.old}</span>}</div>
+                <div style={{display:"flex",gap:8,marginTop:10}}><button onClick={()=>add(p.id)} style={{flex:1,background:"#0A1A33",color:"#fff",border:"none",padding:"10px",borderRadius:999,fontWeight:800,cursor:"pointer"}}>Add to Cart</button><button onClick={()=>{setOrderType("Sample"); add(p.id); setShowCheckout(true);}} style={{background:"#fff",border:"1px solid #0A1A33",padding:"10px 12px",borderRadius:999,fontWeight:700,cursor:"pointer"}}>Sample</button></div>
               </div>
             </div>
           ))}
         </div>
-        {filtered.length===0 && <div style={{background:"#fff",padding:20,borderRadius:12,marginTop:12,textAlign:"center"}}>{lang==="id"?"Tidak ada produk, coba kata lain":"No products, try another keyword"}</div>}
-
-        <div style={{textAlign:"center",color:"#999",fontSize:12,marginTop:24}}>© Voinnect Market • Buyer & Supplier in one place • Sign Out ada di Dashboard / Home saja, tidak di Market</div>
+        {showCart && (
+          <div style={{position:"fixed",right:16,top:70,width:340,maxWidth:"calc(100vw - 32px)",background:"#fff",borderRadius:20,boxShadow:"0 20px 50px rgba(0,0,0,0.2)",padding:16,zIndex:50}}>
+            <div style={{display:"flex",justifyContent:"space-between"}}><b>Cart • {cartItems.length} items</b><button onClick={()=>setShowCart(false)} style={{border:"none",background:"transparent",cursor:"pointer",fontSize:18}}>×</button></div>
+            {cartItems.length===0 ? <div style={{padding:20,textAlign:"center",color:"#888"}}>Keranjang masih kosong</div> : cartItems.map(p=>(
+              <div key={p.id} style={{display:"flex",gap:10,alignItems:"center",marginTop:12}}><img src={p.img} style={{width:54,height:54,objectFit:"cover",borderRadius:12}} alt="" /><div style={{flex:1}}><div style={{fontWeight:700,fontSize:13}}>{p.name}</div><div style={{color:"#FF6A00",fontWeight:800}}>${p.price}</div></div><button onClick={()=>setCart(cart.filter(id=>id!==p.id))} style={{border:"none",background:"#f1f1f1",borderRadius:999,padding:"4px 8px",cursor:"pointer"}}>🗑️</button></div>
+            ))}
+            {cartItems.length>0 && (<><div style={{display:"flex",gap:8,marginTop:14}}><button onClick={()=>setOrderType("Bulk")} style={{flex:1,padding:"9px",borderRadius:999,border:"none",background:orderType==="Bulk"?"#FF6A00":"#eee",color:orderType==="Bulk"?"#fff":"#333",fontWeight:800}}>Bulk Order</button><button onClick={()=>setOrderType("Sample")} style={{flex:1,padding:"9px",borderRadius:999,border:"none",background:orderType==="Sample"?"#0A1A33":"#eee",color:orderType==="Sample"?"#fff":"#333",fontWeight:800}}>Sample Bisnis</button></div>
+            <div style={{fontSize:13,marginTop:12,lineHeight:1.8}}><div style={{display:"flex",justifyContent:"space-between"}}><span>Subtotal</span><b>${subtotal}.00</b></div><div style={{display:"flex",justifyContent:"space-between"}}><span>Platform Fee (5%)</span><b>${fee}</b></div><div style={{display:"flex",justifyContent:"space-between",fontSize:15}}><span>Total</span><b>${total}</b></div><div style={{color:"#666",fontSize:12}}>Supplier dapat 95% • Voinnect Fee 5% • Uang ditahan aman</div></div>
+            <button onClick={()=>setShowCheckout(true)} style={{width:"100%",marginTop:10,background:"#FF6A00",color:"#fff",border:"none",padding:"12px",borderRadius:999,fontWeight:800,cursor:"pointer"}}>Proceed to Checkout →</button></>)}
+          </div>
+        )}
+        {showCheckout && (
+          <div style={{position:"fixed",inset:0,background:"rgba(0,0,0,0.5)",display:"flex",alignItems:"center",justifyContent:"center",zIndex:60,padding:12}}>
+            <div style={{background:"#fff",borderRadius:22,maxWidth:520,width:"100%",padding:20,maxHeight:"90vh",overflow:"auto"}}>
+              <div style={{display:"flex",justifyContent:"space-between"}}><h3 style={{margin:0}}>Checkout • {orderType==="Sample"?"Sample Bisnis":"Bulk Order"}</h3><button onClick={()=>setShowCheckout(false)} style={{border:"none",background:"transparent",fontSize:20,cursor:"pointer"}}>×</button></div>
+              <p style={{fontSize:13,color:"#666"}}>Order ID: VM-88492 • Data ini nanti masuk ke Inbox Supplier sebagai Message, nyambung ke Account Supplier yang sudah isi.</p>
+              <input placeholder="Nama Pembeli / Perusahaan" style={{width:"100%",padding:11,borderRadius:12,border:"1px solid #ddd",marginTop:8}} />
+              <input placeholder="Alamat Kirim" style={{width:"100%",padding:11,borderRadius:12,border:"1px solid #ddd",marginTop:8}} />
+              <input placeholder="Catatan: contoh - Tolong kirim sample 2 warna untuk presentasi" style={{width:"100%",padding:11,borderRadius:12,border:"1px solid #ddd",marginTop:8}} />
+              <div style={{background:"#f6f7fb",borderRadius:14,padding:14,marginTop:12,fontSize:13,lineHeight:1.8}}><div style={{display:"flex",justifyContent:"space-between"}}><span>Subtotal</span><b>${subtotal}.00</b></div><div style={{display:"flex",justifyContent:"space-between"}}><span>Platform Fee (5%)</span><b>${fee}</b></div><div style={{display:"flex",justifyContent:"space-between",fontSize:16}}><span>Total</span><b>${total}</b></div><div style={{fontSize:12,color:"#666",marginTop:6}}>Supplier dapat 95% • Voinnect Fee 5% • Payment ditahan di escrow sampai barang sampai</div></div>
+              <button onClick={()=>{alert("Virtual Checkout - Data masuk ke Inbox Supplier (VM-88492) - Nanti dikonekkan ke Supabase"); setShowCheckout(false); setShowCart(false);}} style={{width:"100%",marginTop:12,background:"#FF6A00",color:"#fff",border:"none",padding:"13px",borderRadius:999,fontWeight:800,cursor:"pointer"}}>Pay Now — ${total}</button>
+              <div style={{textAlign:"center",fontSize:11,color:"#999",marginTop:10}}>Virtual dulu - Nanti dikonekkan ke Midtrans / Stripe + Supabase</div>
+            </div>
+          </div>
+        )}
+        <div style={{textAlign:"center",color:"#999",fontSize:12,marginTop:26}}>© Voinnect Market • Navy + Oren • Sign Out di Home / Dashboard saja, tidak di Market • Profil Supplier: Logo + Foto Personal + Keterangan</div>
       </div>
     </div>
   );
