@@ -4,7 +4,7 @@ import TopNav from "@/components/TopNav";
 import Footer from "@/components/Footer";
 import { getLang, type Lang } from "@/lib/i18n";
 
-// v-meet MULTI 5-10 ORANG - 2 ARAH BENERAN via Daily.co
+// v-meet MULTI 5-10 ORANG - 2 ARAH BENERAN via Jitsi (GRATIS, tanpa kartu)
 // File: src/app/v-meet/page.tsx - timpa file lama
 // SETUP DAILY (5 menit, gratis):
 // 1. Buka https://dashboard.daily.co/signup -> daftar
@@ -188,8 +188,10 @@ export default function VMeetMultiPage() {
   const theirFlag = LANGS.find((l) => l.id === theirLang)?.flag || "🇺🇸";
   const domain = process.env.NEXT_PUBLIC_DAILY_DOMAIN || "vnect.daily.co";
   // Daily Prebuilt - iframe ini yang handle 5-10 video 2 arah, grid, mic/cam, screen share, chat
-  // FIX: URL Daily harus bersih, tanpa ?t= . ?t= bikin iframe blank / Daily nolak load
-  const dailyUrl = `https://${domain}/${room}`;
+  // JITSI - gratis, tanpa payment method, tanpa daftar. Daily minta kartu, jadi pindah ke Jitsi.
+  // Format: https://meet.jit.si/NAMA-ROOM - semua orang join room yang sama, grid otomatis 5-10 orang
+  const dailyUrl = `https://meet.jit.si/${room}`;
+  const dailyDirect = dailyUrl;
 
   const join = async () => {
     setCamError("");
@@ -255,10 +257,10 @@ export default function VMeetMultiPage() {
             <button onClick={() => setJoined(false)} className="leave">■ {tr("leave")}</button>
           </div>
           {/* DAILY IFRAME - ini yang nampilin 5-10 video 2 arah, grid otomatis */}
-          <iframe src={dailyUrl} allow="camera; microphone; fullscreen; display-capture; autoplay" className="dailyframe" title="v-meet Daily" />
+          <iframe src={dailyUrl} allow="camera; microphone; fullscreen; display-capture; autoplay" className="dailyframe" title="v-meet Jitsi" />
           <div className="iframe-fallback">
             <span>Kalau video masih blank, klik ini:</span>
-            <a href={dailyUrl} target="_blank" rel="noreferrer" className="open-daily">↗ Buka Video di Tab Baru (Daily)</a>
+            <a href={dailyUrl} target="_blank" rel="noreferrer" className="open-daily">↗ Buka Video di Tab Baru (Jitsi)</a>
             <span>Link room: {dailyUrl}</span>
           </div>
           {subOn && (
@@ -269,7 +271,7 @@ export default function VMeetMultiPage() {
           )}
           <div className="controls">
             <button onClick={() => setSubOn(!subOn)} className="ctl on">💬 {subOn ? tr("subtitleOn") : tr("subtitleOff")}</button>
-            <span className="hint">Mic / Kamera / Screen Share diatur di dalam video Daily (bawah video)</span>
+            <span className="hint">Mic / Kamera / Screen Share diatur di dalam video Jitsi (bawah video)</span>
           </div>
         </section>
       )}
