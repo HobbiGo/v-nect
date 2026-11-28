@@ -1,162 +1,47 @@
 "use client";
-import { useEffect, useState } from "react";
-import Link from "next/link";
-import { createClient } from "@/lib/supabase/client";
-import LanguageSwitcher from "@/components/LanguageSwitcher";
-import { t, getLang, type Lang } from "@/lib/i18n";
-
-type Post = {
-  id: string; title: string; content: string; post_type: string; created_at: string;
-  companies: { company_name: string; logo_url: string | null } | null;
+import { Suspense, useEffect, useState } from "react";
+import TopNav from "@/components/TopNav";
+import SignOutButton from "@/components/SignOutButton";
+const TEXTS: Record<string, any> = {
+  id: { title: "Business Feed", sub: "Feed bisnis — post dari akun bisnis, bukan feed pribadi.", search: "Cari post bisnis...", forYou: "Untuk Kamu", business: "Bisnis", explore: "Jelajahi", empty: "Belum ada post bisnis yang dipublish.", like: "Suka", comment: "Komentar", share: "Bagikan", follow: "Ikuti", following: "Mengikuti", create: "Buat Post Bisnis" },
+  en: { title: "Business Feed", sub: "Business feed — posts from business accounts, not personal feed.", search: "Search business posts...", forYou: "For You", business: "Business", explore: "Explore", empty: "No published business posts yet.", like: "Like", comment: "Comment", share: "Share", follow: "Follow", following: "Following", create: "Create Business Post" },
+  zh: { title: "商业动态", sub: "商业动态 — 来自企业账号的帖子，不是个人动态。", search: "搜索商业帖子...", forYou: "为你推荐", business: "商业", explore: "探索", empty: "暂无已发布的商业帖子。", like: "点赞", comment: "评论", share: "分享", follow: "关注", following: "已关注", create: "发布商业帖子" },
+  ja: { title: "ビジネスフィード", sub: "ビジネスフィード — 個人ではなくビジネスアカウントの投稿。", search: "ビジネス投稿を検索...", forYou: "あなたへ", business: "ビジネス", explore: "探索", empty: "まだ公開されたビジネス投稿がありません。", like: "いいね", comment: "コメント", share: "共有", follow: "フォロー", following: "フォロー中", create: "ビジネス投稿を作成" },
+  ko: { title: "비즈니스 피드", sub: "비즈니스 피드 — 개인 피드가 아닌 비즈니스 계정의 게시물.", search: "비즈니스 게시물 검색...", forYou: "추천", business: "비즈니스", explore: "탐색", empty: "게시된 비즈니스 게시물이 아직 없습니다.", like: "좋아요", comment: "댓글", share: "공유", follow: "팔로우", following: "팔로잉", create: "비즈니스 게시물 만들기" },
 };
-
-export default function BusinessFeedPage() {
-  const [supabase] = useState(() => createClient());
-  const [lang, setLang] = useState<Lang>(getLang());
-  const [posts, setPosts] = useState<Post[]>([]);
-  const [loading, setLoading] = useState(true);
-  const [tab, setTab] = useState<"foryou"|"following">("foryou");
-  const [userName, setUserName] = useState<string | null>(null);
-
+function FeedContent() {
+  const [lang, setLang] = useState("en");
+  const [q, setQ] = useState("");
+  const [liked, setLiked] = useState<Set<number>>(new Set());
+  const T = TEXTS[lang] || TEXTS.en;
   useEffect(() => {
-    const h = (e: any) => setLang(e.detail as Lang);
+    const read = () => { try { const l = localStorage.getItem("vnect-lang") || "en"; if (TEXTS[l]) setLang(l); } catch {} };
+    read();
+    const h = (e: any) => { if (TEXTS[e.detail]) setLang(e.detail); };
     window.addEventListener("vnect-lang-change", h);
-    return () => window.removeEventListener("vnect-lang-change", h);
+    const iv = setInterval(read, 1000);
+    return () => { window.removeEventListener("vnect-lang-change", h); clearInterval(iv); };
   }, []);
-
-  useEffect(() => {
-    async function load() {
-      const { data: { user } } = await supabase.auth.getUser();
-      if (user) setUserName(user.user_metadata?.full_name || user.email?.split("@")[0] || "Member");
-      const { data } = await supabase.from("business_posts").select(`*,companies(company_name,logo_url)`).eq("status", "published").order("created_at", { ascending: false }).limit(30);
-      setPosts((data || []) as unknown as Post[]);
-      setLoading(false);
-    }
-    load();
-  }, [supabase]);
-
+  const posts = [
+    { biz: "PT Kopi Nusantara", text: "Kopi Arabica baru panen! Ready export ke Jepang & Korea.", likes: 128 },
+    { biz: "Batik Solo", text: "Koleksi batik premium baru, cocok untuk B2B.", likes: 89 },
+    { biz: "Tech Jaya", text: "Headset Pro diskon 20% untuk partner VNECT.", likes: 210 },
+  ].filter(p => (p.biz + p.text).toLowerCase().includes(q.toLowerCase()));
   return (
-    <div className="bf">
-      {/* ===== TOPNAV RAPI - SAMA KAYAK HOMEPAGE ===== */}
-      <header className="topnav">
-        <div className="top-left">
-          <Link href="/" className="brand">v<span>-nect</span></Link>
-          <Link href="/" className="home-pill" title="Kembali ke Beranda">
-            <span className="home-icon">⌂</span>
-            <span>{lang==="id" ? "Beranda" : lang==="en" ? "Home" : lang==="zh" ? "首页" : lang==="ja" ? "ホーム" : "Home"}</span>
-            <span className="home-dot">●</span>
-          </Link>
+    <main style={{ padding: 24, fontFamily: "sans-serif", maxWidth: 800, margin: "0 auto" }}>
+      <TopNav active="feed" />
+      <div style={{ display: "flex", justifyContent: "flex-end", margin: "12px 0" }}><SignOutButton /></div>
+      <h1 style={{ fontSize: 28, fontWeight: 800 }}>{T.title}</h1><p style={{ color: "#666" }}>{T.sub}</p>
+      <input value={q} onChange={(e) => setQ(e.target.value)} placeholder={T.search} style={{ width: "100%", padding: 12, borderRadius: 12, border: "1px solid #ddd", margin: "16px 0", boxSizing: "border-box" }} />
+      <div style={{ display: "flex", gap: 8, marginBottom: 16 }}><button style={{ background: "#111", color: "#fff", border: "none", borderRadius: 999, padding: "8px 14px", fontWeight: 700 }}>{T.forYou}</button><button style={{ background: "#eee", border: "none", borderRadius: 999, padding: "8px 14px", fontWeight: 700 }}>{T.business}</button><button style={{ background: "#eee", border: "none", borderRadius: 999, padding: "8px 14px", fontWeight: 700 }}>{T.explore}</button><button style={{ marginLeft: "auto", background: "#4B6BFF", color: "#fff", border: "none", borderRadius: 999, padding: "8px 14px", fontWeight: 700 }}>{T.create}</button></div>
+      {posts.length === 0 ? <p>{T.empty}</p> : posts.map((p, i) => (
+        <div key={i} style={{ background: "#fff", border: "1px solid #eee", borderRadius: 16, padding: 16, marginBottom: 12 }}>
+          <b>{p.biz}</b><span style={{ background: "#E8EDFF", color: "#4B6BFF", fontSize: 11, padding: "2px 8px", borderRadius: 999, marginLeft: 8 }}>{T.business}</span>
+          <p>{p.text}</p>
+          <div style={{ display: "flex", gap: 12, color: "#666", fontSize: 13 }}><button onClick={() => { const n = new Set(liked); if (n.has(i)) n.delete(i); else n.add(i); setLiked(n); }} style={{ border: "none", background: "none", cursor: "pointer" }}>❤️ {T.like} {p.likes + (liked.has(i) ? 1 : 0)}</button><span>💬 {T.comment}</span><span>↗ {T.share}</span><button style={{ marginLeft: "auto", background: "#111", color: "#fff", border: "none", borderRadius: 999, padding: "6px 12px", fontWeight: 700 }}>{T.follow}</button></div>
         </div>
-        <nav className="nav-desktop">
-          <Link href="/" className="nav-tab">▦ {t("explore", lang)}</Link>
-          <Link href="/#feed" className="nav-tab active">▶ {t("feed", lang)}</Link>
-          <Link href="/v-circle" className="nav-link">👥 {t("community", lang)}</Link>
-          <Link href="/v-market" className="nav-link">🛒 {t("market", lang)}</Link>
-          <Link href="/v-meet" className="nav-link">🎥 {t("meet", lang)}</Link>
-        </nav>
-        <div className="top-right">
-          <LanguageSwitcher />
-          {userName ? <span className="chip">● {userName}</span> : <Link href="/dashboard" className="btn-ghost">Sign In</Link>}
-        </div>
-      </header>
-
-      {/* ===== JUDUL - JELAS & SIMPLE ===== */}
-      <main className="bf-main">
-        <div className="bf-head">
-          <span className="eyebrow">BUSINESS FEED</span>
-          <h1>{tab==="following" ? t("following", lang) : t("forYou", lang)}</h1>
-          <p>Update bisnis, produk & peluang — dari seluruh ekosistem v-nect.</p>
-        </div>
-
-        {/* TABS - CUMA 2, NGGAK NUMPUK */}
-        <div className="tabs">
-          <button onClick={()=>setTab("following")} className={tab==="following"?"tab active":"tab"}>{t("following", lang)}</button>
-          <button onClick={()=>setTab("foryou")} className={tab==="foryou"?"tab active":"tab"}>{t("forYou", lang)}</button>
-          <Link href="/v-circle" className="tab-link">👥 {t("community", lang)} →</Link>
-        </div>
-
-        {/* FEED */}
-        {loading ? <div className="loading">Loading...</div> : posts.length===0 ? (
-          <div className="empty">
-            <div className="empty-logo">v-nect</div>
-            <h3>Belum ada post published.</h3>
-            <p>Jadi yang pertama posting update bisnis kamu.</p>
-            <Link href="/dashboard" className="btn-primary">+ Buat Post →</Link>
-          </div>
-        ) : (
-          <div className="feed-list">
-            {posts.map(p=>(
-              <article key={p.id} className="post-card">
-                <div className="post-top">
-                  <span className="avatar">{p.companies?.company_name?.charAt(0)?.toUpperCase() || "V"}</span>
-                  <div className="post-meta">
-                    <b>@{p.companies?.company_name || "v-nect Official"}</b>
-                    <span>{new Date(p.created_at).toLocaleDateString("id-ID", { day: "numeric", month: "short", year: "numeric" })} • {p.post_type}</span>
-                  </div>
-                  <span className="post-badge">{p.post_type}</span>
-                </div>
-                <h3>{p.title}</h3>
-                <p className="post-content">{p.content?.slice(0, 280)}{(p.content?.length||0)>280 ? "..." : ""}</p>
-                <div className="post-actions">
-                  <button>♥ Like</button>
-                  <button>💬 Komentar</button>
-                  <button>↗ Share</button>
-                  <button>☆ Save</button>
-                </div>
-              </article>
-            ))}
-          </div>
-        )}
-      </main>
-
-      <footer className="footer"><b>v<span>-nect</span></b><p>Connect Beyond Boundaries.</p><small>© 2026 v-nect</small></footer>
-
-      <nav className="bottom-nav">
-        <Link href="/" className="bnav bnav-home">⌂<small>{lang==="id"?"Beranda":"Home"}</small></Link>
-        <Link href="/v-market" className="bnav">🛒<small>{t("market", lang)}</small></Link>
-        <Link href="/#feed" className="bnav plus">+<small></small></Link>
-        <Link href="/v-circle?tab=messages" className="bnav">✉️<small>Kotak Masuk</small></Link>
-        <Link href="/v-hub" className="bnav">●<small>Profil</small></Link>
-      </nav>
-
-      <style jsx>{`
-        .bf{background:#060B24;color:#f3f7ff;min-height:100vh;font-family:var(--font-sans),Arial,sans-serif;padding-bottom:70px;overflow-x:hidden}
-        .topnav{position:sticky;top:0;z-index:30;display:flex;justify-content:space-between;align-items:center;gap:12px;padding:12px 6%;background:#060B24;border-bottom:1px solid rgba(138,165,255,.15)}
-        .top-left{display:flex;align-items:center;gap:12px}
-        .brand{font-size:21px;font-weight:850;color:#fff;text-decoration:none;white-space:nowrap}.brand span,.footer span{color:#8ab4ff}
-        .home-pill{display:flex;align-items:center;gap:7px;background:#fff;color:#060B24;border:2px solid #fff;padding:8px 16px;border-radius:999px;font-size:13.5px;font-weight:800;text-decoration:none;box-shadow:0 6px 18px rgba(255,255,255,.18);white-space:nowrap}
-        .home-icon{font-size:17px;line-height:1}.home-dot{color:#0CAA91;font-size:9px}
-        .nav-desktop{display:flex;gap:8px;align-items:center}
-        .nav-tab{background:rgba(255,255,255,.06);border:1px solid rgba(154,178,255,.25);color:#d9e4ff;padding:8px 16px;border-radius:999px;font-size:13px;font-weight:700;text-decoration:none;white-space:nowrap}.nav-tab.active{background:#fff;color:#060b24;border-color:#fff}
-        .nav-link{color:#d9e4ff;text-decoration:none;font-size:13px;font-weight:600;padding:8px 12px;border-radius:999px;white-space:nowrap}
-        .top-right{display:flex;align-items:center;gap:10px}
-        .chip{background:rgba(138,180,255,.14);border:1px solid rgba(138,180,255,.35);padding:7px 12px;border-radius:999px;font-size:12px;font-weight:700;white-space:nowrap}
-        .btn-ghost{background:rgba(255,255,255,.06);border:1px solid rgba(154,178,255,.28);color:#eef3ff;padding:8px 14px;border-radius:10px;font-size:12px;font-weight:700;text-decoration:none}
-        .bf-main{max-width:620px;margin:0 auto;padding:24px 16px}
-        .eyebrow{color:#79a6ff;font-size:10.5px;font-weight:800;letter-spacing:2.6px}
-        .bf-head h1{margin:8px 0 6px;font-size:30px}.bf-head p{color:#a9b9da;font-size:13.5px;margin:0;line-height:1.6}
-        .tabs{display:flex;gap:8px;align-items:center;margin:20px 0 16px;flex-wrap:wrap}
-        .tab{background:rgba(255,255,255,.06);border:1px solid rgba(154,178,255,.25);color:#d9e4ff;padding:9px 18px;border-radius:999px;font-size:13px;font-weight:700;cursor:pointer}.tab.active{background:#fff;color:#060b24;border-color:#fff}
-        .tab-link{margin-left:auto;color:#9ec0ff;text-decoration:none;font-size:13px;font-weight:700}
-        .feed-list{display:flex;flex-direction:column;gap:14px}
-        .post-card{background:#0E183A;border:1px solid rgba(138,165,255,.16);border-radius:18px;padding:18px}
-        .post-top{display:flex;gap:10px;align-items:center;margin-bottom:10px}
-        .avatar{width:38px;height:38px;border-radius:50%;background:#4B6BFF;display:grid;place-items:center;font-weight:800;flex-shrink:0}
-        .post-meta{display:flex;flex-direction:column;min-width:0}.post-meta b{font-size:14px;white-space:nowrap;overflow:hidden;text-overflow:ellipsis}.post-meta span{font-size:11.5px;color:#9CB0D9}
-        .post-badge{margin-left:auto;background:rgba(138,180,255,.14);border:1px solid rgba(138,180,255,.3);padding:4px 10px;border-radius:999px;font-size:11px;white-space:nowrap}
-        .post-card h3{margin:0 0 6px;font-size:16px;line-height:1.4}.post-content{color:#C3D0EC;font-size:13.5px;line-height:1.6;margin:0}
-        .post-actions{display:flex;gap:8px;margin-top:14px;flex-wrap:wrap}.post-actions button{background:rgba(255,255,255,.06);border:1px solid rgba(154,178,255,.2);color:#d9e4ff;padding:8px 14px;border-radius:999px;font-size:12px;font-weight:700;cursor:pointer}
-        .loading,.empty{padding:40px 20px;text-align:center;background:#0E183A;border:1px solid rgba(138,165,255,.16);border-radius:18px;color:#a9b9da}.empty-logo{font-size:26px;font-weight:850;color:#8ab4ff}.empty h3{color:#fff;margin:10px 0 4px}.empty p{margin:0 0 16px;font-size:13.5px}
-        .btn-primary{background:#4B6BFF;color:#fff;text-decoration:none;padding:12px 20px;border-radius:11px;font-size:13px;font-weight:750;display:inline-block}
-        .footer{text-align:center;padding:28px;color:#96a8d0}.footer b{color:#fff;font-size:22px}
-        .bottom-nav{display:none}
-        @media(max-width:640px){
-          .nav-desktop{display:none}.topnav{padding:10px 4%}.home-pill{padding:7px 12px;font-size:12.5px}.bf-main{padding:18px 12px}
-          .bottom-nav{display:flex;position:fixed;left:0;right:0;bottom:0;z-index:40;background:#060B24;border-top:1px solid rgba(138,165,255,.2);justify-content:space-around;padding:8px 4px 12px}
-          .bottom-nav a{color:#c8d7f5;text-decoration:none;display:flex;flex-direction:column;align-items:center;font-size:18px}.bottom-nav small{font-size:9px;margin-top:2px}.bottom-nav .plus{background:#4B6BFF;width:44px;height:44px;border-radius:14px;display:flex;flex-direction:column;align-items:center;justify-content:center;color:#fff;margin-top:-18px}
-          .bnav-home{color:#fff}.bnav-home small{color:#fff;font-weight:800}
-        }
-      `}</style>
-    </div>
+      ))}
+    </main>
   );
 }
+export default function BusinessFeedPage() { return (<Suspense fallback={<main style={{ padding: 24 }}>Loading...</main>}><FeedContent /></Suspense>); }
