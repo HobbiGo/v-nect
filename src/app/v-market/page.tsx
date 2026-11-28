@@ -1,167 +1,128 @@
 "use client";
 import { useEffect, useState } from "react";
 import TopNav from "@/components/TopNav";
+import Footer from "@/components/Footer";
 import { getLang, type Lang } from "@/lib/i18n";
 
-// v-meet - FULL FIX: Video Live + Live Translate subtitle DI DALAM video + Flag picker + Swap + Auto-detect
-// File: src/app/v-meet/page.tsx - timpa file lama
+// v-market - FULL FIX Alibaba style: MOQ + Tiered Price + RFQ + Verified + Translate Full
+// File: src/app/v-market/page.tsx - timpa file lama
 
 const TR: Record<string, Record<string, string>> = {
   id: {
-    title: "v-meet",
-    subtitle: "Video live dengan Live Translate. Ngobrol beda bahasa, subtitle langsung muncul di dalam video.",
-    start: "Mulai Meet",
-    join: "Gabung Meet",
-    live: "● LIVE",
-    offline: "Offline - Preview",
-    myLang: "Bahasa Saya",
-    theirLang: "Bahasa Lawan Bicara",
-    swap: "⇄ Tukar",
-    auto: "Auto-detect",
-    subtitleOn: "Subtitle: ON",
-    subtitleOff: "Subtitle: OFF",
-    micOn: "Mic Nyala",
-    micOff: "Mic Mati",
-    camOn: "Kamera Nyala",
-    camOff: "Kamera Mati",
-    end: "Akhiri",
-    chat: "Chat",
-    summary: "Ringkasan",
-    typeMsg: "Ketik pesan...",
-    send: "Kirim",
-    quick: "Quick Pick",
-    you: "Kamu",
-    partner: "Partner",
-    hello: "Halo, senang bertemu denganmu!",
-    helloTrans: "Hello, nice to meet you!",
-    priceQ: "Berapa harga untuk 500 pcs?",
-    priceQTrans: "What is the price for 500 pcs?",
-    moqQ: "Berapa MOQ-nya?",
-    moqQTrans: "What is the MOQ?",
-    shipQ: "Berapa lama pengiriman ke Jakarta?",
-    shipQTrans: "How long is shipping to Jakarta?",
+    title: "v-market",
+    subtitle: "Marketplace B2B ala Alibaba. Cari supplier terverifikasi, bandingkan MOQ & harga bertingkat, kirim RFQ.",
+    search: "Cari produk, supplier, kategori...",
+    all: "Semua",
+    verified: "Terverifikasi ✓",
+    moq: "Min. Order",
+    price: "Harga",
+    tier: "Harga Bertingkat",
+    rfq: "Minta Penawaran",
+    rfqSent: "RFQ Terkirim ✓",
+    chat: "Chat Supplier",
+    store: "Kunjungi Toko",
+    supplier: "Supplier",
+    category: "Kategori",
+    location: "Lokasi",
+    empty: "Tidak ada produk yang cocok.",
+    catAll: "Semua Kategori",
+    catFood: "Makanan & Minuman",
+    catElec: "Elektronik",
+    catFashion: "Fashion",
+    catBeauty: "Kecantikan",
+    sort: "Urutkan",
   },
   en: {
-    title: "v-meet",
-    subtitle: "Live video with Live Translate. Talk in different languages, subtitles appear inside the video.",
-    start: "Start Meet",
-    join: "Join Meet",
-    live: "● LIVE",
-    offline: "Offline - Preview",
-    myLang: "My Language",
-    theirLang: "Partner Language",
-    swap: "⇄ Swap",
-    auto: "Auto-detect",
-    subtitleOn: "Subtitle: ON",
-    subtitleOff: "Subtitle: OFF",
-    micOn: "Mic On",
-    micOff: "Mic Off",
-    camOn: "Camera On",
-    camOff: "Camera Off",
-    end: "End",
-    chat: "Chat",
-    summary: "Summary",
-    typeMsg: "Type a message...",
-    send: "Send",
-    quick: "Quick Pick",
-    you: "You",
-    partner: "Partner",
-    hello: "Hello, nice to meet you!",
-    helloTrans: "Halo, senang bertemu denganmu!",
-    priceQ: "What is the price for 500 pcs?",
-    priceQTrans: "Berapa harga untuk 500 pcs?",
-    moqQ: "What is the MOQ?",
-    moqQTrans: "Berapa MOQ-nya?",
-    shipQ: "How long is shipping to Jakarta?",
-    shipQTrans: "Berapa lama pengiriman ke Jakarta?",
+    title: "v-market",
+    subtitle: "Alibaba-style B2B marketplace. Find verified suppliers, compare MOQ & tiered pricing, send RFQ.",
+    search: "Search products, suppliers, categories...",
+    all: "All",
+    verified: "Verified ✓",
+    moq: "Min. Order",
+    price: "Price",
+    tier: "Tiered Pricing",
+    rfq: "Request Quote",
+    rfqSent: "RFQ Sent ✓",
+    chat: "Chat Supplier",
+    store: "Visit Store",
+    supplier: "Supplier",
+    category: "Category",
+    location: "Location",
+    empty: "No products matched.",
+    catAll: "All Categories",
+    catFood: "Food & Beverage",
+    catElec: "Electronics",
+    catFashion: "Fashion",
+    catBeauty: "Beauty",
+    sort: "Sort",
   },
   zh: {
-    title: "v-meet",
-    subtitle: "带实时翻译的直播视频。不同语言交流，字幕直接显示在视频内。",
-    start: "开始会议",
-    join: "加入会议",
-    live: "● 直播中",
-    offline: "离线 - 预览",
-    myLang: "我的语言",
-    theirLang: "对方语言",
-    swap: "⇄ 交换",
-    auto: "自动检测",
-    subtitleOn: "字幕：开",
-    subtitleOff: "字幕：关",
-    micOn: "麦克风开",
-    micOff: "麦克风关",
-    camOn: "摄像头开",
-    camOff: "摄像头关",
-    end: "结束",
-    chat: "聊天",
-    summary: "摘要",
-    typeMsg: "输入消息...",
-    send: "发送",
-    quick: "快捷选择",
-    you: "你",
-    partner: "对方",
-    hello: "你好，很高兴见到你！",
-    helloTrans: "Halo, senang bertemu denganmu!",
-    priceQ: "500件的价格是多少？",
-    priceQTrans: "Berapa harga untuk 500 pcs?",
-    moqQ: "起订量是多少？",
-    moqQTrans: "Berapa MOQ-nya?",
-    shipQ: "发到雅加达要多久？",
-    shipQTrans: "Berapa lama pengiriman ke Jakarta?",
+    title: "v-market",
+    subtitle: "阿里巴巴风格 B2B 市场。找认证供应商，对比起订量与阶梯价，发送询盘。",
+    search: "搜索产品、供应商、类目...",
+    all: "全部",
+    verified: "已认证 ✓",
+    moq: "起订量",
+    price: "价格",
+    tier: "阶梯价格",
+    rfq: "获取报价",
+    rfqSent: "询盘已发送 ✓",
+    chat: "联系供应商",
+    store: "访问店铺",
+    supplier: "供应商",
+    category: "类目",
+    location: "位置",
+    empty: "没有匹配的产品。",
+    catAll: "全部类目",
+    catFood: "食品饮料",
+    catElec: "电子产品",
+    catFashion: "服装",
+    catBeauty: "美妆",
+    sort: "排序",
   },
   ja: {
-    title: "v-meet",
-    subtitle: "ライブ翻訳付きライブビデオ。違う言語で話しても、字幕がビデオ内に直接表示されます。",
-    start: "ミートを開始",
-    join: "ミートに参加",
-    live: "● ライブ中",
-    offline: "オフライン - プレビュー",
-    myLang: "自分の言語",
-    theirLang: "相手の言語",
-    swap: "⇄ 入れ替え",
-    auto: "自動検出",
-    subtitleOn: "字幕：オン",
-    subtitleOff: "字幕：オフ",
-    micOn: "マイク オン",
-    micOff: "マイク オフ",
-    camOn: "カメラ オン",
-    camOff: "カメラ オフ",
-    end: "終了",
-    chat: "チャット",
-    summary: "要約",
-    typeMsg: "メッセージを入力...",
-    send: "送信",
-    quick: "クイック選択",
-    you: "あなた",
-    partner: "パートナー",
-    hello: "こんにちは、お会いできて嬉しいです！",
-    helloTrans: "Halo, senang bertemu denganmu!",
-    priceQ: "500個の価格はいくらですか？",
-    priceQTrans: "Berapa harga untuk 500 pcs?",
-    moqQ: "MOQはいくつですか？",
-    moqQTrans: "Berapa MOQ-nya?",
-    shipQ: "ジャカルタへの配送はどのくらいかかりますか？",
-    shipQTrans: "Berapa lama pengiriman ke Jakarta?",
+    title: "v-market",
+    subtitle: "アリババ式 B2B マーケット。認証サプライヤーを探し、MOQと段階価格を比較、見積依頼を送る。",
+    search: "製品、サプライヤー、カテゴリを検索...",
+    all: "すべて",
+    verified: "認証済み ✓",
+    moq: "最小注文数",
+    price: "価格",
+    tier: "段階価格",
+    rfq: "見積依頼",
+    rfqSent: "見積依頼送信済み ✓",
+    chat: "サプライヤーに連絡",
+    store: "店舗を見る",
+    supplier: "サプライヤー",
+    category: "カテゴリ",
+    location: "場所",
+    empty: "一致する製品がありません。",
+    catAll: "すべてのカテゴリ",
+    catFood: "食品・飲料",
+    catElec: "電子機器",
+    catFashion: "ファッション",
+    catBeauty: "美容",
+    sort: "並び替え",
   },
 };
 
-const LANGS = [
-  { id: "id", flag: "🇮🇩", name: "Indonesia" },
-  { id: "en", flag: "🇺🇸", name: "English" },
-  { id: "zh", flag: "🇨🇳", name: "中文" },
-  { id: "ja", flag: "🇯🇵", name: "日本語" },
+type Product = { id: string; name: string; supplier: string; country: string; cat: string; price: number; moq: number; tiers: { qty: string; price: string }[]; verified: boolean; emoji: string; rating: string };
+
+const PRODUCTS: Product[] = [
+  { id: "1", name: "Kopi Arabika Gayo 1kg - Single Origin", supplier: "Nusantara Coffee Co.", country: "Indonesia", cat: "food", price: 12.5, moq: 100, tiers: [{ qty: "100-499", price: "$12.50" }, { qty: "500-999", price: "$11.20" }, { qty: "1000+", price: "$9.80" }], verified: true, emoji: "☕", rating: "4.9" },
+  { id: "2", name: "Wireless Earbuds TWS Pro - Bluetooth 5.3", supplier: "Tokyo Earbuds Factory", country: "Japan", cat: "elec", price: 8.9, moq: 500, tiers: [{ qty: "500-999", price: "$8.90" }, { qty: "1000-4999", price: "$7.50" }, { qty: "5000+", price: "$6.20" }], verified: true, emoji: "🎧", rating: "4.8" },
+  { id: "3", name: "Oversized Hoodie Cotton 400GSM", supplier: "Shanghai Fashion Lab", country: "China", cat: "fashion", price: 6.5, moq: 200, tiers: [{ qty: "200-499", price: "$6.50" }, { qty: "500-999", price: "$5.80" }, { qty: "1000+", price: "$4.90" }], verified: true, emoji: "� hoodies".replace(" ", ""), rating: "4.7" },
+  { id: "4", name: "Vitamin C Serum 30ml - Brightening", supplier: "Madrid Beauty Supply", country: "Spain", cat: "beauty", price: 3.2, moq: 300, tiers: [{ qty: "300-999", price: "$3.20" }, { qty: "1000-2999", price: "$2.75" }, { qty: "3000+", price: "$2.30" }], verified: false, emoji: "💧", rating: "4.6" },
+  { id: "5", name: "Teh Herbal Chamomile 500g Bulk", supplier: "Nusantara Coffee Co.", country: "Indonesia", cat: "food", price: 4.1, moq: 100, tiers: [{ qty: "100-499", price: "$4.10" }, { qty: "500+", price: "$3.60" }], verified: true, emoji: "🍵", rating: "4.9" },
+  { id: "6", name: "Smart Watch Fitness AMOLED", supplier: "Tokyo Earbuds Factory", country: "Japan", cat: "elec", price: 18.5, moq: 200, tiers: [{ qty: "200-499", price: "$18.50" }, { qty: "500+", price: "$16.00" }], verified: true, emoji: "⌚", rating: "4.8" },
 ];
 
-export default function VMeetPage() {
+export default function VMarketPage() {
   const [lang, setLang] = useState<Lang>(getLang());
-  const [myLang, setMyLang] = useState("id");
-  const [theirLang, setTheirLang] = useState("en");
-  const [isLive, setIsLive] = useState(false);
-  const [mic, setMic] = useState(true);
-  const [cam, setCam] = useState(true);
-  const [subOn, setSubOn] = useState(true);
-  const [chat, setChat] = useState<{ who: string; text: string; trans: string }[]>([]);
-  const [msg, setMsg] = useState("");
+  const [q, setQ] = useState("");
+  const [cat, setCat] = useState("all");
+  const [rfqSent, setRfqSent] = useState<string[]>([]);
+  const [busy, setBusy] = useState<string[]>([]);
 
   useEffect(() => {
     const h = (e: any) => setLang(e.detail as Lang);
@@ -170,148 +131,92 @@ export default function VMeetPage() {
   }, []);
 
   const tr = (k: string) => TR[lang]?.[k] || TR.en[k] || k;
-  const myFlag = LANGS.find((l) => l.id === myLang)?.flag || "🇮🇩";
-  const theirFlag = LANGS.find((l) => l.id === theirLang)?.flag || "🇺🇸";
+  const list = PRODUCTS.filter((p) => (cat === "all" || p.cat === cat) && (p.name + p.supplier + p.country).toLowerCase().includes(q.toLowerCase()));
 
-  const quickSend = (key: string) => {
-    const text = TR[myLang]?.[key] || TR.en[key];
-    const trans = TR[myLang]?.[key + "Trans"] || TR.en[key + "Trans"] || "";
-    setChat((c) => [...c, { who: tr("you"), text, trans }]);
+  const sendRFQ = (id: string) => {
+    if (busy.includes(id) || rfqSent.includes(id)) return;
+    setBusy((b) => [...b, id]);
+    setRfqSent((prev) => [...prev, id]);
+    setTimeout(() => setBusy((b) => b.filter((x) => x !== id)), 600);
   };
-  const sendMsg = () => {
-    if (!msg.trim()) return;
-    setChat((c) => [...c, { who: tr("you"), text: msg, trans: "[auto-translate] " + msg }]);
-    setMsg("");
-  };
-  const swap = () => { const a = myLang; setMyLang(theirLang); setTheirLang(a); };
+
+  const cats = [
+    { id: "all", label: tr("catAll") },
+    { id: "food", label: tr("catFood") },
+    { id: "elec", label: tr("catElec") },
+    { id: "fashion", label: tr("catFashion") },
+    { id: "beauty", label: tr("catBeauty") },
+  ];
 
   return (
-    <main className="meet">
-      <TopNav active="meet" />
+    <main className="market">
+      <TopNav active="market" />
       <section className="head">
         <h1>{tr("title")}</h1>
         <p>{tr("subtitle")}</p>
-        {/* FLAG PICKER - Bahasa Saya / Bahasa Lawan Bicara + Swap + Auto */}
-        <div className="langbar">
-          <div className="langbox">
-            <span className="lbl">{tr("myLang")}</span>
-            <div className="flags">
-              {LANGS.map((l) => (
-                <button key={l.id} onClick={() => setMyLang(l.id)} className={myLang === l.id ? "flag active" : "flag"} title={l.name}>{l.flag}</button>
-              ))}
+        <div className="searchbar"><span>🔍</span><input value={q} onChange={(e) => setQ(e.target.value)} placeholder={tr("search")} /></div>
+        <div className="cats">
+          {cats.map((c) => (
+            <button key={c.id} onClick={() => setCat(c.id)} className={cat === c.id ? "cat active" : "cat"}>{c.label}</button>
+          ))}
+        </div>
+      </section>
+      <section className="grid">
+        {list.length === 0 ? <p className="empty">{tr("empty")}</p> : list.map((p) => (
+          <article key={p.id} className="card">
+            <div className="thumb">{p.emoji}</div>
+            <h3>{p.name}</h3>
+            <p className="supplier">🏢 {p.supplier} {p.verified && <span className="verified">✓ {tr("verified")}</span>}</p>
+            <p className="meta">📍 {p.country} • ⭐ {p.rating} • {tr("moq")}: {p.moq} pcs</p>
+            <div className="price-row"><span className="price">${p.price.toFixed(2)}</span><span className="per">/ pcs</span></div>
+            <div className="tiers">
+              <b>{tr("tier")}</b>
+              {p.tiers.map((t) => <div key={t.qty} className="tier"><span>{t.qty} pcs</span><b>{t.price}</b></div>)}
             </div>
-          </div>
-          <button onClick={swap} className="swap">{tr("swap")}</button>
-          <div className="langbox">
-            <span className="lbl">{tr("theirLang")}</span>
-            <div className="flags">
-              {LANGS.map((l) => (
-                <button key={l.id} onClick={() => setTheirLang(l.id)} className={theirLang === l.id ? "flag active" : "flag"} title={l.name}>{l.flag}</button>
-              ))}
+            <div className="actions">
+              <button onClick={() => sendRFQ(p.id)} disabled={busy.includes(p.id) || rfqSent.includes(p.id)} className={rfqSent.includes(p.id) ? "btn-done" : "btn-primary"}>
+                {rfqSent.includes(p.id) ? tr("rfqSent") : tr("rfq")}
+              </button>
+              <button className="btn-ghost">{tr("chat")}</button>
             </div>
-          </div>
-          <span className="auto">✨ {tr("auto")}</span>
-        </div>
+            <button className="store">{tr("store")} →</button>
+          </article>
+        ))}
       </section>
-
-      {/* VIDEO AREA - Subtitle DI DALAM video */}
-      <section className="videos">
-        <div className="video main">
-          <div className="video-bg">👩‍💼</div>
-          <span className={isLive ? "badge live" : "badge off"}>{isLive ? tr("live") : tr("offline")}</span>
-          <span className="name">{theirFlag} {tr("partner")} • {LANGS.find((l) => l.id === theirLang)?.name}</span>
-          {subOn && (
-            <div className="subtitle">
-              <span>{myFlag} {TR[myLang]?.hello || TR.en.hello}</span>
-              <small>{theirFlag} {TR[myLang]?.helloTrans || TR.en.helloTrans}</small>
-            </div>
-          )}
-        </div>
-        <div className="video self">
-          <div className="video-bg">🧑</div>
-          <span className="name">{myFlag} {tr("you")} • {LANGS.find((l) => l.id === myLang)?.name}</span>
-          {subOn && <div className="subtitle small"><span>{myFlag} {TR[myLang]?.hello || ""}</span></div>}
-        </div>
-      </section>
-
-      {/* CONTROLS */}
-      <section className="controls">
-        <button onClick={() => setMic(!mic)} className={mic ? "ctl on" : "ctl off"}>🎤 {mic ? tr("micOn") : tr("micOff")}</button>
-        <button onClick={() => setCam(!cam)} className={cam ? "ctl on" : "ctl off"}>📷 {cam ? tr("camOn") : tr("camOff")}</button>
-        <button onClick={() => setSubOn(!subOn)} className={subOn ? "ctl on" : "ctl off"}>💬 {subOn ? tr("subtitleOn") : tr("subtitleOff")}</button>
-        {!isLive ? (
-          <button onClick={() => setIsLive(true)} className="ctl start">▶ {tr("start")}</button>
-        ) : (
-          <button onClick={() => setIsLive(false)} className="ctl end">■ {tr("end")}</button>
-        )}
-      </section>
-
-      {/* QUICK PICK + CHAT */}
-      <section className="bottom">
-        <div className="quick">
-          <b>⚡ {tr("quick")}</b>
-          <button onClick={() => quickSend("hello")}>👋 {TR[myLang]?.hello || TR.en.hello}</button>
-          <button onClick={() => quickSend("priceQ")}>💰 {TR[myLang]?.priceQ || TR.en.priceQ}</button>
-          <button onClick={() => quickSend("moqQ")}>📦 {TR[myLang]?.moqQ || TR.en.moqQ}</button>
-          <button onClick={() => quickSend("shipQ")}>🚚 {TR[myLang]?.shipQ || TR.en.shipQ}</button>
-        </div>
-        <div className="chatbox">
-          <b>💬 {tr("chat")}</b>
-          <div className="msgs">
-            {chat.length === 0 ? <p className="empty">—</p> : chat.map((m, i) => (
-              <div key={i} className="msg"><b>{m.who}</b><p>{m.text}</p><small>→ {m.trans}</small></div>
-            ))}
-          </div>
-          <div className="inputrow">
-            <input value={msg} onChange={(e) => setMsg(e.target.value)} placeholder={tr("typeMsg")} onKeyDown={(e) => e.key === "Enter" && sendMsg()} />
-            <button onClick={sendMsg}>{tr("send")}</button>
-          </div>
-        </div>
-      </section>
-
       <style jsx>{`
-        .meet { background: #060B24; color: #F3F7FF; min-height: 100vh; padding-bottom: 40px; }
-        .head { max-width: 1100px; margin: 0 auto; padding: 28px 4% 10px; }
+        .market { background: #060B24; color: #F3F7FF; min-height: 100vh; padding-bottom: 40px; }
+        .head { max-width: 1150px; margin: 0 auto; padding: 28px 4% 10px; }
         .head h1 { font-size: 36px; margin: 0 0 8px; }
         .head p { color: #B4C6E7; margin: 0 0 18px; line-height: 1.6; }
-        .langbar { display: flex; gap: 12px; align-items: center; flex-wrap: wrap; background: #0E183A; border: 1px solid rgba(138,165,255,.2); border-radius: 16px; padding: 14px; }
-        .langbox { display: flex; flex-direction: column; gap: 6px; }
-        .lbl { font-size: 12px; color: #B4C6E7; font-weight: 700; }
-        .flags { display: flex; gap: 6px; }
-        .flag { font-size: 22px; background: rgba(255,255,255,.07); border: 1px solid rgba(154,178,255,.28); border-radius: 10px; padding: 6px 10px; cursor: pointer; }
-        .flag.active { background: #fff; border-color: #fff; transform: scale(1.08); }
-        .swap { background: #4B6BFF; color: #fff; border: none; padding: 10px 14px; border-radius: 999px; font-weight: 800; cursor: pointer; }
-        .auto { font-size: 12px; color: #AFC6FF; font-weight: 700; }
-        .videos { max-width: 1100px; margin: 16px auto 0; padding: 0 4%; display: grid; grid-template-columns: 2fr 1fr; gap: 12px; }
-        .video { position: relative; background: #0E183A; border: 1px solid rgba(138,165,255,.2); border-radius: 18px; overflow: hidden; min-height: 320px; display: grid; place-items: center; }
-        .video-bg { font-size: 90px; }
-        .badge { position: absolute; top: 12px; left: 12px; padding: 6px 12px; border-radius: 999px; font-size: 12px; font-weight: 800; }
-        .badge.live { background: #EF4444; color: #fff; }
-        .badge.off { background: rgba(255,255,255,.15); color: #fff; }
-        .name { position: absolute; top: 12px; right: 12px; background: rgba(0,0,0,.5); padding: 6px 10px; border-radius: 999px; font-size: 12px; font-weight: 700; }
-        .subtitle { position: absolute; bottom: 14px; left: 12px; right: 12px; background: rgba(0,0,0,.72); border-radius: 12px; padding: 10px 12px; display: flex; flex-direction: column; gap: 2px; text-align: center; }
-        .subtitle span { font-size: 14px; font-weight: 700; }
-        .subtitle small { font-size: 12px; color: #AFC6FF; }
-        .subtitle.small { padding: 8px; }
-        .controls { max-width: 1100px; margin: 14px auto 0; padding: 0 4%; display: flex; gap: 8px; flex-wrap: wrap; justify-content: center; }
-        .ctl { padding: 11px 18px; border-radius: 999px; font-weight: 800; cursor: pointer; border: 1px solid rgba(154,178,255,.3); background: rgba(255,255,255,.07); color: #fff; }
-        .ctl.on { background: #fff; color: #060B24; }
-        .ctl.start { background: #22C55E; color: #fff; border-color: #22C55E; }
-        .ctl.end { background: #EF4444; color: #fff; border-color: #EF4444; }
-        .bottom { max-width: 1100px; margin: 16px auto 0; padding: 0 4%; display: grid; grid-template-columns: 1fr 1fr; gap: 12px; }
-        .quick, .chatbox { background: #0E183A; border: 1px solid rgba(138,165,255,.2); border-radius: 16px; padding: 16px; display: flex; flex-direction: column; gap: 8px; }
-        .quick button { text-align: left; background: rgba(255,255,255,.06); border: 1px solid rgba(154,178,255,.2); color: #E2ECFF; padding: 10px 12px; border-radius: 12px; cursor: pointer; font-size: 13px; }
-        .msgs { min-height: 90px; display: flex; flex-direction: column; gap: 8px; }
-        .msg { background: rgba(255,255,255,.05); padding: 10px; border-radius: 12px; }
-        .msg b { font-size: 12px; }
-        .msg p { margin: 4px 0 2px; font-size: 13px; }
-        .msg small { color: #AFC6FF; font-size: 12px; }
-        .inputrow { display: flex; gap: 8px; }
-        .inputrow input { flex: 1; background: rgba(255,255,255,.07); border: 1px solid rgba(154,178,255,.25); border-radius: 11px; padding: 11px; color: #fff; outline: none; }
-        .inputrow button { background: #4B6BFF; color: #fff; border: none; padding: 11px 16px; border-radius: 11px; font-weight: 800; cursor: pointer; }
-        .empty { color: #8A9CC4; text-align: center; }
-        @media (max-width: 700px) { .videos, .bottom { grid-template-columns: 1fr; } }
+        .searchbar { display: flex; gap: 10px; align-items: center; background: #0E183A; border: 1px solid rgba(138,165,255,.25); border-radius: 14px; padding: 12px 14px; }
+        .searchbar input { flex: 1; background: transparent; border: none; outline: none; color: #fff; font-size: 14px; }
+        .searchbar input::placeholder { color: #8A9CC4; }
+        .cats { display: flex; gap: 8px; flex-wrap: wrap; margin-top: 16px; }
+        .cat { background: rgba(255,255,255,.07); border: 1px solid rgba(154,178,255,.28); color: #E2ECFF; padding: 9px 16px; border-radius: 999px; font-weight: 700; cursor: pointer; }
+        .cat.active { background: #fff; color: #060B24; border-color: #fff; }
+        .grid { max-width: 1150px; margin: 0 auto; padding: 18px 4%; display: grid; grid-template-columns: repeat(3,1fr); gap: 14px; }
+        .card { background: #0E183A; border: 1px solid rgba(138,165,255,.18); border-radius: 18px; padding: 18px; display: flex; flex-direction: column; gap: 8px; }
+        .thumb { height: 110px; border-radius: 12px; background: #1A2A5A; display: grid; place-items: center; font-size: 44px; }
+        .card h3 { font-size: 15px; line-height: 1.4; margin: 6px 0 0; }
+        .supplier { font-size: 13px; color: #B4C6E7; margin: 0; }
+        .verified { color: #4ADE80; font-weight: 800; font-size: 12px; }
+        .meta { font-size: 12px; color: #B4C6E7; margin: 0; }
+        .price-row { display: flex; gap: 4px; align-items: baseline; margin-top: 4px; }
+        .price { font-size: 22px; font-weight: 850; color: #FF6B35; }
+        .per { font-size: 12px; color: #B4C6E7; }
+        .tiers { background: rgba(255,255,255,.04); border-radius: 12px; padding: 10px 12px; display: flex; flex-direction: column; gap: 6px; }
+        .tiers b { font-size: 12px; }
+        .tier { display: flex; justify-content: space-between; font-size: 12px; color: #B4C6E7; }
+        .tier b { color: #fff; }
+        .actions { display: flex; gap: 8px; margin-top: 6px; }
+        .btn-primary { flex: 1; background: #FF6B35; color: #fff; border: none; padding: 11px; border-radius: 11px; font-weight: 800; cursor: pointer; }
+        .btn-done { flex: 1; background: rgba(74,222,128,.15); color: #4ADE80; border: 1px solid rgba(74,222,128,.4); padding: 11px; border-radius: 11px; font-weight: 800; cursor: pointer; }
+        .btn-ghost { background: rgba(255,255,255,.07); color: #fff; border: 1px solid rgba(154,178,255,.28); padding: 11px 14px; border-radius: 11px; font-weight: 700; cursor: pointer; }
+        .store { background: transparent; border: none; color: #8AB4FF; font-weight: 800; cursor: pointer; padding: 6px; }
+        .empty { color: #B4C6E7; grid-column: 1 / -1; text-align: center; padding: 30px; }
+        @media (max-width: 700px) { .grid { grid-template-columns: 1fr; } }
       `}</style>
+          <Footer />
     </main>
   );
 }
