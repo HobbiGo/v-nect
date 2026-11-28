@@ -1,34 +1,139 @@
 "use client";
 import { useEffect, useState } from "react";
-import Link from "next/link";
-import { createClient } from "@/lib/supabase/client";
-import LanguageSwitcher from "@/components/LanguageSwitcher";
-import { t, getLang, type Lang } from "@/lib/i18n";
+import TopNav from "@/components/TopNav";
+import { getLang, type Lang } from "@/lib/i18n";
 
-type Person = { id: string; name: string; role: string; location: string; avatar: string; tags: string[] };
-type Circle = { id: string; name: string; members: number; desc: string; icon: string; joined: boolean };
+// v-circle - FULL FIX: Logo gede tanpa tulisan, TopNav bareng, Translate full, Tanpa garis, Connect 1x klik
+// File: src/app/v-circle/page.tsx - timpa file lama
 
-const DEMO_PEOPLE: Person[] = [
-  { id: "1", name: "Ayu Prameswari", role: "Founder • Fashion Export", location: "Jakarta, Indonesia", avatar: "A", tags: ["Fashion", "Export", "UMKM"] },
-  { id: "2", name: "David Chen", role: "Supplier • Electronics", location: "Shenzhen, China", avatar: "D", tags: ["Electronics", "OEM", "B2B"] },
-  { id: "3", name: "Sato Yuki", role: "Buyer • Retail Japan", location: "Osaka, Japan", avatar: "S", tags: ["Retail", "Import", "Japan"] },
-  { id: "4", name: "Maria Gonzalez", role: "Distributor • Food", location: "Madrid, Spain", avatar: "M", tags: ["Food", "Distribution"] },
+const TR: Record<string, Record<string, string>> = {
+  id: {
+    title: "v-circle",
+    subtitle: "Founder, profesional & perusahaan. Cari partner, diskusi, tanya produk — di satu circle.",
+    search: "Cari orang, circle, produk, negara...",
+    people: "Orang",
+    companies: "Perusahaan",
+    circles: "Circle",
+    inbox: "Kotak Masuk",
+    connect: "Connect",
+    connected: "Terhubung ✓",
+    pending: "Menunggu...",
+    message: "Pesan",
+    location: "Lokasi",
+    industry: "Industri",
+    members: "Anggota",
+    join: "Gabung",
+    joined: "Sudah Gabung ✓",
+    all: "Semua",
+    emptyPeople: "Belum ada orang yang cocok.",
+    emptyCompanies: "Belum ada perusahaan yang cocok.",
+    emptyCircles: "Belum ada circle yang cocok.",
+    inboxEmpty: "Belum ada pesan.",
+    filterAll: "Semua Negara",
+  },
+  en: {
+    title: "v-circle",
+    subtitle: "Founders, professionals & companies. Find partners, discuss, ask about products — in one circle.",
+    search: "Search people, circles, products, countries...",
+    people: "People",
+    companies: "Companies",
+    circles: "Circles",
+    inbox: "Inbox",
+    connect: "Connect",
+    connected: "Connected ✓",
+    pending: "Pending...",
+    message: "Message",
+    location: "Location",
+    industry: "Industry",
+    members: "Members",
+    join: "Join",
+    joined: "Joined ✓",
+    all: "All",
+    emptyPeople: "No people matched.",
+    emptyCompanies: "No companies matched.",
+    emptyCircles: "No circles matched.",
+    inboxEmpty: "No messages yet.",
+    filterAll: "All Countries",
+  },
+  zh: {
+    title: "v-circle",
+    subtitle: "创始人、专业人士与企业。在一个圈子里找伙伴、讨论、咨询产品。",
+    search: "搜索人、圈子、产品、国家...",
+    people: "人",
+    companies: "公司",
+    circles: "圈子",
+    inbox: "收件箱",
+    connect: "连接",
+    connected: "已连接 ✓",
+    pending: "等待中...",
+    message: "发消息",
+    location: "位置",
+    industry: "行业",
+    members: "成员",
+    join: "加入",
+    joined: "已加入 ✓",
+    all: "全部",
+    emptyPeople: "没有匹配的人。",
+    emptyCompanies: "没有匹配的公司。",
+    emptyCircles: "没有匹配的圈子。",
+    inboxEmpty: "暂无消息。",
+    filterAll: "所有国家",
+  },
+  ja: {
+    title: "v-circle",
+    subtitle: "創業者、専門家、企業。1つのサークルでパートナー探し、議論、製品相談。",
+    search: "人、サークル、製品、国を検索...",
+    people: "人",
+    companies: "企業",
+    circles: "サークル",
+    inbox: "受信箱",
+    connect: "つながる",
+    connected: "つながり済み ✓",
+    pending: "保留中...",
+    message: "メッセージ",
+    location: "場所",
+    industry: "業界",
+    members: "メンバー",
+    join: "参加",
+    joined: "参加済み ✓",
+    all: "すべて",
+    emptyPeople: "一致する人がいません。",
+    emptyCompanies: "一致する企業がありません。",
+    emptyCircles: "一致するサークルがありません。",
+    inboxEmpty: "メッセージはまだありません。",
+    filterAll: "すべての国",
+  },
+};
+
+const PEOPLE = [
+  { id: "p1", name: "Ayu Putri", role: "Founder • Fashion", country: "Indonesia", avatar: "👩", tags: ["Fashion", "Export"] },
+  { id: "p2", name: "Kenji Tanaka", role: "Buyer • Electronics", country: "Japan", avatar: "👨", tags: ["Electronics", "Import"] },
+  { id: "p3", name: "Li Wei", role: "Supplier • Coffee", country: "China", avatar: "🧑", tags: ["Coffee", "Factory"] },
+  { id: "p4", name: "Maria Gomez", role: "Distributor • Beauty", country: "Spain", avatar: "👩‍💼", tags: ["Beauty", "Retail"] },
+  { id: "p5", name: "David Kim", role: "CEO • Tech", country: "South Korea", avatar: "👨‍💼", tags: ["Tech", "SaaS"] },
+  { id: "p6", name: "Sarah Lim", role: "Marketing • F&B", country: "Singapore", avatar: "👩", tags: ["F&B", "Marketing"] },
 ];
-
-const DEMO_CIRCLES: Circle[] = [
-  { id: "c1", name: "Export Indonesia → Global", members: 1240, desc: "Diskusi export, bea cukai, buyer luar negeri.", icon: "🌏", joined: true },
-  { id: "c2", name: "Supplier & Pabrik Asia", members: 860, desc: "Cari supplier, MOQ, harga pabrik.", icon: "🏭", joined: false },
-  { id: "c3", name: "Founder & UMKM Naik Kelas", members: 2100, desc: "Branding, marketplace, pendanaan.", icon: "🚀", joined: false },
+const COMPANIES = [
+  { id: "c1", name: "Nusantara Coffee Co.", industry: "Makanan • Kopi", country: "Indonesia", avatar: "☕" },
+  { id: "c2", name: "Tokyo Earbuds Factory", industry: "Elektronik • Audio", country: "Japan", avatar: "🎧" },
+  { id: "c3", name: "Shanghai Fashion Lab", industry: "Fashion • Garmen", country: "China", avatar: "👗" },
+  { id: "c4", name: "Madrid Beauty Supply", industry: "Kecantikan • Skincare", country: "Spain", avatar: "💄" },
+];
+const CIRCLES = [
+  { id: "ci1", name: "Export Kopi Indonesia", members: 1240, desc: "Diskusi buyer, harga, logistik kopi." },
+  { id: "ci2", name: "Electronics Sourcing Asia", members: 860, desc: "Cari pabrik, MOQ, QC elektronik." },
+  { id: "ci3", name: "Fashion Founders", members: 2100, desc: "Brand, produksi, marketplace fashion." },
+  { id: "ci4", name: "Beauty Distributors", members: 640, desc: "Distribusi skincare & kosmetik." },
 ];
 
 export default function VCirclePage() {
-  const [supabase] = useState(() => createClient());
   const [lang, setLang] = useState<Lang>(getLang());
-  const [tab, setTab] = useState<"people"|"circles"|"messages">("people");
+  const [tab, setTab] = useState<"people" | "companies" | "circles" | "inbox">("people");
+  const [q, setQ] = useState("");
   const [connected, setConnected] = useState<string[]>([]);
-  const [joined, setJoined] = useState<string[]>(["c1"]);
-  const [search, setSearch] = useState("");
-  const [userName, setUserName] = useState<string | null>(null);
+  const [joined, setJoined] = useState<string[]>([]);
+  // FIX Connect dobel: kunci per-id, jadi 1 klik = 1 aksi, nggak bisa dobel klik
+  const [busy, setBusy] = useState<string[]>([]);
 
   useEffect(() => {
     const h = (e: any) => setLang(e.detail as Lang);
@@ -36,160 +141,111 @@ export default function VCirclePage() {
     return () => window.removeEventListener("vnect-lang-change", h);
   }, []);
 
-  useEffect(() => {
-    supabase.auth.getUser().then(({ data }) => {
-      if (data.user) setUserName(data.user.user_metadata?.full_name || data.user.email?.split("@")[0] || "Member");
-    });
-  }, [supabase]);
+  const tr = (k: string) => TR[lang]?.[k] || TR.en[k] || k;
+  const filter = (s: string) => s.toLowerCase().includes(q.toLowerCase());
+  const people = PEOPLE.filter((p) => filter(p.name + p.role + p.country));
+  const companies = COMPANIES.filter((c) => filter(c.name + c.industry + c.country));
+  const circles = CIRCLES.filter((c) => filter(c.name + c.desc));
 
-  function toggleConnect(id: string) {
-    setConnected(p => p.includes(id) ? p.filter(x => x !== id) : [...p, id]);
-  }
-  function toggleJoin(id: string) {
-    setJoined(p => p.includes(id) ? p.filter(x => x !== id) : [...p, id]);
-  }
-
-  const filteredPeople = DEMO_PEOPLE.filter(p => (p.name + p.role + p.location + p.tags.join(" ")).toLowerCase().includes(search.toLowerCase()));
+  const toggleConnect = (id: string) => {
+    if (busy.includes(id)) return; // cegah dobel klik
+    setBusy((b) => [...b, id]);
+    setConnected((prev) => (prev.includes(id) ? prev.filter((x) => x !== id) : [...prev, id]));
+    setTimeout(() => setBusy((b) => b.filter((x) => x !== id)), 600);
+  };
+  const toggleJoin = (id: string) => {
+    if (busy.includes(id)) return;
+    setBusy((b) => [...b, id]);
+    setJoined((prev) => (prev.includes(id) ? prev.filter((x) => x !== id) : [...prev, id]));
+    setTimeout(() => setBusy((b) => b.filter((x) => x !== id)), 600);
+  };
 
   return (
-    <div className="vc">
-      {/* TOPNAV - SAMA KAYAK HOMEPAGE + BUSINESS FEED */}
-      <header className="topnav">
-        <div className="top-left">
-          <Link href="/" className="brand">v<span>-nect</span></Link>
-          <Link href="/" className="home-pill">
-            <span className="home-icon">⌂</span>
-            <span>{lang==="id" ? "Beranda" : lang==="en" ? "Home" : lang==="zh" ? "首页" : lang==="ja" ? "ホーム" : "Home"}</span>
-            <span className="home-dot">●</span>
-          </Link>
+    <main className="vcircle">
+      <TopNav active="community" />
+      <section className="head">
+        <h1>{tr("title")}</h1>
+        <p>{tr("subtitle")}</p>
+        <div className="searchbar">
+          <span>🔍</span>
+          <input value={q} onChange={(e) => setQ(e.target.value)} placeholder={tr("search")} />
         </div>
-        <nav className="nav-desktop">
-          <Link href="/" className="nav-tab">▦ {t("explore", lang)}</Link>
-          <Link href="/#feed" className="nav-tab">▶ {t("feed", lang)}</Link>
-          <Link href="/v-circle" className="nav-tab active">👥 {t("community", lang)}</Link>
-          <Link href="/v-market" className="nav-link">🛒 {t("market", lang)}</Link>
-          <Link href="/v-meet" className="nav-link">🎥 {t("meet", lang)}</Link>
-        </nav>
-        <div className="top-right">
-          <LanguageSwitcher />
-          {userName ? <span className="chip">● {userName}</span> : <Link href="/dashboard" className="btn-ghost">Sign In</Link>}
-        </div>
-      </header>
-
-      <main className="vc-main">
-        {/* HEADER - JELAS, NGGAK GRADASI */}
-        <div className="vc-head">
-          <span className="eyebrow">COMMUNITY • V-CIRCLE</span>
-          <h1>v-circle {t("community", lang)}</h1>
-          <p>Founder, profesional & perusahaan. Cari partner, diskusi, tanya produk — di satu circle.</p>
-        </div>
-
-        {/* SEARCH - 1 BARIS, JELAS */}
-        <input className="search" value={search} onChange={e=>setSearch(e.target.value)} placeholder="🔍 Cari orang, circle, produk, negara..." />
-
-        {/* TABS - CUMA 3 */}
         <div className="tabs">
-          <button onClick={()=>setTab("people")} className={tab==="people"?"tab active":"tab"}>👥 Orang</button>
-          <button onClick={()=>setTab("circles")} className={tab==="circles"?"tab active":"tab"}>⭕ Circle</button>
-          <button onClick={()=>setTab("messages")} className={tab==="messages"?"tab active":"tab"}>✉️ Kotak Masuk</button>
+          <button onClick={() => setTab("people")} className={tab === "people" ? "tab active" : "tab"}>👤 {tr("people")}</button>
+          <button onClick={() => setTab("companies")} className={tab === "companies" ? "tab active" : "tab"}>🏢 {tr("companies")}</button>
+          <button onClick={() => setTab("circles")} className={tab === "circles" ? "tab active" : "tab"}>👥 {tr("circles")}</button>
+          <button onClick={() => setTab("inbox")} className={tab === "inbox" ? "tab active" : "tab"}>✉️ {tr("inbox")}</button>
         </div>
+      </section>
 
-        {tab==="people" && (
-          <div className="list">
-            {filteredPeople.length===0 && <div className="empty">Nggak ketemu. Coba kata lain.</div>}
-            {filteredPeople.map(p=>(
-              <div key={p.id} className="person-card">
-                <span className="avatar">{p.avatar}</span>
-                <div className="person-info">
-                  <b>{p.name}</b>
-                  <span>{p.role}</span>
-                  <span className="loc">📍 {p.location}</span>
-                  <div className="tags">{p.tags.map(tag=><span key={tag} className="tag">{tag}</span>)}</div>
-                </div>
-                <button onClick={()=>toggleConnect(p.id)} className={connected.includes(p.id) ? "btn-connected" : "btn-connect"}>
-                  {connected.includes(p.id) ? "✓ Terhubung" : "+ Connect"}
-                </button>
-              </div>
-            ))}
-          </div>
-        )}
-
-        {tab==="circles" && (
-          <div className="list">
-            {DEMO_CIRCLES.map(c=>(
-              <div key={c.id} className="circle-card">
-                <span className="circle-icon">{c.icon}</span>
-                <div className="person-info">
-                  <b>{c.name}</b>
-                  <span>{c.members.toLocaleString()} anggota</span>
-                  <span className="loc">{c.desc}</span>
-                </div>
-                <button onClick={()=>toggleJoin(c.id)} className={joined.includes(c.id) ? "btn-connected" : "btn-connect"}>
-                  {joined.includes(c.id) ? "✓ Gabung" : "Gabung"}
-                </button>
-              </div>
-            ))}
-          </div>
-        )}
-
-        {tab==="messages" && (
-          <div className="empty">
-            <div className="empty-logo">✉️</div>
-            <h3>Kotak Masuk</h3>
-            <p>Chat sama orang yang udah kamu Connect akan muncul di sini.</p>
-            <button onClick={()=>setTab("people")} className="btn-primary">Cari Orang →</button>
-          </div>
-        )}
-      </main>
-
-      <footer className="footer"><b>v<span>-nect</span></b><p>Connect Beyond Boundaries.</p><small>© 2026 v-nect</small></footer>
-
-      <nav className="bottom-nav">
-        <Link href="/" className="bnav bnav-home">⌂<small>{lang==="id"?"Beranda":"Home"}</small></Link>
-        <Link href="/v-market" className="bnav">🛒<small>{t("market", lang)}</small></Link>
-        <Link href="/#feed" className="bnav plus">+<small></small></Link>
-        <Link href="/v-circle?tab=messages" className="bnav">✉️<small>Kotak Masuk</small></Link>
-        <Link href="/v-hub" className="bnav">●<small>Profil</small></Link>
-      </nav>
+      <section className="grid">
+        {tab === "people" && (people.length === 0 ? <p className="empty">{tr("emptyPeople")}</p> : people.map((p) => (
+          <article key={p.id} className="card">
+            <div className="row"><span className="avatar">{p.avatar}</span><div><b>{p.name}</b><p>{p.role}</p></div></div>
+            <p className="meta">📍 {p.country}</p>
+            <div className="tags">{p.tags.map((t) => <span key={t}>{t}</span>)}</div>
+            <div className="actions">
+              <button onClick={() => toggleConnect(p.id)} disabled={busy.includes(p.id)} className={connected.includes(p.id) ? "btn-done" : "btn-primary"}>
+                {connected.includes(p.id) ? tr("connected") : tr("connect")}
+              </button>
+              <button className="btn-ghost">{tr("message")}</button>
+            </div>
+          </article>
+        )))}
+        {tab === "companies" && (companies.length === 0 ? <p className="empty">{tr("emptyCompanies")}</p> : companies.map((c) => (
+          <article key={c.id} className="card">
+            <div className="row"><span className="avatar">{c.avatar}</span><div><b>{c.name}</b><p>{c.industry}</p></div></div>
+            <p className="meta">📍 {c.country}</p>
+            <div className="actions">
+              <button onClick={() => toggleConnect(c.id)} disabled={busy.includes(c.id)} className={connected.includes(c.id) ? "btn-done" : "btn-primary"}>
+                {connected.includes(c.id) ? tr("connected") : tr("connect")}
+              </button>
+              <button className="btn-ghost">{tr("message")}</button>
+            </div>
+          </article>
+        )))}
+        {tab === "circles" && (circles.length === 0 ? <p className="empty">{tr("emptyCircles")}</p> : circles.map((c) => (
+          <article key={c.id} className="card">
+            <div className="row"><span className="avatar">👥</span><div><b>{c.name}</b><p>{c.members.toLocaleString()} {tr("members")}</p></div></div>
+            <p className="meta">{c.desc}</p>
+            <div className="actions">
+              <button onClick={() => toggleJoin(c.id)} disabled={busy.includes(c.id)} className={joined.includes(c.id) ? "btn-done" : "btn-primary"}>
+                {joined.includes(c.id) ? tr("joined") : tr("join")}
+              </button>
+            </div>
+          </article>
+        )))}
+        {tab === "inbox" && <p className="empty">{tr("inboxEmpty")}</p>}
+      </section>
 
       <style jsx>{`
-        .vc{background:#060B24;color:#f3f7ff;min-height:100vh;font-family:var(--font-sans),Arial,sans-serif;padding-bottom:70px;overflow-x:hidden}
-        .topnav{position:sticky;top:0;z-index:30;display:flex;justify-content:space-between;align-items:center;gap:12px;padding:12px 6%;background:#060B24;border-bottom:1px solid rgba(138,165,255,.15)}
-        .top-left{display:flex;align-items:center;gap:12px}
-        .brand{font-size:21px;font-weight:850;color:#fff;text-decoration:none;white-space:nowrap}.brand span,.footer span{color:#8ab4ff}
-        .home-pill{display:flex;align-items:center;gap:7px;background:#fff;color:#060B24;border:2px solid #fff;padding:8px 16px;border-radius:999px;font-size:13.5px;font-weight:800;text-decoration:none;box-shadow:0 6px 18px rgba(255,255,255,.18);white-space:nowrap}
-        .home-icon{font-size:17px;line-height:1}.home-dot{color:#0CAA91;font-size:9px}
-        .nav-desktop{display:flex;gap:8px;align-items:center}
-        .nav-tab{background:rgba(255,255,255,.06);border:1px solid rgba(154,178,255,.25);color:#d9e4ff;padding:8px 16px;border-radius:999px;font-size:13px;font-weight:700;text-decoration:none;white-space:nowrap}.nav-tab.active{background:#fff;color:#060b24;border-color:#fff}
-        .nav-link{color:#d9e4ff;text-decoration:none;font-size:13px;font-weight:600;padding:8px 12px;border-radius:999px;white-space:nowrap}
-        .top-right{display:flex;align-items:center;gap:10px}
-        .chip{background:rgba(138,180,255,.14);border:1px solid rgba(138,180,255,.35);padding:7px 12px;border-radius:999px;font-size:12px;font-weight:700;white-space:nowrap}
-        .btn-ghost{background:rgba(255,255,255,.06);border:1px solid rgba(154,178,255,.28);color:#eef3ff;padding:8px 14px;border-radius:10px;font-size:12px;font-weight:700;text-decoration:none}
-        .vc-main{max-width:680px;margin:0 auto;padding:24px 16px}
-        .eyebrow{color:#79a6ff;font-size:10.5px;font-weight:800;letter-spacing:2.6px}
-        .vc-head h1{margin:8px 0 6px;font-size:30px}.vc-head p{color:#a9b9da;font-size:13.5px;margin:0;line-height:1.6}
-        .search{width:100%;box-sizing:border-box;background:#0E183A;border:1px solid rgba(138,165,255,.25);border-radius:12px;padding:12px 14px;color:#fff;font-size:14px;margin:18px 0 14px;outline:none}.search::placeholder{color:#8A9DC2}
-        .tabs{display:flex;gap:8px;margin-bottom:16px;flex-wrap:wrap}
-        .tab{background:rgba(255,255,255,.06);border:1px solid rgba(154,178,255,.25);color:#d9e4ff;padding:9px 18px;border-radius:999px;font-size:13px;font-weight:700;cursor:pointer}.tab.active{background:#fff;color:#060b24;border-color:#fff}
-        .list{display:flex;flex-direction:column;gap:12px}
-        .person-card,.circle-card{background:#0E183A;border:1px solid rgba(138,165,255,.16);border-radius:18px;padding:16px;display:flex;gap:12px;align-items:flex-start}
-        .avatar{width:48px;height:48px;flex-shrink:0;border-radius:50%;background:#4B6BFF;display:grid;place-items:center;font-weight:800;font-size:18px}
-        .circle-icon{width:48px;height:48px;flex-shrink:0;border-radius:14px;background:#1A2A5A;display:grid;place-items:center;font-size:22px}
-        .person-info{display:flex;flex-direction:column;gap:2px;min-width:0;flex:1}.person-info b{font-size:15px}.person-info span{font-size:12.5px;color:#B4C6E7;line-height:1.4}.person-info .loc{color:#9CB0D9}
-        .tags{display:flex;gap:6px;flex-wrap:wrap;margin-top:6px}.tag{background:rgba(138,180,255,.14);border:1px solid rgba(138,180,255,.25);padding:3px 9px;border-radius:999px;font-size:11px;color:#C8D7F5}
-        .btn-connect{background:#4B6BFF;color:#fff;border:none;padding:9px 16px;border-radius:999px;font-size:12.5px;font-weight:750;cursor:pointer;white-space:nowrap;flex-shrink:0}.btn-connected{background:#0CAA91;color:#fff;border:none;padding:9px 16px;border-radius:999px;font-size:12.5px;font-weight:750;cursor:pointer;white-space:nowrap;flex-shrink:0}
-        .empty{padding:40px 20px;text-align:center;background:#0E183A;border:1px solid rgba(138,165,255,.16);border-radius:18px;color:#a9b9da}.empty-logo{font-size:26px;font-weight:850;color:#8ab4ff}.empty h3{color:#fff;margin:10px 0 4px}.empty p{margin:0 0 16px;font-size:13.5px}
-        .btn-primary{background:#4B6BFF;color:#fff;text-decoration:none;padding:12px 20px;border-radius:11px;font-size:13px;font-weight:750;display:inline-block;border:none;cursor:pointer}
-        .footer{text-align:center;padding:28px;color:#96a8d0}.footer b{color:#fff;font-size:22px}
-        .bottom-nav{display:none}
-        @media(max-width:640px){
-          .nav-desktop{display:none}.topnav{padding:10px 4%}.home-pill{padding:7px 12px;font-size:12.5px}.vc-main{padding:18px 12px}
-          .person-card,.circle-card{padding:14px}.btn-connect,.btn-connected{padding:8px 12px;font-size:12px}
-          .bottom-nav{display:flex;position:fixed;left:0;right:0;bottom:0;z-index:40;background:#060B24;border-top:1px solid rgba(138,165,255,.2);justify-content:space-around;padding:8px 4px 12px}
-          .bottom-nav a{color:#c8d7f5;text-decoration:none;display:flex;flex-direction:column;align-items:center;font-size:18px}.bottom-nav small{font-size:9px;margin-top:2px}.bottom-nav .plus{background:#4B6BFF;width:44px;height:44px;border-radius:14px;display:flex;flex-direction:column;align-items:center;justify-content:center;color:#fff;margin-top:-18px}
-          .bnav-home{color:#fff}.bnav-home small{color:#fff;font-weight:800}
-        }
+        .vcircle { background: #060B24; color: #F3F7FF; min-height: 100vh; padding-bottom: 40px; }
+        .head { max-width: 1100px; margin: 0 auto; padding: 28px 4% 10px; }
+        .head h1 { font-size: 36px; margin: 0 0 8px; }
+        .head p { color: #B4C6E7; margin: 0 0 18px; line-height: 1.6; }
+        .searchbar { display: flex; gap: 10px; align-items: center; background: #0E183A; border: 1px solid rgba(138,165,255,.25); border-radius: 14px; padding: 12px 14px; }
+        .searchbar input { flex: 1; background: transparent; border: none; outline: none; color: #fff; font-size: 14px; }
+        .searchbar input::placeholder { color: #8A9CC4; }
+        .tabs { display: flex; gap: 8px; flex-wrap: wrap; margin-top: 16px; }
+        .tab { background: rgba(255,255,255,.07); border: 1px solid rgba(154,178,255,.28); color: #E2ECFF; padding: 9px 16px; border-radius: 999px; font-weight: 700; cursor: pointer; text-decoration: none; }
+        .tab.active { background: #fff; color: #060B24; border-color: #fff; }
+        .grid { max-width: 1100px; margin: 0 auto; padding: 18px 4%; display: grid; grid-template-columns: repeat(3,1fr); gap: 14px; }
+        .card { background: #0E183A; border: 1px solid rgba(138,165,255,.18); border-radius: 18px; padding: 18px; display: flex; flex-direction: column; gap: 10px; }
+        .row { display: flex; gap: 12px; align-items: center; }
+        .avatar { width: 48px; height: 48px; border-radius: 50%; background: #1A2A5A; display: grid; place-items: center; font-size: 22px; flex-shrink: 0; }
+        .card b { font-size: 15px; }
+        .card p { margin: 2px 0 0; color: #B4C6E7; font-size: 13px; }
+        .meta { font-size: 13px; }
+        .tags { display: flex; gap: 6px; flex-wrap: wrap; }
+        .tags span { background: rgba(75,107,255,.18); color: #AFC6FF; padding: 5px 10px; border-radius: 999px; font-size: 11px; font-weight: 700; }
+        .actions { display: flex; gap: 8px; margin-top: 4px; }
+        .btn-primary { flex: 1; background: #4B6BFF; color: #fff; border: none; padding: 11px; border-radius: 11px; font-weight: 800; cursor: pointer; }
+        .btn-done { flex: 1; background: rgba(255,255,255,.12); color: #AFC6FF; border: 1px solid rgba(138,165,255,.3); padding: 11px; border-radius: 11px; font-weight: 800; cursor: pointer; }
+        .btn-ghost { background: rgba(255,255,255,.07); color: #fff; border: 1px solid rgba(154,178,255,.28); padding: 11px 14px; border-radius: 11px; font-weight: 700; cursor: pointer; }
+        .btn-primary:disabled, .btn-done:disabled { opacity: .6; }
+        .empty { color: #B4C6E7; grid-column: 1 / -1; text-align: center; padding: 30px; }
+        @media (max-width: 700px) { .grid { grid-template-columns: 1fr; } }
       `}</style>
-    </div>
+    </main>
   );
 }
