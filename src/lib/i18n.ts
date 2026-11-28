@@ -76,3 +76,17 @@ export function useLang() {
   };
   return { lang, setLang };
 }
+
+// COMPAT: file lama manggil getLang(), file baru manggil useLang() — dua-duanya disediain biar gak error lagi
+export function getLang(): Lang {
+  try {
+    const l = localStorage.getItem("vnect-lang") as Lang;
+    if (l && LANGS.includes(l)) return l;
+  } catch {}
+  return "en";
+}
+export function setLangGlobal(l: Lang) {
+  try { localStorage.setItem("vnect-lang", l); } catch {}
+  try { window.dispatchEvent(new CustomEvent("vnect-lang-change", { detail: l })); } catch {}
+}
+export function getLangFromStorage(): Lang { return getLang(); }
