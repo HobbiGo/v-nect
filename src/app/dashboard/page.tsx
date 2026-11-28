@@ -1,4 +1,5 @@
 "use client";
+import SignOutButton from "@/components/SignOutButton";
 import { useEffect, useState } from "react";
 import TopNav from "@/components/TopNav";
 import Footer from "@/components/Footer";
@@ -21,6 +22,7 @@ const TR: Record<string, Record<string, string>> = {
     company: "Company",
     companyDesc: "Profil Perusahaan",
     profile: "Profil Saya",
+    <SignOutButton />
     displayName: "Nama Tampilan",
     bio: "Bio",
     bioPh: "Ceritain bisnis kamu...",
@@ -163,6 +165,7 @@ export default function DashboardPage() {
     <main className="dash">
       {/* DASHBOARD SEMPURNA - hero + stats + gambar + form rapi */}
       <TopNav active="home" />
+      <SignOutButton />
       <section className="wrap">
         <div className="hero">
           <div>
