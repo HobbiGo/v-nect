@@ -77,9 +77,15 @@ a { color: inherit; }
 /* ===== BARU: Logo kiri atas + Community tanpa garis ===== */
 a, a *, .fc-community, .fc-community *, .pill, .pill * { text-decoration: none !important; }
 .brand-logo { display:flex; align-items:center; text-decoration:none !important; }
-.logo-img { height:40px; width:auto; object-fit:contain; }
+.logo-img { height:68px; width:auto; object-fit:contain; }
 .nav-pills { display:flex; gap:6px; align-items:center; }
 .nav-pills .pill { min-width:96px; justify-content:center; }
 .fc-community { text-decoration:none !important; }
 .comm-stats-clean { border:none !important; background:none !important; }
 .comm-stats-clean span { background:none !important; border:none !important; }
+
+/* LOGO GEDE - tulisan v-nect dihapus, logo gambar aja */
+.brand-logo { line-height: 0; }
+.logo-img { height: 68px !important; width: auto !important; min-width: 120px; object-fit: contain; }
+.logo-fallback { display: none !important; }
+@media (max-width: 640px) { .logo-img { height: 52px !important; min-width: 90px; } }
