@@ -21,7 +21,7 @@ const MODULES = [
   { id: "v-chat", name: "v-chat", tag: "Chat & Messaging", desc: "Connect and communicate.", href: "/business-feed", icon: "💬", color: "#36b9ff" },
   { id: "v-meet", name: "v-meet", tag: "Live Meetings", desc: "Voice & video meetings.", href: "/v-meet", icon: "🎥", color: "#bd78ff" },
   { id: "v-hub", name: "v-hub", tag: "Identity Hub", desc: "Build your professional identity.", href: "/v-hub", icon: "✣", color: "#32dce9" },
-  { id: "v-feed", name: "v-business feed", tag: "Business Feed", desc: "Business Feed is in the Feed tab below.", href: "#feed", icon: "▤", color: "#559fff" },
+  { id: "v-feed", name: "v-business feed", tag: "Business Feed", desc: "Business Feed", href: "#feed", icon: "▤", color: "#559fff" },
   { id: "v-circle", name: "v-circle", tag: "Network Circle", desc: "Grow your network.", href: "/v-circle", icon: "👥", color: "#4B6BFF" },
   { id: "v-market", name: "v-market", tag: "Marketplace", desc: "Products & suppliers.", href: "/v-market", icon: "🛒", color: "#fbbf24" },
 ];
@@ -146,7 +146,7 @@ export default function HomePage() {
         if(e.isIntersecting) v.play().catch(()=>{}); else v.pause();
       });
     },{ threshold: 0.4 });
-    const els = feedRef.current?.querySelectorAll("video.tiktok-video");
+    const els = feedRef.current?.querySelectorAll("video.vnect-video");
     els?.forEach(v=>obs.observe(v));
     return ()=>obs.disconnect();
   },[posts, mainTab, feedTab]);
@@ -249,7 +249,7 @@ export default function HomePage() {
         </div>
       </section>
       <section id="explore" className="explore">
-        <div className="sec-head"><div><span className="eyebrow">EXPLORE • ECOSYSTEM</span><h2>Explore the v-nect Suite</h2><p className="eco-note">{lang==="id" ? "Business Feed sudah di dalam sini — klik kartu Business Feed untuk pindah ke tab Feed." : lang==="zh" ? "Business Feed 已在这里 — 点击 Business Feed 卡片切换到 Feed 标签。" : lang==="ja" ? "Business Feed はここにあります — Business Feed カードをクリックして Feed タブへ移動。" : "Business Feed is inside here — click the Business Feed card to go to the Feed tab."}</p></div><span className="link">6 modul • 1 tempat</span></div>
+        <div className="sec-head"><div><span className="eyebrow">EXPLORE • ECOSYSTEM</span><h2>{lang==="id" ? "Jelajahi Suite v-nect" : lang==="zh" ? "探索 v-nect 套件" : lang==="ja" ? "v-nect スイートを探索" : lang==="ko" ? "v-nect 스위트 탐색" : "Explore the v-nect Suite"}</h2><p className="eco-note">{lang==="id" ? "Business Feed sudah di dalam sini — klik kartu Business Feed untuk pindah ke tab Feed." : lang==="zh" ? "Business Feed 已在这里 — 点击 Business Feed 卡片切换到 Feed 标签。" : lang==="ja" ? "Business Feed はここにあります — Business Feed カードをクリックして Feed タブへ移動。" : "Business Feed is inside here — click the Business Feed card to go to the Feed tab."}</p></div><span className="link">6 modul • 1 tempat</span></div>
         <div className="module-grid">
           {MODULES.map(m=>(
             m.id==="v-feed"
@@ -263,7 +263,7 @@ export default function HomePage() {
       {mainTab==="feed" && (
       <div id="feed">
       <section id="explore" className="explore">
-        <div className="sec-head"><div><span className="eyebrow">EXPLORE</span><h2>Explore the v-nect Suite</h2></div><Link href="/explore" className="link">All modules ↗</Link></div>
+        <div className="sec-head"><div><span className="eyebrow">EXPLORE</span><h2>{lang==="id" ? "Jelajahi Suite v-nect" : lang==="zh" ? "探索 v-nect 套件" : lang==="ja" ? "v-nect スイートを探索" : lang==="ko" ? "v-nect 스위트 탐색" : "Explore the v-nect Suite"}</h2></div><Link href="/explore" className="link">{lang==="id" ? "Semua modul ↗" : lang==="zh" ? "全部模块 ↗" : lang==="ja" ? "全モジュール ↗" : lang==="ko" ? "모든 모듈 ↗" : "{lang==="id" ? "Semua modul" : "All modules"} ↗"}</Link></div>
         <div className="module-grid">
           {MODULES.map(m=>(
             <Link key={m.id} href={m.href} className="module-card">
@@ -274,10 +274,10 @@ export default function HomePage() {
         </div>
       </section>
       <section className="feed-section">
-        <div className="sec-head"><div><span className="eyebrow">FEED • BUSINESS FEED</span><h2>{feedTab==="following" ? t("following", lang) : t("forYou", lang)}</h2><p>Scroll ke bawah kayak TikTok. Video jalan sendiri.</p></div><button onClick={()=>goToJelajahi()} className="link">← Balik ke Jelajahi</button></div>
-        <div className="tiktok-tabs feed-tabs"><button onClick={()=>setFeedTab("following")} className={feedTab==="following"?"tab active":"tab"}>{t("following", lang)}</button><button onClick={()=>setFeedTab("foryou")} className={feedTab==="foryou"?"tab active":"tab"}>{t("forYou", lang)}</button></div>
-        {loadingPosts ? <div className="loading">Loading posts...</div> : posts.length===0 ? <div className="loading">Belum ada post published.</div> : (
-        <div className="tiktok-feed" ref={feedRef}>
+        <div className="sec-head"><div><span className="eyebrow">FEED • BUSINESS FEED</span><h2>{feedTab==="following" ? t("following", lang) : t("forYou", lang)}</h2><p>{lang==="id" ? "Scroll ke bawah, video jalan sendiri." : lang==="zh" ? "向下滑动，视频自动播放。" : lang==="ja" ? "下にスクロールすると、動画が自動で再生されます。" : lang==="ko" ? "아래로 스크롤하면 동영상이 자동으로 재생됩니다." : "Scroll down, videos play by themselves."}</p></div><button onClick={()=>goToJelajahi()} className="link">← Balik ke Jelajahi</button></div>
+        <div className="vnect-tabs feed-tabs"><button onClick={()=>setFeedTab("following")} className={feedTab==="following"?"tab active":"tab"}>{t("following", lang)}</button><button onClick={()=>setFeedTab("foryou")} className={feedTab==="foryou"?"tab active":"tab"}>{t("forYou", lang)}</button></div>
+        {loadingPosts ? <div className="loading">{lang==="id" ? "Memuat post..." : "Loading posts..."}</div> : posts.length===0 ? <div className="loading">{lang==="id" ? "Belum ada post yang dipublish." : lang==="zh" ? "暂无已发布的帖子。" : lang==="ja" ? "まだ公開された投稿がありません。" : lang==="ko" ? "게시된 게시물이 아직 없습니다." : "No published posts yet."}</div> : (
+        <div className="vnect-feed" ref={feedRef}>
           {posts.map(post=>{
             const media = getMedia(post);
             const liked = likedPostIds.includes(post.id);
@@ -285,21 +285,21 @@ export default function HomePage() {
             const isOpen = openComments.includes(post.id);
             const caption = extractCaption(post.content) || cleanText(post.content);
             return (
-              <article key={post.id} className="tiktok-card">
-                <div className="tiktok-media">
+              <article key={post.id} className="vnect-card">
+                <div className="vnect-media">
                   {media.type==="upload" ? (
-                    <video className="tiktok-video" src={media.url} autoPlay muted loop playsInline preload="auto" disablePictureInPicture onClick={(e)=>{ const v=e.currentTarget; if(v.paused) v.play().catch(()=>{}); else v.pause(); }} onError={(e)=>{ (e.currentTarget as HTMLVideoElement).style.display="none"; }} />
+                    <video className="vnect-video" src={media.url} autoPlay muted loop playsInline preload="auto" disablePictureInPicture onClick={(e)=>{ const v=e.currentTarget; if(v.paused) v.play().catch(()=>{}); else v.pause(); }} onError={(e)=>{ (e.currentTarget as HTMLVideoElement).style.display="none"; }} />
                   ) : media.type==="youtube" ? (
-                    <iframe src={media.embed} allow="autoplay; encrypted-media; picture-in-picture" allowFullScreen className="tiktok-video" />
-                  ) : media.type==="image" ? <img src={media.url} alt={post.title} className="tiktok-img"/>
+                    <iframe src={media.embed} allow="autoplay; encrypted-media; picture-in-picture" allowFullScreen className="vnect-video" />
+                  ) : media.type==="image" ? <img src={media.url} alt={post.title} className="vnect-img"/>
                   : <div className="no-media"><span className="no-media-logo">v-nect</span><p>{post.title}</p></div>}
-                  <div className="tiktok-actions">
+                  <div className="vnect-actions">
                     <button onClick={()=>toggleLike(post.id)} className={liked?"act liked":"act"}><span>♥</span><small>{likeCounts[post.id]||0}</small></button>
                     <button onClick={()=>setOpenComments(p=>p.includes(post.id)?p.filter(x=>x!==post.id):[...p,post.id])} className="act"><span>💬</span><small>{commentCounts[post.id]||0}</small></button>
                     <button onClick={()=>setSavedIds(p=>p.includes(post.id)?p.filter(x=>x!==post.id):[...p,post.id])} className={saved?"act saved":"act"}><span>{saved?"★":"☆"}</span><small>Save</small></button>
                     <a href="#feed" className="act"><span>↗</span><small>Share</small></a>
                   </div>
-                  <div className="tiktok-caption">
+                  <div className="vnect-caption">
                     <div className="author"><span className="avatar">{post.companies?.company_name?.charAt(0)?.toUpperCase()||"V"}</span><b>@{post.companies?.company_name||"v-nect Official"}</b><span className="badge">{post.post_type}</span></div>
                     <h3>{post.title}</h3>
                     {caption && <p>{caption.slice(0,140)}</p>}
@@ -353,18 +353,18 @@ export default function HomePage() {
         .comm-desc{margin:0;line-height:1.6;font-size:13.5px;color:#FFFFFF;word-break:break-word}
         .comm-stats{display:grid;grid-template-columns:repeat(3,1fr);gap:10px;margin:6px 0}.comm-stats div{background:#16224F !important;border:1px solid rgba(138,165,255,.2);border-radius:12px;padding:12px 6px;text-align:center;display:flex;flex-direction:column;min-width:0}.comm-stats b{font-size:20px;color:#fff}.comm-stats span{font-size:11px;color:#B4C6E7}
         .eco-note{color:#a9b9da;font-size:13px;margin:8px 0 0;max-width:620px;line-height:1.6}
-        .tiktok-tabs{display:flex;gap:4px;background:rgba(255,255,255,.06);padding:4px;border-radius:999px}.tiktok-tabs .tab{background:transparent;border:none;color:#a9b9da;padding:7px 14px;border-radius:999px;font-size:12.5px;font-weight:700;cursor:pointer}.tiktok-tabs .tab.active{background:#fff;color:#060b24}.feed-tabs{margin-bottom:16px;justify-content:center}
+        .vnect-tabs{display:flex;gap:4px;background:rgba(255,255,255,.06);padding:4px;border-radius:999px}.vnect-tabs .tab{background:transparent;border:none;color:#a9b9da;padding:7px 14px;border-radius:999px;font-size:12.5px;font-weight:700;cursor:pointer}.vnect-tabs .tab.active{background:#fff;color:#060b24}.feed-tabs{margin-bottom:16px;justify-content:center}
         .sec-head{display:flex;justify-content:space-between;align-items:flex-end;gap:16px;margin-bottom:18px}.sec-head h2{margin:6px 0 0;font-size:clamp(24px,4vw,32px)}.sec-head p{color:#a9b9da;font-size:13px;margin:6px 0 0}.link{color:#9ec0ff;text-decoration:none;font-size:13px;font-weight:700;white-space:nowrap}
         .module-grid{display:grid;grid-template-columns:repeat(3,1fr);gap:14px}
         .module-card{background:#0E183A;border:1px solid rgba(138,165,255,.16);border-radius:16px;padding:18px;text-decoration:none;color:#fff;display:flex;flex-direction:column;gap:4px}
         .m-icon{width:42px;height:42px;border-radius:12px;display:grid;place-items:center;font-size:19px;margin-bottom:6px}.module-card small{color:#82b4ff;font-size:11px;font-weight:700}.module-card p{color:#b4c6e7;font-size:12.5px;line-height:1.5;margin:0}
-        .tiktok-feed{display:flex;flex-direction:column;gap:18px;scroll-snap-type:y proximity}
-        .tiktok-card{scroll-snap-align:start}
-        .tiktok-media{position:relative;width:100%;aspect-ratio:9/16;max-height:720px;border-radius:20px;overflow:hidden;background:#000;border:1px solid rgba(138,165,255,.18)}
-        .tiktok-video,.tiktok-img{width:100%;height:100%;object-fit:cover;display:block;border:none}
+        .vnect-feed{display:flex;flex-direction:column;gap:18px;scroll-snap-type:y proximity}
+        .vnect-card{scroll-snap-align:start}
+        .vnect-media{position:relative;width:100%;aspect-ratio:9/16;max-height:720px;border-radius:20px;overflow:hidden;background:#000;border:1px solid rgba(138,165,255,.18)}
+        .vnect-video,.vnect-img{width:100%;height:100%;object-fit:cover;display:block;border:none}
         .no-media{width:100%;height:100%;display:grid;place-items:center;align-content:center;gap:8px;background:#0E183A;text-align:center;padding:20px}.no-media-logo{font-size:28px;font-weight:850;color:#8ab4ff}
-        .tiktok-actions{position:absolute;right:12px;bottom:110px;display:flex;flex-direction:column;gap:12px;z-index:3}.act{background:rgba(0,0,0,.45);backdrop-filter:blur(6px);border:1px solid rgba(255,255,255,.2);color:#fff;width:52px;height:52px;border-radius:50%;display:flex;flex-direction:column;align-items:center;justify-content:center;cursor:pointer;text-decoration:none;font-size:18px}.act small{font-size:9px;margin-top:1px}.act.liked{color:#ff5b7a;border-color:#ff5b7a}.act.saved{color:#fbbf24;border-color:#fbbf24}
-        .tiktok-caption{position:absolute;left:14px;right:72px;bottom:14px;z-index:2;text-shadow:0 1px 8px rgba(0,0,0,.9)}.author{display:flex;align-items:center;gap:8px;margin-bottom:6px}.avatar{width:30px;height:30px;border-radius:50%;background:#4b6bff;display:grid;place-items:center;font-size:13px;font-weight:800}.badge{background:rgba(255,255,255,.18);padding:3px 8px;border-radius:999px;font-size:10px}.tiktok-caption h3{margin:0 0 4px;font-size:16px}.tiktok-caption p{margin:0;font-size:13px;line-height:1.5;color:#e2ecff;display:-webkit-box;-webkit-line-clamp:2;-webkit-box-orient:vertical;overflow:hidden}
+        .vnect-actions{position:absolute;right:12px;bottom:110px;display:flex;flex-direction:column;gap:12px;z-index:3}.act{background:rgba(0,0,0,.45);backdrop-filter:blur(6px);border:1px solid rgba(255,255,255,.2);color:#fff;width:52px;height:52px;border-radius:50%;display:flex;flex-direction:column;align-items:center;justify-content:center;cursor:pointer;text-decoration:none;font-size:18px}.act small{font-size:9px;margin-top:1px}.act.liked{color:#ff5b7a;border-color:#ff5b7a}.act.saved{color:#fbbf24;border-color:#fbbf24}
+        .vnect-caption{position:absolute;left:14px;right:72px;bottom:14px;z-index:2;text-shadow:0 1px 8px rgba(0,0,0,.9)}.author{display:flex;align-items:center;gap:8px;margin-bottom:6px}.avatar{width:30px;height:30px;border-radius:50%;background:#4b6bff;display:grid;place-items:center;font-size:13px;font-weight:800}.badge{background:rgba(255,255,255,.18);padding:3px 8px;border-radius:999px;font-size:10px}.vnect-caption h3{margin:0 0 4px;font-size:16px}.vnect-caption p{margin:0;font-size:13px;line-height:1.5;color:#e2ecff;display:-webkit-box;-webkit-line-clamp:2;-webkit-box-orient:vertical;overflow:hidden}
         .thread{margin-top:10px;background:#0d1838;border:1px solid rgba(138,165,255,.2);border-radius:16px;padding:12px;color:#131c36}
         .loading{padding:30px;text-align:center;color:#a9b9da;background:rgba(15,25,58,.7);border-radius:16px}
         .more{background:#0E183A;border:1px solid rgba(138,165,255,.2);border-radius:22px;padding:28px;margin-top:10px}.more h2{margin:0 0 8px}.more p{color:#a9b9da}.more-grid{display:grid;grid-template-columns:repeat(3,1fr);gap:14px;margin:18px 0}
@@ -372,7 +372,7 @@ export default function HomePage() {
         .bottom-nav{display:none}.bottom-nav button{background:none;border:none;cursor:pointer}
         @media(max-width:640px){
           .nav-pills{display:none}.fc-grid{grid-template-columns:1fr}.module-grid{grid-template-columns:repeat(2,1fr);gap:10px}.module-card{padding:14px}.hero{padding:26px 5% 18px}.explore,.feed-section,.more{padding:22px 5%}
-          .tiktok-media{aspect-ratio:9/16;max-height:none;border-radius:18px}.more-grid{grid-template-columns:1fr}
+          .vnect-media{aspect-ratio:9/16;max-height:none;border-radius:18px}.more-grid{grid-template-columns:1fr}
           .topnav{padding:10px 4%}
           .home-pill{padding:7px 12px;font-size:12.5px}
           .bottom-nav{display:flex;position:fixed;left:0;right:0;bottom:0;z-index:40;background:#060B24;border-top:1px solid rgba(138,165,255,.2);justify-content:space-around;padding:8px 4px 12px}
