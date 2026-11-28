@@ -1,8 +1,6 @@
 "use client";
 import React, { useEffect, useRef, useState } from "react";
 import Link from "next/link";
-// PENTING: kalau di src/lib/supabase/client.ts export-nya namanya createSupabaseClient,
-// ganti baris di bawah jadi: import { createSupabaseClient as createClient } from "@/lib/supabase/client";
 import { createClient } from "@/lib/supabase/client";
 import { AccountAuthModal } from "@/components/AccountAuthModal";
 import { PostThreadComments } from "@/components/PostThreadComments";
@@ -155,14 +153,18 @@ export default function HomePage() {
       {/* ===== TOPNAV BARU - SEMUA JADI TOMBOL PILL, MENARIK ===== */}
       <header className="topnav">
         <div className="top-left">
-          <Link href="/" className="brand">v<span>-nect</span></Link>
+          {/* LOGO ASLI di pojok kiri atas - upload file logo ke public/logo.png */}
+          <Link href="/" className="brand-logo">
+            <img src="/logo.png" alt="v-nect" className="logo-img" onError={(e)=>{ (e.currentTarget as HTMLImageElement).style.display="none"; }} />
+            <span className="logo-fallback">V<span>-NECT</span></span>
+          </Link>
           <button onClick={()=>setMainTab("jelajahi")} className="home-pill">
             <span className="home-icon">⌂</span>
             <span>{lang==="id" ? "Beranda" : lang==="en" ? "Home" : lang==="zh" ? "首页" : lang==="ja" ? "ホーム" : "Home"}</span>
             <span className="home-dot">●</span>
           </button>
         </div>
-        {/* MENU ATAS - SEMUA PILL, NGGAK ADA LAGI TEKS POLOS + UNDERLINE */}
+        {/* MENU ATAS - SEMUA PILL UKURAN SAMA, KOLOM RAPI */}
         <nav className="nav-pills">
           <button onClick={()=>setMainTab("jelajahi")} className={mainTab==="jelajahi" ? "pill active" : "pill"}><span>▦</span> {t("explore", lang)}</button>
           <button onClick={()=>setMainTab("feed")} className={mainTab==="feed" ? "pill active" : "pill"}><span>▶</span> {t("feed", lang)}</button>
@@ -199,18 +201,17 @@ export default function HomePage() {
               ))}
             </div>
           </div>
-          {/* COMMUNITY - FIX: NAVY GELAP, TEKS PUTIH JELAS, NGGAK ADA BIRU TERANG LAGI */}
-          <Link href="/v-circle" className="fc-community">
+          {/* COMMUNITY BARU - TANPA GARIS, TANPA KOTAK: div bukan Link, jadi nggak ada underline */}
+          <div className="fc-community">
             <span className="eyebrow">COMMUNITY</span>
             <div className="comm-head"><span className="comm-icon">👥</span><div><h2>v-circle Community</h2><p>Grow your network.</p></div></div>
             <p className="comm-desc">Founder, profesional & perusahaan. Diskusi, tanya produk, cari partner — di satu circle.</p>
-            <div className="comm-stats">
-              <div><b>{posts.length || "0"}</b><span>Post terbaru</span></div>
-              <div><b>{Object.values(likeCounts).reduce((a,b)=>a+b,0) || "0"}</b><span>Total likes</span></div>
-              <div><b>{Object.values(commentCounts).reduce((a,b)=>a+b,0) || "0"}</b><span>Diskusi</span></div>
+            <div className="comm-avatars"><span>👩</span><span>👨</span><span>🧑</span><span>👩‍💼</span><span>👨‍💼</span><span className="comm-more">+12k</span></div>
+            <div className="comm-stats-clean">
+              <span><b>{posts.length || "0"}</b> Post terbaru</span><span className="comm-dot">•</span><span><b>{Object.values(likeCounts).reduce((a,b)=>a+b,0) || "0"}</b> Total likes</span><span className="comm-dot">•</span><span><b>{Object.values(commentCounts).reduce((a,b)=>a+b,0) || "0"}</b> Diskusi</span>
             </div>
-            <span className="btn-join">{t("joinCommunity", lang)} →</span>
-          </Link>
+            <Link href="/v-circle" className="btn-join">{t("joinCommunity", lang)} →</Link>
+          </div>
         </div>
       </section>
       <section id="explore" className="explore">
@@ -232,8 +233,8 @@ export default function HomePage() {
       )}
       {mainTab==="feed" && (
       <div id="feed">
-      <section id="explore-feed" className="explore">
-        <div className="sec-head"><div><span className="eyebrow">EXPLORE</span><h2>Explore the v-nect Suite</h2></div><Link href="/#explore" className="link">All modules ↗</Link></div>
+      <section id="explore" className="explore">
+        <div className="sec-head"><div><span className="eyebrow">EXPLORE</span><h2>Explore the v-nect Suite</h2></div><Link href="/explore" className="link">All modules ↗</Link></div>
         <div className="module-grid">
           {MODULES.map(m=>(
             <Link key={m.id} href={m.href} className="module-card">
@@ -325,7 +326,7 @@ export default function HomePage() {
         .hero-btns{display:flex;gap:10px;flex-wrap:wrap}
         .feature-community{padding:10px 7% 10px;max-width:1100px;margin:0 auto}.fc-grid{display:grid;grid-template-columns:1.1fr 0.9fr;gap:16px;align-items:stretch}.fc-feature{background:#0E183A;border:1px solid rgba(138,165,255,.16);border-radius:20px;padding:24px}.fc-feature h2{margin:8px 0 6px;font-size:clamp(22px,3.5vw,30px)}.fc-sub{color:#a9b9da;font-size:13px;margin:0 0 16px}.feature-list{display:flex;flex-direction:column;gap:12px}.feature-row{display:flex;gap:12px;align-items:flex-start;background:rgba(255,255,255,.04);border:1px solid rgba(138,165,255,.12);border-radius:14px;padding:12px}.feature-row b{font-size:14px}.feature-row p{margin:3px 0 0;color:#b4c6e7;font-size:12.5px;line-height:1.5}.f-icon{width:40px;height:40px;flex-shrink:0;border-radius:11px;background:rgba(92,124,255,.18);display:grid;place-items:center;font-size:18px}
         /* COMMUNITY - FIX BIRU NABRAK: SEMUA GELAP, TEKS PUTIH */
-        .fc-community{background:#0E183A !important;background-image:none !important;border:1px solid rgba(138,165,255,.35);border-radius:20px;padding:24px;color:#fff;text-decoration:none;display:flex;flex-direction:column;gap:12px;overflow:hidden;min-width:0}
+        .brand-logo{display:flex;align-items:center;gap:8px;text-decoration:none !important}.logo-img{height:40px;width:auto;object-fit:contain}.logo-fallback{font-size:20px;font-weight:850;color:#fff}.logo-fallback span{color:#8ab4ff}.comm-avatars{display:flex;align-items:center;gap:0;margin:4px 0}.comm-avatars span{width:32px;height:32px;border-radius:50%;background:#2A3F7A;display:grid;place-items:center;font-size:15px;border:2px solid #0E183A;margin-left:-6px}.comm-avatars span:first-child{margin-left:0}.comm-more{background:#4B6BFF !important;font-size:11px !important;font-weight:800}.comm-stats-clean{display:flex;flex-wrap:wrap;gap:8px;align-items:center;font-size:13px;color:#B4C6E7}.comm-stats-clean b{color:#fff}.comm-dot{color:#5A6E9E}.fc-community{background:#0E183A !important;background-image:none !important;border:1px solid rgba(138,165,255,.35);border-radius:20px;padding:24px;color:#fff;text-decoration:none;display:flex;flex-direction:column;gap:12px;overflow:hidden;min-width:0}
         .fc-community .eyebrow{color:#8AB4FF}
         .comm-head{display:flex;gap:12px;align-items:center;min-width:0}.comm-icon{width:52px;height:52px;flex-shrink:0;border-radius:16px;background:#1A2A5A !important;display:grid;place-items:center;font-size:24px;border:1px solid rgba(138,165,255,.3)}.comm-head h2{margin:0;font-size:21px;line-height:1.2;word-break:break-word;color:#FFFFFF}.comm-head p{margin:2px 0 0;color:#B4C6E7;font-size:13px}
         .comm-desc{margin:0;line-height:1.6;font-size:13.5px;color:#FFFFFF;word-break:break-word}
