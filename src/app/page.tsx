@@ -7,6 +7,7 @@ import { PostThreadComments } from "@/components/PostThreadComments";
 import LanguageSwitcher from "@/components/LanguageSwitcher";
 import { t, getLang, type Lang } from "@/lib/i18n";
 import Footer from "@/components/Footer";
+import SignOutButton from "@/components/SignOutButton";
 
 interface BusinessPost {
   id: string; company_id: string; author_id: string; title: string; content: string;
@@ -25,8 +26,6 @@ const MODULES = [
   { id: "v-market", name: "v-market", tag: "Marketplace", desc: "Products & suppliers.", href: "/v-market", icon: "🛒", color: "#fbbf24" },
 ];
 
-// TRANSLATE FIX: Feature jangan ditulis manual, harus ikut bahasa yang dipilih
-// Kalau di i18n.ts belum ada key-nya, yang ini yang dipakai - jadi nggak campur lagi
 const FEATURES_BY_LANG: Record<string, {icon:string;title:string;desc:string}[]> = {
   id: [
     { icon: "💬", title: "Pesan Langsung & Grup", desc: "Chat real-time sama partner, tim & kontak bisnis." },
@@ -50,7 +49,6 @@ const FEATURES_BY_LANG: Record<string, {icon:string;title:string;desc:string}[]>
   ],
 };
 const getFeatures = (lang: string) => FEATURES_BY_LANG[lang] || FEATURES_BY_LANG.en;
-const FEATURES = FEATURES_BY_LANG.en;
 
 function isVideoUrl(u: string) {
   const c = (u||"").toLowerCase();
@@ -173,11 +171,8 @@ export default function HomePage() {
 
   return (
     <main className="home">
-      {/* ===== TOPNAV BARU - SEMUA JADI TOMBOL PILL, MENARIK ===== */}
       <header className="topnav">
         <div className="top-left">
-          {/* LOGO ASLI di pojok kiri atas - upload file logo ke public/logo.png */}
-          {/* LOGO GEDE - tulisan v-nect dihapus */}
           <Link href="/" className="brand-logo">
             <img src="/images/V-NECT-logo.png" alt="v-nect" className="logo-img" />
           </Link>
@@ -187,7 +182,6 @@ export default function HomePage() {
             <span className="home-dot">●</span>
           </button>
         </div>
-        {/* MENU ATAS - SEMUA PILL UKURAN SAMA, KOLOM RAPI */}
         <nav className="nav-pills">
           <button onClick={()=>setMainTab("jelajahi")} className={mainTab==="jelajahi" ? "pill active" : "pill"}><span>▦</span> {t("explore", lang)}</button>
           <button onClick={()=>setMainTab("feed")} className={mainTab==="feed" ? "pill active" : "pill"}><span>▶</span> {t("feed", lang)}</button>
@@ -197,7 +191,14 @@ export default function HomePage() {
         </nav>
         <div style={{ display: "flex", alignItems: "center", gap: 10 }}>
           <LanguageSwitcher />
-          {currentUserName ? <span className="chip">● {currentUserName}</span> : <button className="btn-ghost" onClick={()=>setAuthModalOpen(true)}>Sign In</button>}
+          {currentUserName ? (
+            <>
+              <span className="chip">● {currentUserName}</span>
+              <SignOutButton />
+            </>
+          ) : (
+            <button className="btn-ghost" onClick={()=>setAuthModalOpen(true)}>Sign In</button>
+          )}
         </div>
       </header>
 
@@ -211,7 +212,6 @@ export default function HomePage() {
 
       {mainTab==="jelajahi" && (
       <div id="jelajahi">
-      {/* ===== FEATURE + COMMUNITY - FIX BIRU NABRAK: SOLID GELAP TOTAL ===== */}
       <section id="feature-community" className="feature-community">
         <div className="fc-grid">
           <div className="fc-feature">
@@ -224,7 +224,6 @@ export default function HomePage() {
               ))}
             </div>
           </div>
-          {/* COMMUNITY BARU - TANPA GARIS, TANPA KOTAK: div bukan Link, jadi nggak ada underline */}
           <div className="fc-community">
             <span className="eyebrow">COMMUNITY</span>
             <div className="comm-head"><span className="comm-icon">👥</span><div><h2>v-circle Community</h2><p>{lang==="id" ? "Kembangkan jaringanmu." : lang==="zh" ? "拓展你的人脉。" : lang==="ja" ? "ネットワークを広げよう。" : "Grow your network."}</p></div></div>
@@ -246,7 +245,7 @@ export default function HomePage() {
             : <Link key={m.id} href={m.href} className="module-card"><span className="m-icon" style={{background:m.color}}>{m.icon}</span><b>{m.name} </b><small>{m.tag}</small><p>{m.desc}</p></Link>
           ))}
         </div>
-</section>
+      </section>
       </div>
       )}
       {mainTab==="feed" && (
@@ -262,11 +261,9 @@ export default function HomePage() {
           ))}
         </div>
       </section>
-
       <section className="feed-section">
         <div className="sec-head"><div><span className="eyebrow">FEED • BUSINESS FEED</span><h2>{feedTab==="following" ? t("following", lang) : t("forYou", lang)}</h2><p>Scroll ke bawah kayak TikTok. Video jalan sendiri.</p></div><button onClick={()=>setMainTab("jelajahi")} className="link">← Balik ke Jelajahi</button></div>
         <div className="tiktok-tabs feed-tabs"><button onClick={()=>setFeedTab("following")} className={feedTab==="following"?"tab active":"tab"}>{t("following", lang)}</button><button onClick={()=>setFeedTab("foryou")} className={feedTab==="foryou"?"tab active":"tab"}>{t("forYou", lang)}</button></div>
-
         {loadingPosts ? <div className="loading">Loading posts...</div> : posts.length===0 ? <div className="loading">Belum ada post published.</div> : (
         <div className="tiktok-feed" ref={feedRef}>
           {posts.map(post=>{
@@ -284,21 +281,18 @@ export default function HomePage() {
                     <iframe src={media.embed} allow="autoplay; encrypted-media; picture-in-picture" allowFullScreen className="tiktok-video" />
                   ) : media.type==="image" ? <img src={media.url} alt={post.title} className="tiktok-img"/>
                   : <div className="no-media"><span className="no-media-logo">v-nect</span><p>{post.title}</p></div>}
-
                   <div className="tiktok-actions">
                     <button onClick={()=>toggleLike(post.id)} className={liked?"act liked":"act"}><span>♥</span><small>{likeCounts[post.id]||0}</small></button>
                     <button onClick={()=>setOpenComments(p=>p.includes(post.id)?p.filter(x=>x!==post.id):[...p,post.id])} className="act"><span>💬</span><small>{commentCounts[post.id]||0}</small></button>
                     <button onClick={()=>setSavedIds(p=>p.includes(post.id)?p.filter(x=>x!==post.id):[...p,post.id])} className={saved?"act saved":"act"}><span>{saved?"★":"☆"}</span><small>Save</small></button>
                     <a href="#feed" className="act"><span>↗</span><small>Share</small></a>
                   </div>
-
                   <div className="tiktok-caption">
                     <div className="author"><span className="avatar">{post.companies?.company_name?.charAt(0)?.toUpperCase()||"V"}</span><b>@{post.companies?.company_name||"v-nect Official"}</b><span className="badge">{post.post_type}</span></div>
                     <h3>{post.title}</h3>
                     {caption && <p>{caption.slice(0,140)}</p>}
                   </div>
                 </div>
-
                 {isOpen && <div className="thread"><PostThreadComments supabase={supabase} postId={post.id} currentUserId={currentUserId} currentUserName={currentUserName} focusTrigger={1} /></div>}
               </article>
             );
@@ -319,13 +313,11 @@ export default function HomePage() {
 
       <style jsx>{`
         .home{background:#060b24;color:#f3f7ff;font-family:var(--font-sans),Arial,sans-serif;padding-bottom:70px;overflow-x:hidden}
-        /* TOPNAV BARU - SEMUA PILL */
         .topnav{position:sticky;top:0;z-index:30;display:flex;justify-content:space-between;align-items:center;gap:12px;padding:12px 4%;background:#060B24;border-bottom:1px solid rgba(138,165,255,.15)}
         .top-left{display:flex;align-items:center;gap:10px;flex-shrink:0}
         .brand{font-size:21px;font-weight:850;color:#fff;text-decoration:none;white-space:nowrap}.brand span,.footer span{color:#8ab4ff}
         .home-pill{display:flex;align-items:center;gap:7px;background:#ffffff;color:#060B24;border:2px solid #ffffff;padding:8px 15px;border-radius:999px;font-size:13.5px;font-weight:800;cursor:pointer;box-shadow:0 6px 18px rgba(255,255,255,.18);white-space:nowrap}
         .home-icon{font-size:17px;line-height:1}.home-dot{color:#0CAA91;font-size:9px}
-        /* NAV PILLS - INI YANG BIKIN ATAS JADI MENARIK */
         .nav-pills{display:flex;gap:6px;align-items:center;flex-wrap:nowrap}
         .pill{display:flex;align-items:center;gap:6px;background:rgba(255,255,255,.07);border:1px solid rgba(154,178,255,.28);color:#E2ECFF;padding:8px 14px;border-radius:999px;font-size:13px;font-weight:700;cursor:pointer;text-decoration:none;white-space:nowrap}
         .pill span{font-size:13px}
@@ -343,7 +335,6 @@ export default function HomePage() {
         .explore,.more{padding:28px 7%;max-width:1100px;margin:0 auto}.feed-section{padding:28px 7%;max-width:560px;margin:0 auto}
         .hero-btns{display:flex;gap:10px;flex-wrap:wrap}
         .feature-community{padding:10px 7% 10px;max-width:1100px;margin:0 auto}.fc-grid{display:grid;grid-template-columns:1.1fr 0.9fr;gap:16px;align-items:stretch}.fc-feature{background:#0E183A;border:1px solid rgba(138,165,255,.16);border-radius:20px;padding:24px}.fc-feature h2{margin:8px 0 6px;font-size:clamp(22px,3.5vw,30px)}.fc-sub{color:#a9b9da;font-size:13px;margin:0 0 16px}.feature-list{display:flex;flex-direction:column;gap:12px}.feature-row{display:flex;gap:12px;align-items:flex-start;background:rgba(255,255,255,.04);border:1px solid rgba(138,165,255,.12);border-radius:14px;padding:12px}.feature-row b{font-size:14px}.feature-row p{margin:3px 0 0;color:#b4c6e7;font-size:12.5px;line-height:1.5}.f-icon{width:40px;height:40px;flex-shrink:0;border-radius:11px;background:rgba(92,124,255,.18);display:grid;place-items:center;font-size:18px}
-        /* COMMUNITY - FIX BIRU NABRAK: SEMUA GELAP, TEKS PUTIH */
         .brand-logo{display:flex;align-items:center;gap:8px;text-decoration:none !important}.logo-img{height:68px;width:auto;object-fit:contain}.logo-fallback{font-size:20px;font-weight:850;color:#fff}.logo-fallback span{color:#8ab4ff}.comm-avatars{display:flex;align-items:center;gap:0;margin:4px 0}.comm-avatars span{width:32px;height:32px;border-radius:50%;background:#2A3F7A;display:grid;place-items:center;font-size:15px;border:2px solid #0E183A;margin-left:-6px}.comm-avatars span:first-child{margin-left:0}.comm-more{background:#4B6BFF !important;font-size:11px !important;font-weight:800}.comm-stats-clean{display:flex;flex-wrap:wrap;gap:8px;align-items:center;font-size:13px;color:#B4C6E7}.comm-stats-clean b{color:#fff}.comm-dot{color:#5A6E9E}.fc-community{background:#0E183A !important;background-image:none !important;border:1px solid rgba(138,165,255,.35);border-radius:20px;padding:24px;color:#fff;text-decoration:none;display:flex;flex-direction:column;gap:12px;overflow:hidden;min-width:0}
         .fc-community .eyebrow{color:#8AB4FF}
         .comm-head{display:flex;gap:12px;align-items:center;min-width:0}.comm-icon{width:52px;height:52px;flex-shrink:0;border-radius:16px;background:#1A2A5A !important;display:grid;place-items:center;font-size:24px;border:1px solid rgba(138,165,255,.3)}.comm-head h2{margin:0;font-size:21px;line-height:1.2;word-break:break-word;color:#FFFFFF}.comm-head p{margin:2px 0 0;color:#B4C6E7;font-size:13px}
