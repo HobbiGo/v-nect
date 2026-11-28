@@ -1,6 +1,7 @@
 "use client";
 import { useEffect, useState } from "react";
 import TopNav from "@/components/TopNav";
+import Footer from "@/components/Footer";
 import { getLang, type Lang } from "@/lib/i18n";
 
 // v-circle - FULL FIX: Logo gede tanpa tulisan, TopNav bareng, Translate full, Tanpa garis, Connect 1x klik
@@ -246,6 +247,7 @@ export default function VCirclePage() {
         .empty { color: #B4C6E7; grid-column: 1 / -1; text-align: center; padding: 30px; }
         @media (max-width: 700px) { .grid { grid-template-columns: 1fr; } }
       `}</style>
+          <Footer />
     </main>
   );
 }
