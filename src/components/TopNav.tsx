@@ -28,9 +28,14 @@ export default function TopNav({ active }: { active: string }) {
   return (
     <header className="topnav">
       {/* LOGO - pojok kiri atas, file di public/images/V-NECT-logo.png */}
-      {/* LOGO GEDE - tulisan v-nect dihapus, logo gambar aja */}
       <Link href="/" className="brand-logo">
-        <img src="/images/V-NECT-logo.png" alt="v-nect" className="logo-img" />
+        <img
+          src="/images/V-NECT-logo.png"
+          alt="v-nect"
+          className="logo-img"
+          onError={(e) => { (e.currentTarget as HTMLImageElement).style.display = "none"; }}
+        />
+        <span className="logo-fallback">V<span>-NECT</span></span>
       </Link>
 
       {/* PILLS - semua ukuran sama, kolom rapi, tanpa garis */}
@@ -54,7 +59,7 @@ export default function TopNav({ active }: { active: string }) {
           border-bottom: 1px solid rgba(138,165,255,.15);
         }
         .brand-logo { display: flex; align-items: center; gap: 8px; text-decoration: none !important; flex-shrink: 0; }
-        .logo-img { height: 68px; width: auto; object-fit: contain; display: block; }
+        .logo-img { height: 42px; width: auto; object-fit: contain; display: block; }
         .logo-fallback { font-size: 20px; font-weight: 850; color: #fff; }
         .logo-fallback span { color: #8ab4ff; }
         .nav-pills { display: flex; gap: 6px; align-items: center; flex-wrap: nowrap; }
