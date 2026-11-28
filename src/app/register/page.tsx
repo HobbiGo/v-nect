@@ -57,7 +57,7 @@ export default function RegisterPage() {
           data: {
             full_name: fullName.trim(),
           },
-          emailRedirectTo: `${window.location.origin}/auth/callback`,
+          emailRedirectTo: `https://voinnect.vercel.app/auth/callback`,
         },
       });
 
