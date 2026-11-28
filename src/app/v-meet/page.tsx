@@ -188,7 +188,8 @@ export default function VMeetMultiPage() {
   const theirFlag = LANGS.find((l) => l.id === theirLang)?.flag || "🇺🇸";
   const domain = process.env.NEXT_PUBLIC_DAILY_DOMAIN || "vnect.daily.co";
   // Daily Prebuilt - iframe ini yang handle 5-10 video 2 arah, grid, mic/cam, screen share, chat
-  const dailyUrl = `https://${domain}/${room}?t=${encodeURIComponent(name || "Guest")}`;
+  // FIX: URL Daily harus bersih, tanpa ?t= . ?t= bikin iframe blank / Daily nolak load
+  const dailyUrl = `https://${domain}/${room}`;
 
   const join = async () => {
     setCamError("");
@@ -255,6 +256,11 @@ export default function VMeetMultiPage() {
           </div>
           {/* DAILY IFRAME - ini yang nampilin 5-10 video 2 arah, grid otomatis */}
           <iframe src={dailyUrl} allow="camera; microphone; fullscreen; display-capture; autoplay" className="dailyframe" title="v-meet Daily" />
+          <div className="iframe-fallback">
+            <span>Kalau video masih blank, klik ini:</span>
+            <a href={dailyUrl} target="_blank" rel="noreferrer" className="open-daily">↗ Buka Video di Tab Baru (Daily)</a>
+            <span>Link room: {dailyUrl}</span>
+          </div>
           {subOn && (
             <div className="subtitle">
               <span>{myFlag} {TR[myLang]?.hello || TR.en.hello}</span>
@@ -308,7 +314,7 @@ export default function VMeetMultiPage() {
         .dailyhead { display: flex; gap: 10px; align-items: center; justify-content: space-between; flex-wrap: wrap; margin-bottom: 10px; font-size: 13px; font-weight: 700; }
         .live { background: #EF4444; color: #fff; padding: 6px 12px; border-radius: 999px; }
         .leave { background: #EF4444; color: #fff; border: none; padding: 9px 14px; border-radius: 999px; font-weight: 800; cursor: pointer; }
-        .dailyframe { width: 100%; height: 640px; border: 1px solid rgba(138,165,255,.25); border-radius: 18px; background: #000; }
+        .iframe-fallback { display: flex; gap: 10px; align-items: center; flex-wrap: wrap; margin-top: 10px; font-size: 12px; color: #B4C6E7; } .open-daily { background: #4B6BFF; color: #fff; padding: 9px 14px; border-radius: 999px; font-weight: 800; text-decoration: none; } .dailyframe { width: 100%; height: 640px; border: 1px solid rgba(138,165,255,.25); border-radius: 18px; background: #000; }
         .subtitle { margin-top: 10px; background: rgba(0,0,0,.72); border-radius: 12px; padding: 10px 12px; text-align: center; display: flex; flex-direction: column; gap: 2px; }
         .subtitle span { font-weight: 700; }
         .subtitle small { color: #AFC6FF; }
