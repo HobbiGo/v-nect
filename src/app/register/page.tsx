@@ -61,10 +61,7 @@ export default function RegisterPage() {
 
       if (error) {
         console.error("v-nect SIGNUP ERROR:", error);
-
-        setErrorMessage(
-          Registration failed: " + error.message};
-        );
+        setErrorMessage("Registration failed.");
         return;
       }
 
@@ -80,13 +77,7 @@ export default function RegisterPage() {
 
     } catch (error) {
       console.error("v-nect REGISTER ERROR:", error);
-
-      setErrorMessage(
-        error instanceof Error
-          ? error.message
-          : "An unexpected error occurred. Please try again."
-      );
-
+      setErrorMessage("An unexpected error occurred. Please try again.");
     } finally {
       setLoading(false);
     }
