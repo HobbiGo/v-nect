@@ -161,6 +161,7 @@ export default function DashboardPage() {
 
   return (
     <main className="dash">
+      {/* DASHBOARD SEMPURNA - hero + stats + gambar + form rapi */}
       <TopNav active="home" />
       <section className="wrap">
         <div className="hero">
