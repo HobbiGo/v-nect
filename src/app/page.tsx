@@ -114,6 +114,18 @@ export default function HomePage() {
   const [mainTab, setMainTab] = useState<"jelajahi"|"feed">("jelajahi");
   const [feedTab, setFeedTab] = useState<"foryou"|"following">("foryou");
   const FEATURES = getFeatures(lang);
+  function goToFeed() {
+    setMainTab("feed");
+    setTimeout(() => {
+      document.getElementById("feed")?.scrollIntoView({ behavior: "smooth", block: "start" });
+    }, 100);
+  }
+  function goToJelajahi() {
+    setMainTab("jelajahi");
+    setTimeout(() => {
+      document.getElementById("jelajahi")?.scrollIntoView({ behavior: "smooth", block: "start" });
+    }, 100);
+  }
   const feedRef = useRef<HTMLDivElement>(null);
 
   useEffect(() => {
@@ -176,15 +188,15 @@ export default function HomePage() {
           <Link href="/" className="brand-logo">
             <img src="/images/V-NECT-logo.png" alt="v-nect" className="logo-img" />
           </Link>
-          <button onClick={()=>setMainTab("jelajahi")} className="home-pill">
+          <button onClick={()=>goToJelajahi()} className="home-pill">
             <span className="home-icon">⌂</span>
             <span>{lang==="id" ? "Beranda" : lang==="en" ? "Home" : lang==="zh" ? "首页" : lang==="ja" ? "ホーム" : "Home"}</span>
             <span className="home-dot">●</span>
           </button>
         </div>
         <nav className="nav-pills">
-          <button onClick={()=>setMainTab("jelajahi")} className={mainTab==="jelajahi" ? "pill active" : "pill"}><span>▦</span> {t("explore", lang)}</button>
-          <button onClick={()=>setMainTab("feed")} className={mainTab==="feed" ? "pill active" : "pill"}><span>▶</span> {t("feed", lang)}</button>
+          <button onClick={()=>goToJelajahi()} className={mainTab==="jelajahi" ? "pill active" : "pill"}><span>▦</span> {t("explore", lang)}</button>
+          <button onClick={()=>goToFeed()} className={mainTab==="feed" ? "pill active" : "pill"}><span>▶</span> {t("feed", lang)}</button>
           <Link href="/v-circle" className="pill"><span>👥</span> {t("community", lang)}</Link>
           <Link href="/v-market" className="pill"><span>🛒</span> {t("market", lang)}</Link>
           <Link href="/v-meet" className="pill"><span>🎥</span> {t("meet", lang)}</Link>
@@ -206,7 +218,7 @@ export default function HomePage() {
         <span className="eyebrow">THE V-NECT PLATFORM</span>
         <h1>{t("heroTitle1", lang)}<br/><span>{t("heroTitle2", lang)}</span></h1>
         <p>{t("heroDesc", lang)}</p>
-        <div className="hero-btns"><button onClick={()=>setMainTab("jelajahi")} className="btn-primary">▦ {t("exploreAll", lang)} →</button><button onClick={()=>setMainTab("feed")} className="btn-secondary">▶ {t("watchFeed", lang)}</button></div>
+        <div className="hero-btns"><button onClick={()=>goToJelajahi()} className="btn-primary">▦ {t("exploreAll", lang)} →</button><button onClick={()=>goToFeed()} className="btn-secondary">▶ {t("watchFeed", lang)}</button></div>
         <div className="hero-stats">{lang==="id" ? "2 Menu Besar • 1 Klik Nyampe • 6 Modul di Dalamnya" : lang==="zh" ? "2 个大菜单 • 1 次点击到达 • 内含 6 个模块" : lang==="ja" ? "2つの大きなメニュー • 1クリックで到達 • 6つのモジュール内蔵" : "2 Big Menus • 1 Click Away • 6 Modules Inside"}</div>
       </section>
 
@@ -241,7 +253,7 @@ export default function HomePage() {
         <div className="module-grid">
           {MODULES.map(m=>(
             m.id==="v-feed"
-            ? <button key={m.id} onClick={()=>setMainTab("feed")} className="module-card"><span className="m-icon" style={{background:m.color}}>{m.icon}</span><b>{m.name} </b><small>{m.tag}</small><p>{m.desc}</p></button>
+            ? <button key={m.id} onClick={()=>goToFeed()} className="module-card"><span className="m-icon" style={{background:m.color}}>{m.icon}</span><b>{m.name} </b><small>{m.tag}</small><p>{m.desc}</p></button>
             : <Link key={m.id} href={m.href} className="module-card"><span className="m-icon" style={{background:m.color}}>{m.icon}</span><b>{m.name} </b><small>{m.tag}</small><p>{m.desc}</p></Link>
           ))}
         </div>
@@ -262,7 +274,7 @@ export default function HomePage() {
         </div>
       </section>
       <section className="feed-section">
-        <div className="sec-head"><div><span className="eyebrow">FEED • BUSINESS FEED</span><h2>{feedTab==="following" ? t("following", lang) : t("forYou", lang)}</h2><p>Scroll ke bawah kayak TikTok. Video jalan sendiri.</p></div><button onClick={()=>setMainTab("jelajahi")} className="link">← Balik ke Jelajahi</button></div>
+        <div className="sec-head"><div><span className="eyebrow">FEED • BUSINESS FEED</span><h2>{feedTab==="following" ? t("following", lang) : t("forYou", lang)}</h2><p>Scroll ke bawah kayak TikTok. Video jalan sendiri.</p></div><button onClick={()=>goToJelajahi()} className="link">← Balik ke Jelajahi</button></div>
         <div className="tiktok-tabs feed-tabs"><button onClick={()=>setFeedTab("following")} className={feedTab==="following"?"tab active":"tab"}>{t("following", lang)}</button><button onClick={()=>setFeedTab("foryou")} className={feedTab==="foryou"?"tab active":"tab"}>{t("forYou", lang)}</button></div>
         {loadingPosts ? <div className="loading">Loading posts...</div> : posts.length===0 ? <div className="loading">Belum ada post published.</div> : (
         <div className="tiktok-feed" ref={feedRef}>
@@ -306,7 +318,7 @@ export default function HomePage() {
       <Footer />
 
       <nav className="bottom-nav">
-        <button onClick={()=>setMainTab("jelajahi")} className="bnav bnav-home">⌂<small>{lang==="id"?"Beranda":"Home"}</small></button><a href="/v-market" className="bnav">🛒<small>{t("market", lang)}</small></a><button onClick={()=>setMainTab("feed")} className="bnav plus">+<small></small></button><a href="/v-circle?tab=messages" className="bnav">✉️<small>Kotak Masuk</small></a><a href="/v-hub" className="bnav">●<small>Profil</small></a>
+        <button onClick={()=>goToJelajahi()} className="bnav bnav-home">⌂<small>{lang==="id"?"Beranda":"Home"}</small></button><a href="/v-market" className="bnav">🛒<small>{t("market", lang)}</small></a><button onClick={()=>goToFeed()} className="bnav plus">+<small></small></button><a href="/v-circle?tab=messages" className="bnav">✉️<small>Kotak Masuk</small></a><a href="/v-hub" className="bnav">●<small>Profil</small></a>
       </nav>
 
       <AccountAuthModal open={authModalOpen} initialMode="login" onClose={()=>setAuthModalOpen(false)} onSuccess={()=>loadUser()} />
